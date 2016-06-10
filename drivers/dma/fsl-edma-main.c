@@ -2,12 +2,12 @@
 /*
  * drivers/dma/fsl-edma.c
  *
- * Copyright 2013-2014 Freescale Semiconductor, Inc.
+ * Copyright 2013-2016 Freescale Semiconductor, Inc.
  * Copyright 2020 NXP
  *
  * Driver for the Freescale eDMA engine with flexible channel multiplexing
  * capability for DMA request sources. The eDMA block can be found on some
- * Vybrid and Layerscape SoCs.
+ * Vybrid, Layerscape and S32V234 SoCs.
  */
 
 #include <dt-bindings/dma/fsl-edma.h>
@@ -283,6 +283,46 @@ fsl_edma2_irq_init(struct platform_device *pdev,
 	return 0;
 }
 
+static int fsl_edma_irq_init_s32(struct platform_device *pdev,
+				 struct fsl_edma_engine *fsl_edma)
+{
+	int i, ret, irq, txirq_count = fsl_edma->drvdata->txirq_count;
+	static const char * const names[] = {"edma-tx_0-15", "edma-tx_16-31",
+					     "edma-err"};
+
+	edma_writel(fsl_edma, ~0, fsl_edma->regs.intl);
+
+	for (i = 0; i <= txirq_count; i++) {
+		irq = platform_get_irq_byname(pdev, names[i]);
+		if (irq < 0) {
+			dev_err(&pdev->dev, "Can't get %s IRQ.\n",
+				names[i]);
+			return irq;
+		}
+
+		if (i == txirq_count) {
+			fsl_edma->errirq = irq;
+			ret = devm_request_irq(&pdev->dev, irq,
+					       fsl_edma_err_handler, 0,
+					       names[i], fsl_edma);
+		} else {
+			fsl_edma->txirqs[i] = irq;
+			ret = devm_request_irq(&pdev->dev, irq,
+					       fsl_edma_tx_handler, 0,
+					       names[i], fsl_edma);
+		}
+
+		if (ret) {
+			dev_err(&pdev->dev,
+				"Can't register %s IRQ.\n",
+				names[i]);
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
 static void fsl_edma_irq_exit(
 		struct platform_device *pdev, struct fsl_edma_engine *fsl_edma)
 {
@@ -368,6 +408,15 @@ static struct fsl_edma_drvdata imx93_data4 = {
 	.setup_irq = fsl_edma3_irq_init,
 };
 
+static struct fsl_edma_drvdata s32v234_data = {
+	.dmamuxs = DMAMUX_NR,
+	.flags = FSL_EDMA_DRV_MUX_SWAP | FSL_EDMA_DRV_WRAP_IO,
+	.chreg_off = EDMA_TCD,
+	.chreg_space_sz = sizeof(struct fsl_edma_hw_tcd),
+	.setup_irq = fsl_edma_irq_init_s32,
+	.txirq_count = 2,
+};
+
 static const struct of_device_id fsl_edma_dt_ids[] = {
 	{ .compatible = "fsl,vf610-edma", .data = &vf610_data},
 	{ .compatible = "fsl,ls1028a-edma", .data = &ls1028a_data},
@@ -376,6 +425,7 @@ static const struct of_device_id fsl_edma_dt_ids[] = {
 	{ .compatible = "fsl,imx8ulp-edma", .data = &imx8ulp_data},
 	{ .compatible = "fsl,imx93-edma3", .data = &imx93_data3},
 	{ .compatible = "fsl,imx93-edma4", .data = &imx93_data4},
+	{ .compatible = "fsl,s32v234-edma", .data = &s32v234_data},
 	{ /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, fsl_edma_dt_ids);
