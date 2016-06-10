@@ -25,6 +25,7 @@ properties:
           - fsl,imx8qm-edma
           - fsl,imx93-edma3
           - fsl,imx93-edma4
+          - fsl,s32v234-edma
       - items:
           - const: fsl,ls1028a-edma
           - const: fsl,vf610-edma
@@ -245,3 +246,24 @@ examples:
         clocks = <&clk IMX93_CLK_EDMA1_GATE>;
         clock-names = "dma";
     };
+
+  - |
+    #include <dt-bindings/interrupt-controller/arm-gic.h>
+    #include <dt-bindings/clock/s32v234-clock.h>
+    edma: dma-controller@40002000 {
+       #dma-cells = <2>;
+       compatible = "fsl,s32v234-edma";
+       reg = <0x0 0x40002000 0x0 0x2000>,
+            <0x0 0x40031000 0x0 0x1000>,
+             <0x0 0x400A1000 0x0 0x1000>;
+       dma-channels = <32>;
+       interrupts = <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>,
+                    <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>,
+                    <GIC_SPI 10 IRQ_TYPE_LEVEL_HIGH>;
+       interrupt-names = "edma-tx_0-15",
+                         "edma-tx_16-31",
+                         "edma-err";
+       clock-names = "dmamux0", "dmamux1";
+       clocks = <&clks S32V234_CLK_SYS6>,
+                <&clks S32V234_CLK_SYS6>;
+    }; /* S32V234 */
