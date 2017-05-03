@@ -50,9 +50,9 @@ struct async_op {
 	int err;
 };
 
-static void tls_async_op_done(void *data, int err)
+static void tls_async_op_done(struct crypto_async_request *req, int err)
 {
-	struct async_op *areq = data;
+	struct async_op *areq = req->data;
 
 	if (err == -EINPROGRESS)
 		return;
@@ -192,6 +192,17 @@ static int crypto_tls_encrypt(struct aead_request *req)
 	unsigned int cryptlen, phashlen;
 	u8 *hash = treq_ctx->tail;
 	int err;
+
+	/*
+	 * The hash result is saved at the beginning of the tls request ctx
+	 * and is aligned as required by the hash transform. Enough space was
+	 * allocated in crypto_tls_init_tfm to accommodate the difference. The
+	 * requests themselves start later at treq_ctx->tail + ctx->reqoff so
+	 * the result is not overwritten by the second (cipher) request.
+	 */
+	hash = (u8 *)ALIGN((unsigned long)hash +
+			   crypto_ahash_alignmask(ctx->auth),
+			   crypto_ahash_alignmask(ctx->auth) + 1);
 
 	/*
 	 * STEP 1: create ICV together with necessary padding
@@ -345,6 +356,13 @@ static int crypto_tls_decrypt(struct aead_request *req)
 			paderr = -EBADMSG;
 
 	/*
+	 * Align the digest result as required by the hash transform. Enough
+	 * space was allocated in crypto_tls_init_tfm
+	 */
+	hash = (u8 *)ALIGN((unsigned long)hash +
+			   crypto_ahash_alignmask(ctx->auth),
+			   crypto_ahash_alignmask(ctx->auth) + 1);
+	/*
 	 * Step 3 - Verify hash
 	 * Two bytes at the end of the associated data make the length field.
 	 * It must be updated with the length of the cleartext message before
@@ -413,7 +431,13 @@ static int crypto_tls_init_tfm(struct crypto_aead *tfm)
 	 * and the other will be calculated. For encryption, one digest is
 	 * padded (up to a cipher blocksize) and chained with the payload
 	 */
+<<<<<<< HEAD
 	ctx->reqoff = crypto_ahash_digestsize(auth) +
+=======
+	ctx->reqoff = ALIGN(crypto_ahash_digestsize(auth) +
+			    crypto_ahash_alignmask(auth),
+			    crypto_ahash_alignmask(auth) + 1) +
+>>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 			    max(crypto_ahash_digestsize(auth),
 				crypto_skcipher_blocksize(enc));
 
@@ -459,7 +483,11 @@ static int crypto_tls_create(struct crypto_template *tmpl, struct rtattr **tb)
 	struct aead_instance *inst;
 	struct hash_alg_common *auth;
 	struct crypto_alg *auth_base;
+<<<<<<< HEAD
 	struct skcipher_alg_common *enc;
+=======
+	struct skcipher_alg *enc;
+>>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 	struct tls_instance_ctx *ctx;
 	u32 mask;
 	int err;
@@ -491,7 +519,11 @@ static int crypto_tls_create(struct crypto_template *tmpl, struct rtattr **tb)
 				   crypto_attr_alg_name(tb[2]), 0, mask);
 	if (err)
 		goto err_free_inst;
+<<<<<<< HEAD
 	enc = crypto_spawn_skcipher_alg_common(&ctx->enc);
+=======
+	enc = crypto_spawn_skcipher_alg(&ctx->enc);
+>>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 
 	err = -ENAMETOOLONG;
 	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
@@ -513,8 +545,13 @@ static int crypto_tls_create(struct crypto_template *tmpl, struct rtattr **tb)
 					enc->base.cra_alignmask;
 	inst->alg.base.cra_ctxsize = sizeof(struct crypto_tls_ctx);
 
+<<<<<<< HEAD
 	inst->alg.ivsize = enc->ivsize;
 	inst->alg.chunksize = enc->chunksize;
+=======
+	inst->alg.ivsize = crypto_skcipher_alg_ivsize(enc);
+	inst->alg.chunksize = crypto_skcipher_alg_chunksize(enc);
+>>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 	inst->alg.maxauthsize = auth->digestsize;
 
 	inst->alg.init = crypto_tls_init_tfm;
