@@ -1779,6 +1779,7 @@ void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
 	xen_setup_dma_ops(dev);
 	dev->archdata.dma_ops_setup = true;
 }
+EXPORT_SYMBOL(arch_setup_dma_ops);
 
 void arch_teardown_dma_ops(struct device *dev)
 {
