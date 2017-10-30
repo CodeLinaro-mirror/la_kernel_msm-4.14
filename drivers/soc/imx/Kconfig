@@ -12,6 +12,12 @@ config SOC_IMX8M
 	  support, it will provide the SoC info like SoC family,
 	  ID and revision etc.
 
+config IMX8M_BUSFREQ
+	bool "i.MX8M busfreq"
+	depends on SOC_IMX8M
+    default ARCH_MXC
+    select HAVE_IMX_BUSFREQ
+
 config IMX8M_PM_DOMAINS
 	tristate "i.MX8M PM domains"
 	default ARCH_MXC
