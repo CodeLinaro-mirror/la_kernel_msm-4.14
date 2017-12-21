@@ -11,6 +11,7 @@
 #include <linux/media-bus-format.h>
 #include <linux/module.h>
 #include <linux/of.h>
+#include <linux/of_graph.h>
 #include <linux/slab.h>
 
 #include <media/cec.h>
@@ -1197,6 +1198,11 @@ static int adv7511_probe(struct i2c_client *i2c)
 	struct adv7511_link_config link_config;
 	struct adv7511 *adv7511;
 	struct device *dev = &i2c->dev;
+#if IS_ENABLED(CONFIG_OF_DYNAMIC)
+	struct device_node *remote_node = NULL, *endpoint = NULL;
+	struct of_changeset ocs;
+	struct property *prop;
+#endif
 	unsigned int val;
 	int ret;
 
@@ -1347,6 +1353,44 @@ uninit_regulators:
 	adv7511_uninit_regulators(adv7511);
 err_of_node_put:
 	of_node_put(adv7511->host_node);
+#if IS_ENABLED(CONFIG_OF_DYNAMIC)
+	endpoint = of_graph_get_next_endpoint(dev->of_node, NULL);
+	if (endpoint)
+		remote_node = of_graph_get_remote_port_parent(endpoint);
+
+	if (remote_node) {
+		int num_endpoints = 0;
+
+		/*
+		 * Remote node should have two endpoints (input and output: us)
+		 * If remote node has more than two endpoints, probably that it
+		 * has more outputs, so there is no need to disable it.
+		 */
+		endpoint = NULL;
+		while ((endpoint = of_graph_get_next_endpoint(remote_node,
+							      endpoint)))
+			num_endpoints++;
+
+		if (num_endpoints > 2) {
+			of_node_put(remote_node);
+			return ret;
+		}
+
+		prop = devm_kzalloc(dev, sizeof(*prop), GFP_KERNEL);
+		prop->name = devm_kstrdup(dev, "status", GFP_KERNEL);
+		prop->value = devm_kstrdup(dev, "disabled", GFP_KERNEL);
+		prop->length = 9;
+		of_changeset_init(&ocs);
+		of_changeset_update_property(&ocs, remote_node, prop);
+		ret = of_changeset_apply(&ocs);
+		if (!ret)
+			dev_warn(dev,
+				"Probe failed. Remote port '%s' disabled\n",
+				remote_node->full_name);
+
+		of_node_put(remote_node);
+	};
+#endif
 
 	return ret;
 }
