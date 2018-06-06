@@ -6,7 +6,7 @@ config DRM_IMX
 	select VIDEOMODE_HELPERS
 	select DRM_GEM_DMA_HELPER
 	depends on DRM && (ARCH_MXC || COMPILE_TEST)
-	depends on IMX_IPUV3_CORE || IMX_DPU_CORE
+	depends on IMX_IPUV3_CORE || IMX_DPU_CORE || IMX8MM_LCDIF_CORE
 	help
 	  enable i.MX graphics support
 
@@ -77,6 +77,10 @@ source "drivers/gpu/drm/imx/dcif/Kconfig"
 source "drivers/gpu/drm/imx/dcnano/Kconfig"
 source "drivers/gpu/drm/imx/dpu/Kconfig"
 source "drivers/gpu/drm/imx/dcss/Kconfig"
+<<<<<<< HEAD
 source "drivers/gpu/drm/imx/mhdp/Kconfig"
 source "drivers/gpu/drm/imx/ipuv3/Kconfig"
+=======
+source "drivers/gpu/drm/imx/lcdif/Kconfig"
+>>>>>>> ab37b39ca8db7 (MLK-18535-5 drm/imx: add LCDIF DRM/KMS driver)
 source "drivers/gpu/drm/imx/lcdc/Kconfig"
