@@ -51,5 +51,11 @@ config IMX8_MEDIA_DEVICE
 	  This media device is a virtual device which used to manage
 	  all modules in image subsystem of imx8qxp/qm platform.
 
+config IMX8_CAPTURE_DRIVER
+	tristate "IMX8 Camera Controller"
+	depends on VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+	select VIDEOBUF2_DMA_CONTIG
+	default y
+
 endmenu
 endif  #VIDEO_IMX_CAPTURE
