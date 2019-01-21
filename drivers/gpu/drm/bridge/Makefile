@@ -50,3 +50,4 @@ obj-y += analogix/
 obj-y += cadence/
 obj-y += imx/
 obj-y += synopsys/
+obj-$(CONFIG_DRM_ITE_IT6263_NXP) += it6263.o
