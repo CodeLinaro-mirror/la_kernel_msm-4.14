@@ -145,6 +145,11 @@ config PHY_SPACEMIT_K1_PCIE
 	  Enable support for the PCIe and USB 3 combo PHY and two
 	  PCIe-only PHYs used in the SpacemiT K1 SoC.
 
+config PHY_MIXEL_LVDS
+	tristate "MIXEL LVDS PHY support"
+	depends on OF
+	select GENERIC_PHY
+
 source "drivers/phy/allwinner/Kconfig"
 source "drivers/phy/amlogic/Kconfig"
 source "drivers/phy/apple/Kconfig"
