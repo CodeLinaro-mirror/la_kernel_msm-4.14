@@ -29,6 +29,12 @@ config IMX8M_BUSFREQ
 	depends on SOC_IMX8M
 	default ARCH_MXC
 
+config IMX8M_PM_DOMAINS
+	bool "i.MX8M PM domains"
+	depends on ARCH_MXC || (COMPILE_TEST && OF)
+	depends on PM
+	select PM_GENERIC_DOMAINS
+
 config SOC_IMX9
 	tristate "i.MX9 SoC family support"
 	depends on ARCH_MXC || COMPILE_TEST
