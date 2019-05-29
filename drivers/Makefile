@@ -199,4 +199,4 @@ obj-y				+= resctrl/
 
 obj-$(CONFIG_DIBS)		+= dibs/
 obj-$(CONFIG_S390)		+= s390/
-obj-y		 		+= mxc/
+obj-y				+= mxc/
