@@ -51,6 +51,10 @@
 			reg = <0 0x92200000 0 0x200000>;
 			no-map;
 		};
+		encoder_reserved: encoder_reserved@94400000 {
+			no-map;
+			reg = <0 0x94400000 0 0x800000>;
+		};
 		/* global autoconfigured region for contiguous allocations */
 		linux,cma {
 			compatible = "shared-dma-pool";
@@ -737,6 +741,7 @@
 &vpu_core1 {
 	reg = <0x2d050000 0x10000>;
 	memory-region = <&encoder_boot>, <&encoder_rpc>;
+	reserved-region = <&encoder_reserved>;
 	status = "okay";
 };
 
