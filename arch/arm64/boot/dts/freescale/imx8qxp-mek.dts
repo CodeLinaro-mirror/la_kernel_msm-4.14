@@ -1054,20 +1054,6 @@
 		>;
 	};
 
-	pinctrl_lpuart2: lpuart2grp {
-		fsl,pins = <
-			IMX8QXP_UART2_TX_ADMA_UART2_TX          0x06000020
-			IMX8QXP_UART2_RX_ADMA_UART2_RX          0x06000020
-		>;
-	};
-
-	pinctrl_lpuart3: lpuart3grp {
-		fsl,pins = <
-			IMX8QXP_FLEXCAN2_TX_ADMA_UART3_TX       0x06000020
-			IMX8QXP_FLEXCAN2_RX_ADMA_UART3_RX       0x06000020
-		>;
-	};
-
 	pinctrl_typec: typecgrp {
 		fsl,pins = <
 			IMX8QXP_SPI2_SCK_LSIO_GPIO1_IO03                        0x06000021
@@ -1086,6 +1072,20 @@
 			IMX8QXP_UART1_RX_ADMA_UART1_RX				0x06000020
 			IMX8QXP_UART1_RTS_B_ADMA_UART1_RTS_B			0x06000020
 			IMX8QXP_UART1_CTS_B_ADMA_UART1_CTS_B			0x06000020
+		>;
+	};
+
+	pinctrl_lpuart2: lpuart2grp {
+		fsl,pins = <
+			IMX8QXP_UART2_TX_ADMA_UART2_TX				0x06000020
+			IMX8QXP_UART2_RX_ADMA_UART2_RX				0x06000020
+		>;
+	};
+
+	pinctrl_lpuart3: lpuart3grp {
+		fsl,pins = <
+			IMX8QXP_FLEXCAN2_TX_ADMA_UART3_TX			0x06000020
+			IMX8QXP_FLEXCAN2_RX_ADMA_UART3_RX			0x06000020
 		>;
 	};
 
