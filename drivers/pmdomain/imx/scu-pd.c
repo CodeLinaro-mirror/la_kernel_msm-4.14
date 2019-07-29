@@ -51,11 +51,13 @@
  *
  */
 
+#include <linux/arm-smccc.h>
 #include <dt-bindings/firmware/imx/rsrc.h>
 #include <linux/console.h>
 #include <linux/firmware/imx/sci.h>
 #include <linux/firmware/imx/svc/rm.h>
 #include <linux/io.h>
+#include <linux/irqchip/arm-gic-v3.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
@@ -64,6 +66,13 @@
 #include <linux/pm.h>
 #include <linux/pm_domain.h>
 #include <linux/slab.h>
+#include <linux/syscore_ops.h>
+
+#define IMX_WU_MAX_IRQS	(((IMX_SC_R_LAST + 31) / 32 ) * 32 )
+
+#define IMX_SIP_WAKEUP_SRC              0xc2000009
+#define IMX_SIP_WAKEUP_SRC_SCU          0x1
+#define IMX_SIP_WAKEUP_SRC_IRQSTEER     0x2
 
 /* SCU Power Mode Protocol definition */
 struct imx_sc_msg_req_set_resource_power_mode {
@@ -310,6 +319,25 @@ to_imx_sc_pd(struct generic_pm_domain *genpd)
 	return container_of(genpd, struct imx_sc_pm_domain, pd);
 }
 
+static int imx_pm_domains_suspend(void *data)
+{
+	struct arm_smccc_res res;
+
+	arm_smccc_smc(IMX_SIP_WAKEUP_SRC,
+			  IMX_SIP_WAKEUP_SRC_IRQSTEER,
+			  0, 0, 0, 0, 0, 0, &res);
+
+	return 0;
+}
+
+static const struct syscore_ops imx_pm_domains_syscore_ops = {
+	.suspend = imx_pm_domains_suspend,
+};
+
+static struct syscore imx_pm_domains_syscore = {
+	.ops = &imx_pm_domains_syscore_ops,
+};
+
 static void imx_sc_pd_get_console_rsrc(void)
 {
 	struct of_phandle_args specs;
@@ -440,6 +468,7 @@ imx_scu_add_pm_domain(struct device *dev, int idx,
 	sc_pd->rsrc = pd_ranges->rsrc + idx;
 	sc_pd->pd.power_off = imx_sc_pd_power_off;
 	sc_pd->pd.power_on = imx_sc_pd_power_on;
+	sc_pd->pd.flags |= GENPD_FLAG_ACTIVE_WAKEUP;
 	states[0].power_off_latency_ns = 25000;
 	states[0].power_on_latency_ns =  25000;
 	states[1].power_off_latency_ns = 2500000;
@@ -457,7 +486,7 @@ imx_scu_add_pm_domain(struct device *dev, int idx,
 
 	sc_pd->pd.name = sc_pd->name;
 	if (imx_con_rsrc == sc_pd->rsrc)
-		sc_pd->pd.flags = GENPD_FLAG_RPM_ALWAYS_ON;
+		sc_pd->pd.flags |= GENPD_FLAG_RPM_ALWAYS_ON;
 
 	mode = imx_sc_get_pd_power(dev, pd_ranges->rsrc + idx);
 	if (mode == IMX_SC_PM_PW_MODE_ON)
@@ -544,6 +573,7 @@ static int imx_sc_pd_probe(struct platform_device *pdev)
 		return -ENODEV;
 
 	imx_sc_pd_get_console_rsrc();
+	register_syscore(&imx_pm_domains_syscore);
 
 	return imx_scu_init_pm_domains(&pdev->dev, pd_soc);
 }
