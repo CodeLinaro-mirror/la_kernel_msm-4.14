@@ -98,16 +98,22 @@
 	status = "okay";
 };
 
-&lpuart2 {
+&lpuart1 { /* BT */
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_lpuart2>;
+	pinctrl-0 = <&pinctrl_lpuart1>;
 	status = "okay";
 };
 
-&lpuart3 {
+&lpuart2 { /* Dbg console */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_lpuart2>;
+	status = "disabled";
+};
+
+&lpuart3 { /* MKbus */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_lpuart3>;
-	status = "okay";
+	status = "disabled";
 };
 
 &fec1 {
@@ -335,6 +341,15 @@
 		fsl,pins = <
 			IMX8QM_UART0_RX_DMA_UART0_RX				0x06000020
 			IMX8QM_UART0_TX_DMA_UART0_TX				0x06000020
+		>;
+	};
+
+	pinctrl_lpuart1: lpuart1grp {
+		fsl,pins = <
+			IMX8QM_UART1_RX_DMA_UART1_RX		0x06000020
+			IMX8QM_UART1_TX_DMA_UART1_TX		0x06000020
+			IMX8QM_UART1_CTS_B_DMA_UART1_CTS_B	0x06000020
+			IMX8QM_UART1_RTS_B_DMA_UART1_RTS_B	0x06000020
 		>;
 	};
 
