@@ -160,6 +160,7 @@ struct fsl_edma_chan {
 	bool				is_rxchan;
 	bool				is_remote;
 	bool				is_multi_fifo;
+	u32				chn_real_count;
 };
 
 struct fsl_edma_desc {
