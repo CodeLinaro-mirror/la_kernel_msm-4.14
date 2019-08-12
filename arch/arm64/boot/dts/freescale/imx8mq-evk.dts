@@ -262,10 +262,16 @@
 	};
 };
 
-&gpio5 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_wifi_reset>;
+&gpio3 {
+	/* enable the on-board BT */
+	bt-reg-on-hog {
+		gpio-hog;
+		gpios = <5 GPIO_ACTIVE_HIGH>;
+		output-high;
+	};
+};
 
+&gpio5 {
 	wl-reg-on-hog {
 		gpio-hog;
 		gpios = <29 GPIO_ACTIVE_HIGH>;
@@ -557,6 +563,17 @@
 &uart1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1>;
+	assigned-clocks = <&clk IMX8MQ_CLK_UART1>;
+	assigned-clock-parents = <&clk IMX8MQ_CLK_25M>;
+	status = "okay";
+};
+
+&uart3 { /* BT */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart3>;
+	assigned-clocks = <&clk IMX8MQ_CLK_UART3>;
+	assigned-clock-parents = <&clk IMX8MQ_SYS1_PLL_80M>;
+	fsl,uart-has-rtscts;
 	status = "okay";
 };
 
@@ -623,6 +640,16 @@
 };
 
 &iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	pinctrl_hog: hoggrp {
+		fsl,pins = <
+			MX8MQ_IOMUXC_NAND_CLE_GPIO3_IO5			0x16
+			MX8MQ_IOMUXC_UART4_TXD_GPIO5_IO29		0x16
+		>;
+	};
+
 	pinctrl_buck2: vddarmgrp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_GPIO1_IO13_GPIO1_IO13		0x19
@@ -750,6 +777,15 @@
 		>;
 	};
 
+	pinctrl_uart3: uart3grp {
+		fsl,pins = <
+			MX8MQ_IOMUXC_UART3_TXD_UART3_DCE_TX		0x49
+			MX8MQ_IOMUXC_UART3_RXD_UART3_DCE_RX		0x49
+			MX8MQ_IOMUXC_ECSPI1_MISO_UART3_DCE_CTS_B	0x49
+			MX8MQ_IOMUXC_ECSPI1_SS0_UART3_DCE_RTS_B		0x49
+		>;
+	};
+
 	pinctrl_usdhc1: usdhc1grp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_SD1_CLK_USDHC1_CLK			0x83
@@ -846,12 +882,6 @@
 	pinctrl_wdog: wdog1grp {
 		fsl,pins = <
 			MX8MQ_IOMUXC_GPIO1_IO02_WDOG1_WDOG_B		0xc6
-		>;
-	};
-
-	pinctrl_wifi_reset: wifiresetgrp {
-		fsl,pins = <
-			MX8MQ_IOMUXC_UART4_TXD_GPIO5_IO29		0x16
 		>;
 	};
 };
