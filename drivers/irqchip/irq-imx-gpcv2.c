@@ -18,6 +18,7 @@
 #define FSL_SIP_GPC                     0xC2000000
 #define FSL_SIP_CONFIG_GPC_MASK         0x00
 #define FSL_SIP_CONFIG_GPC_UNMASK       0x01
+#define FSL_SIP_CONFIG_GPC_SET_WAKE     0x02
 #define FSL_SIP_CONFIG_GPC_PM_DOMAIN    0x03
 #define FSL_SIP_CONFIG_GPC_SET_AFF      0x04
 #define FSL_SIP_CONFIG_GPC_CORE_WAKE    0x05
@@ -127,6 +128,9 @@ static void imx_gpcv2_wake_request_fixup(void)
 static int imx_gpcv2_irq_set_wake(struct irq_data *d, unsigned int on)
 {
 	struct gpcv2_irqchip_data *cd = d->chip_data;
+#ifdef CONFIG_ARM64
+	struct arm_smccc_res res;
+#endif
 	unsigned int idx = d->hwirq / 32;
 	unsigned long flags;
 	u32 mask, val;
@@ -136,7 +140,13 @@ static int imx_gpcv2_irq_set_wake(struct irq_data *d, unsigned int on)
 	val = cd->wakeup_sources[idx];
 
 	cd->wakeup_sources[idx] = on ? (val & ~mask) : (val | mask);
+
+#ifdef CONFIG_ARM64
+	arm_smccc_smc(FSL_SIP_GPC, FSL_SIP_CONFIG_GPC_SET_WAKE,
+			d->hwirq, on, 0, 0, 0, 0, &res);
+#endif
 	raw_spin_unlock_irqrestore(&cd->rlock, flags);
+
 
 	/*
 	 * Do *not* call into the parent, as the GIC doesn't have any
