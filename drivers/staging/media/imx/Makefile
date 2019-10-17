@@ -22,3 +22,4 @@ obj-$(CONFIG_DWC_MIPI_CSI2_HOST) += dwc-mipi-csi2.o
 obj-y += hdmirx/
 
 obj-$(CONFIG_IMX8_ISI_CORE) += imx8-capture.o
+obj-$(CONFIG_IMX8_ISI_CAPTURE) 	  += imx8-isi-cap.o
