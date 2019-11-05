@@ -16,14 +16,14 @@
 		spi0 = &flexspi;
 	};
 
-	reg_sd1_vmmc: sd1_regulator {
+	reg_usdhc1_vmmc: regulator-usdhc1 {
 		compatible = "regulator-fixed";
 		regulator-name = "WLAN_EN";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_reg_usdhc1_vmmc>;
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio2 10 GPIO_ACTIVE_HIGH>;
-		off-on-delay-us = <20000>;
-		startup-delay-us = <100>;
 		enable-active-high;
 	};
 };
@@ -66,15 +66,22 @@
 
 &usdhc1 {
 	pinctrl-names = "default", "state_100mhz", "state_200mhz";
-	pinctrl-0 = <&pinctrl_usdhc1>, <&pinctrl_usdhc1_gpio>;
-	pinctrl-1 = <&pinctrl_usdhc1_100mhz>, <&pinctrl_usdhc1_gpio>;
-	pinctrl-2 = <&pinctrl_usdhc1_200mhz>, <&pinctrl_usdhc1_gpio>;
+	pinctrl-0 = <&pinctrl_usdhc1>, <&pinctrl_wlan>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz>, <&pinctrl_wlan>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz>, <&pinctrl_wlan>;
 	bus-width = <4>;
-	vmmc-supply = <&reg_sd1_vmmc>;
-	pm-ignore-notify;
 	keep-power-in-suspend;
 	non-removable;
+	wakeup-source;
+	vmmc-supply = <&reg_usdhc1_vmmc>;
 	status = "okay";
+
+	wifi_wake_host {
+		compatible = "nxp,wifi-wake-host";
+		interrupt-parent = <&gpio2>;
+		interrupts = <9 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-names = "host-wake";
+	};
 };
 
 &usdhc3 {
@@ -90,6 +97,12 @@
 };
 
 &iomuxc {
+	pinctrl_reg_usdhc1_vmmc: regusdhc1vmmcgrp {
+		fsl,pins = <
+			MX8MM_IOMUXC_SD1_RESET_B_GPIO2_IO10	0x141
+		>;
+	};
+
 	pinctrl_flexspi: flexspigrp {
 		fsl,pins = <
 			MX8MM_IOMUXC_NAND_ALE_QSPI_A_SCLK               0x1c2
@@ -147,6 +160,13 @@
 			MX8MM_IOMUXC_NAND_CE3_B_USDHC3_DATA6            0x1d6
 			MX8MM_IOMUXC_NAND_CLE_USDHC3_DATA7              0x1d6
 			MX8MM_IOMUXC_NAND_CE1_B_USDHC3_STROBE           0x196
+		>;
+	};
+
+	pinctrl_wlan: wlangrp {
+		fsl,pins = <
+			MX8MM_IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K	0x141
+			MX8MM_IOMUXC_SD1_DATA7_GPIO2_IO9		0x159
 		>;
 	};
 };
