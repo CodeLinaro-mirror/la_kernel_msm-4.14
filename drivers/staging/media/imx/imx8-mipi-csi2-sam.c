@@ -1016,7 +1016,9 @@ static int mipi_csis_s_rx_buffer(struct v4l2_subdev *mipi_sd, void *buf,
 	return 0;
 }
 
-static int mipi_csis_s_parm(struct v4l2_subdev *mipi_sd, struct v4l2_streamparm *a)
+static int mipi_csis_set_frame_interval(struct v4l2_subdev *mipi_sd,
+					struct v4l2_subdev_state *sd_state,
+					struct v4l2_subdev_frame_interval *interval)
 {
 	struct csi_state *state = mipi_sd_to_csi_state(mipi_sd);
 	struct media_pad *source_pad;
@@ -1036,10 +1038,12 @@ static int mipi_csis_s_parm(struct v4l2_subdev *mipi_sd, struct v4l2_streamparm 
 		return -EINVAL;
 	}
 
-	return v4l2_subdev_call(sen_sd, video, s_parm, a);
+	return v4l2_subdev_call_state_active(sen_sd, pad, set_frame_interval, interval);
 }
 
-static int mipi_csis_g_parm(struct v4l2_subdev *mipi_sd, struct v4l2_streamparm *a)
+static int mipi_csis_get_frame_interval(struct v4l2_subdev *mipi_sd,
+					struct v4l2_subdev_state *sd_state,
+					struct v4l2_subdev_frame_interval *interval)
 {
 	struct csi_state *state = mipi_sd_to_csi_state(mipi_sd);
 	struct media_pad *source_pad;
@@ -1059,7 +1063,7 @@ static int mipi_csis_g_parm(struct v4l2_subdev *mipi_sd, struct v4l2_streamparm 
 		return -EINVAL;
 	}
 
-	return v4l2_subdev_call(sen_sd, video, g_parm, a);
+	return v4l2_subdev_call_state_active(sen_sd, pad, get_frame_interval, interval);
 }
 
 static int mipi_csis_enum_framesizes(struct v4l2_subdev *mipi_sd,
@@ -1134,9 +1138,6 @@ static struct v4l2_subdev_core_ops mipi_csis_core_ops = {
 static struct v4l2_subdev_video_ops mipi_csis_video_ops = {
 	.s_rx_buffer = mipi_csis_s_rx_buffer,
 	.s_stream = mipi_csis_s_stream,
-
-	.s_parm = mipi_csis_s_parm,
-	.g_parm = mipi_csis_g_parm,
 };
 
 static const struct v4l2_subdev_pad_ops mipi_csis_pad_ops = {
@@ -1144,6 +1145,9 @@ static const struct v4l2_subdev_pad_ops mipi_csis_pad_ops = {
 	.enum_frame_interval   = mipi_csis_enum_frameintervals,
 	.get_fmt               = mipi_csis_get_fmt,
 	.set_fmt               = mipi_csis_set_fmt,
+
+	.get_frame_interval = mipi_csis_get_frame_interval,
+	.set_frame_interval = mipi_csis_set_frame_interval,
 };
 
 static struct v4l2_subdev_ops mipi_csis_subdev_ops = {
