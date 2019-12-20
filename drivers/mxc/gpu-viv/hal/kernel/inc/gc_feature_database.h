@@ -1,59 +1,4 @@
-/****************************************************************************
-*
-*    The MIT License (MIT)
-*
-*    Copyright (c) 2014 - 2019 Vivante Corporation
-*
-*    Permission is hereby granted, free of charge, to any person obtaining a
-*    copy of this software and associated documentation files (the "Software"),
-*    to deal in the Software without restriction, including without limitation
-*    the rights to use, copy, modify, merge, publish, distribute, sublicense,
-*    and/or sell copies of the Software, and to permit persons to whom the
-*    Software is furnished to do so, subject to the following conditions:
-*
-*    The above copyright notice and this permission notice shall be included in
-*    all copies or substantial portions of the Software.
-*
-*    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-*    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-*    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-*    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-*    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-*    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-*    DEALINGS IN THE SOFTWARE.
-*
-*****************************************************************************
-*
-*    The GPL License (GPL)
-*
-*    Copyright (C) 2014 - 2019 Vivante Corporation
-*
-*    This program is free software; you can redistribute it and/or
-*    modify it under the terms of the GNU General Public License
-*    as published by the Free Software Foundation; either version 2
-*    of the License, or (at your option) any later version.
-*
-*    This program is distributed in the hope that it will be useful,
-*    but WITHOUT ANY WARRANTY; without even the implied warranty of
-*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*    GNU General Public License for more details.
-*
-*    You should have received a copy of the GNU General Public License
-*    along with this program; if not, write to the Free Software Foundation,
-*    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*
-*****************************************************************************
-*
-*    Note: This software is released under dual MIT and GPL licenses. A
-*    recipient may use this file under the terms of either the MIT license or
-*    GPL License. If you wish to use only one license not the other, you can
-*    indicate your decision by deleting one of the above license notices in your
-*    version of this file.
-*
-*****************************************************************************/
-
-
-/*Auto created on 2019-12-11 16:49*/
+/*Auto created on 2019-12-17 16:40*/
 #ifndef _gc_feature_database_h_
 #define _gc_feature_database_h_
 
@@ -345,6 +290,7 @@ typedef struct
     gctUINT32 REG_DEC:1;
     gctUINT32 REG_VSTileNV12:1;
     gctUINT32 REG_VSTileNV12_10BIT:1;
+    gctUINT32 REG_DisableVIP:1;
     gctUINT32 RenderTarget8:1;
     gctUINT32 TxLodFlowCorrection:1;
     gctUINT32 FaceLod:1;
@@ -919,6 +865,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -1491,6 +1438,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -2063,6 +2011,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -2635,6 +2584,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -3207,6 +3157,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -3779,6 +3730,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -4351,6 +4303,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -4923,6 +4876,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -5495,6 +5449,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -6067,6 +6022,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -6639,6 +6595,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -7211,6 +7168,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -7783,6 +7741,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -8355,6 +8314,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -8927,6 +8887,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -9499,6 +9460,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -10071,6 +10033,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -10643,6 +10606,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -11215,6 +11179,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -11787,6 +11752,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -12359,6 +12325,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -12931,6 +12898,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -13503,6 +13471,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -14075,6 +14044,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -14647,6 +14617,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -15219,6 +15190,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -15791,6 +15763,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -16363,6 +16336,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -16935,6 +16909,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -17507,6 +17482,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -18079,6 +18055,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -18651,6 +18628,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -19223,6 +19201,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -19795,6 +19774,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x1, /* gcFEATURE_BIT_REG_DEC */
         0x1, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -20367,6 +20347,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -20939,6 +20920,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -21511,6 +21493,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x1, /* gcFEATURE_BIT_REG_DEC */
         0x1, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -22083,6 +22066,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -22655,6 +22639,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -23227,6 +23212,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x1, /* gcFEATURE_BIT_REG_DEC */
         0x1, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -23799,6 +23785,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -24371,6 +24358,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -24943,6 +24931,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -25515,6 +25504,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -26087,6 +26077,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -26659,6 +26650,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -27231,6 +27223,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -27803,6 +27796,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -28375,6 +28369,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -28947,6 +28942,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -29519,6 +29515,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -30091,6 +30088,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -30663,6 +30661,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -31235,6 +31234,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -31807,6 +31807,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -32379,6 +32380,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -32951,6 +32953,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -33523,6 +33526,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -34095,6 +34099,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -34667,6 +34672,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -35239,6 +35245,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -35811,6 +35818,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -36383,6 +36391,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -36955,6 +36964,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -37527,6 +37537,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -38099,6 +38110,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -38671,6 +38683,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -39243,6 +39256,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -39815,6 +39829,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -40387,6 +40402,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -40959,6 +40975,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -41531,6 +41548,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -42103,6 +42121,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -42675,6 +42694,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -43247,6 +43267,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -43819,6 +43840,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -44391,6 +44413,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -44963,6 +44986,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -45535,6 +45559,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -46107,6 +46132,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -46679,6 +46705,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -47251,6 +47278,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -47823,6 +47851,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -48395,6 +48424,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -48967,6 +48997,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -49539,6 +49570,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -50111,6 +50143,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -50683,6 +50716,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -51255,6 +51289,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -51827,6 +51862,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -52399,6 +52435,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -52971,6 +53008,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -53543,6 +53581,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -54115,6 +54154,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -54687,6 +54727,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -55259,6 +55300,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -55831,6 +55873,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -56403,6 +56446,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -56975,6 +57019,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -57547,6 +57592,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -58119,6 +58165,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -58691,6 +58738,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -59263,6 +59311,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -59835,6 +59884,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -60407,6 +60457,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -60979,6 +61030,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -61551,6 +61603,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -62123,6 +62176,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -62695,6 +62749,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -63267,6 +63322,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -63839,6 +63895,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -64411,6 +64468,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -64983,6 +65041,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -65555,6 +65614,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -66127,6 +66187,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -66699,6 +66760,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -67271,6 +67333,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -67843,6 +67906,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -68415,6 +68479,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -68987,6 +69052,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -69559,6 +69625,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -70131,6 +70198,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -70703,6 +70771,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -71275,6 +71344,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -71847,6 +71917,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -72419,6 +72490,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -72991,6 +73063,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -73563,6 +73636,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -74135,6 +74209,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -74707,6 +74782,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -75279,6 +75355,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -75851,6 +75928,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -76423,6 +76501,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -76995,6 +77074,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -77567,6 +77647,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -78139,6 +78220,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -78711,6 +78793,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -79283,6 +79366,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -79855,6 +79939,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -80427,6 +80512,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -80999,6 +81085,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -81571,6 +81658,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -82143,6 +82231,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -82715,6 +82804,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -83287,6 +83377,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -83859,6 +83950,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -84431,6 +84523,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -85003,6 +85096,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -85575,6 +85669,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -86147,6 +86242,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -86719,6 +86815,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -87291,6 +87388,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -87863,6 +87961,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -88435,6 +88534,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -89007,6 +89107,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -89579,6 +89680,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -90151,6 +90253,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -90723,6 +90826,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -91295,6 +91399,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -91867,6 +91972,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -92439,6 +92545,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -93011,6 +93118,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -93583,6 +93691,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -94155,6 +94264,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -94727,6 +94837,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -95299,6 +95410,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -95871,6 +95983,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -96443,6 +96556,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -97015,6 +97129,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -97587,6 +97702,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -98159,6 +98275,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -98731,6 +98848,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -99303,6 +99421,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -99875,6 +99994,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -100193,16 +100313,16 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x100, /* gcFEATURE_VALUE_RESULT_WINDOW_MAX_SIZE */
         0x0, /* gcFEATURE_VALUE_ClusterAliveMask */
         0x40, /* gcFEATURE_VALUE_NNMadPerCore */
-        0x6, /* gcFEATURE_VALUE_NNCoreCount */
-        0x6, /* gcFEATURE_VALUE_NNCoreCount_INT8 */
-        0x6, /* gcFEATURE_VALUE_NNCoreCount_INT16 */
+        0x4, /* gcFEATURE_VALUE_NNCoreCount */
+        0x4, /* gcFEATURE_VALUE_NNCoreCount_INT8 */
+        0x4, /* gcFEATURE_VALUE_NNCoreCount_INT16 */
         0x0, /* gcFEATURE_VALUE_NNCoreCount_FLOAT16 */
         0x0, /* gcFEATURE_VALUE_NNCoreCount_BFLOAT */
         0x9, /* gcFEATURE_VALUE_NNInputBufferDepth */
         0x20, /* gcFEATURE_VALUE_NNAccumBufferDepth */
         0x400, /* gcFEATURE_VALUE_TPEngine_PwlLUTCount */
         0x10, /* gcFEATURE_VALUE_TPEngine_PwlLUTSize */
-        0x40000, /* gcFEATURE_VALUE_VIP_SRAM_SIZE */
+        0x100000, /* gcFEATURE_VALUE_VIP_SRAM_SIZE */
         0x2, /* gcFEATURE_VALUE_TPEngine_CoreCount */
         0x0, /* gcFEATURE_VALUE_AXI_SRAM_SIZE */
         0x5, /* gcFEATURE_VALUE_NN_INIMAGE_OFFSET_BITS */
@@ -100447,6 +100567,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -101019,6 +101140,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -101591,6 +101713,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -102163,6 +102286,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -102735,6 +102859,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -103307,6 +103432,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -103879,6 +104005,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -104451,6 +104578,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -105023,6 +105151,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -105595,6 +105724,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -106167,6 +106297,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -106739,6 +106870,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -107311,6 +107443,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -107883,6 +108016,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -108455,6 +108589,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -109027,6 +109162,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -109599,6 +109735,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -110171,6 +110308,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -110743,6 +110881,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -111315,6 +111454,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -111887,6 +112027,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -112459,6 +112600,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -113031,6 +113173,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -113603,6 +113746,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -114175,6 +114319,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -114747,6 +114892,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -115319,6 +115465,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -115891,6 +116038,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -116463,6 +116611,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -117035,6 +117184,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -117607,6 +117757,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -118179,6 +118330,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -118751,6 +118903,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -119323,6 +119476,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -119895,6 +120049,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -120467,6 +120622,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -121039,6 +121195,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -121611,6 +121768,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -122183,6 +122341,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -122755,6 +122914,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -123327,6 +123487,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -123899,6 +124060,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -124471,6 +124633,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -125043,6 +125206,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -125615,6 +125779,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -126187,6 +126352,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -126759,6 +126925,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -127331,6 +127498,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -127903,6 +128071,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -128475,6 +128644,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -129047,6 +129217,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -129619,6 +129790,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -130191,6 +130363,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -130763,6 +130936,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -131335,6 +131509,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -131907,6 +132082,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -132479,6 +132655,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -133051,6 +133228,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -133623,6 +133801,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -134195,6 +134374,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -134767,6 +134947,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -135339,6 +135520,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -135911,6 +136093,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -136483,6 +136666,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -137055,6 +137239,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -137627,6 +137812,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -138199,6 +138385,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -138771,6 +138958,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -139343,6 +139531,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -139915,6 +140104,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -140487,6 +140677,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -141059,6 +141250,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -141631,6 +141823,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -142203,6 +142396,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -142775,6 +142969,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -143347,6 +143542,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -143919,6 +144115,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -144491,6 +144688,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -145063,6 +145261,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -145635,6 +145834,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -146207,6 +146407,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -146779,6 +146980,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
@@ -147351,6 +147553,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x0, /* gcFEATURE_BIT_REG_DEC */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12 */
         0x0, /* gcFEATURE_BIT_REG_VSTileNV12_10BIT */
+        0x0, /* gcFEATURE_BIT_REG_DisableVIP */
         0x0, /* gcFEATURE_BIT_RenderTarget8 */
         0x0, /* gcFEATURE_BIT_TxLodFlowCorrection */
         0x0, /* gcFEATURE_BIT_FaceLod */
