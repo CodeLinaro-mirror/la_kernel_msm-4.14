@@ -1,4 +1,4 @@
-/*Auto created on 2019-12-17 16:40*/
+/*Auto created on 2019-12-20 06:53*/
 #ifndef _gc_feature_database_h_
 #define _gc_feature_database_h_
 
@@ -100285,7 +100285,7 @@ static gcsFEATURE_DATABASE gChipInfo[] = {
         0x9000, /* ChipID */
         0x8200, /* ChipRevision */
         0x5090009, /* ProductID */
-        0x6000000, /* EcoID */
+        0x4000000, /* EcoID */
         0xc2, /* CustomerID */
         0x0, /* PatchVersion */
         "", /* ProductName */
