@@ -1214,6 +1214,7 @@ struct dwc3 {
 	struct clk		*utmi_clk;
 	struct clk		*pipe_clk;
 
+	bool			core_inited;
 	struct reset_control	*reset;
 
 	struct usb_phy		*usb2_phy;
