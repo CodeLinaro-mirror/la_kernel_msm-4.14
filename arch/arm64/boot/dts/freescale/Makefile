@@ -304,7 +304,7 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mp-edm-g-wb.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk.dtb imx8mp-evk-flexcan2.dtb \
 			  imx8mp-evk-rpmsg.dtb \
 			  imx8mp-evk-root.dtb imx8mp-evk-inmate.dtb \
-			  imx8mp-evk-spdif-lb.dtb
+			  imx8mp-evk-spdif-lb.dtb imx8mp-evk-dsp.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-frdm.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-hummingboard-mate.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-hummingboard-pro.dtb
