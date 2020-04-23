@@ -19,18 +19,6 @@
 		stdout-path = &uart2;
 	};
 
-	hdmi-connector {
-		compatible = "hdmi-connector";
-		label = "hdmi";
-		type = "a";
-
-		port {
-			hdmi_connector_in: endpoint {
-				remote-endpoint = <&adv7535_out>;
-			};
-		};
-	};
-
 	gpio-leds {
 		compatible = "gpio-leds";
 		pinctrl-names = "default";
@@ -57,18 +45,6 @@
 		pinctrl-0 = <&pinctrl_flexcan_phy>;
 		standby-gpios = <&gpio5 5 GPIO_ACTIVE_LOW>,
 				<&gpio4 27 GPIO_ACTIVE_LOW>;
-	};
-
-	native-hdmi-connector {
-		compatible = "hdmi-connector";
-		label = "HDMI OUT";
-		type = "a";
-
-		port {
-			hdmi_in: endpoint {
-				remote-endpoint = <&hdmi_tx_out>;
-			};
-		};
 	};
 
 	pcie0_refclk: pcie0-refclk {
@@ -159,13 +135,6 @@
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-	};
-
-	reg_vext_3v3: regulator-vext-3v3 {
-		compatible = "regulator-fixed";
-		regulator-name = "VEXT_3V3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
 	};
 
 	audio_codec_bt_sco: audio-codec-bt-sco {
@@ -507,32 +476,6 @@
 	status = "disabled";/* can2 pin conflict with pdm */
 };
 
-&hdmi_pai {
-	status = "okay";
-};
-
-&hdmi_pvi {
-	status = "okay";
-};
-
-&hdmi_tx {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hdmi>;
-	status = "okay";
-
-	ports {
-		port@1 {
-			hdmi_tx_out: endpoint {
-				remote-endpoint = <&hdmi_in>;
-			};
-		};
-	};
-};
-
-&hdmi_tx_phy {
-	status = "okay";
-};
-
 &i2c1 {
 	clock-frequency = <400000>;
 	pinctrl-names = "default";
@@ -835,6 +778,18 @@
 	};
 };
 
+&hdmi_pavi {
+	status = "okay";
+};
+
+&hdmi {
+	status = "okay";
+};
+
+&hdmiphy {
+	status = "okay";
+};
+
 &lcdif1 {
 	status = "okay";
 };
@@ -845,6 +800,9 @@
 
 &lcdif3 {
 	status = "okay";
+
+	thres-low  = <1 2>;             /* (FIFO * 1 / 2) */
+	thres-high = <3 4>;             /* (FIFO * 3 / 4) */
 };
 
 &ldb {
@@ -1244,17 +1202,12 @@
 		>;
 	};
 
-	pinctrl_hdmi: hdmigrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_HDMI_DDC_SCL__HDMIMIX_HDMI_SCL	0x1c2
-			MX8MP_IOMUXC_HDMI_DDC_SDA__HDMIMIX_HDMI_SDA	0x1c2
-			MX8MP_IOMUXC_HDMI_CEC__HDMIMIX_HDMI_CEC		0x10
-		>;
-	};
-
 	pinctrl_hog: hoggrp {
 		fsl,pins = <
+			MX8MP_IOMUXC_HDMI_DDC_SCL__HDMIMIX_HDMI_SCL	0x400001c2
+			MX8MP_IOMUXC_HDMI_DDC_SDA__HDMIMIX_HDMI_SDA	0x400001c2
 			MX8MP_IOMUXC_HDMI_HPD__HDMIMIX_HDMI_HPD		0x40000010
+			MX8MP_IOMUXC_HDMI_CEC__HDMIMIX_HDMI_CEC		0x40000010
 
 			/*
 			 * M.2 pin20 & pin21 need to be set to 11 for 88W9098 to select the

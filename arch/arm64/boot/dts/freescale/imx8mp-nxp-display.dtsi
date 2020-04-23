@@ -4,6 +4,7 @@
  */
 
 /delete-node/ &hdmi_blk_ctrl;
+/delete-node/ &hdmi_pai;
 /delete-node/ &hdmi_pvi;
 /delete-node/ &hdmi_tx;
 /delete-node/ &hdmi_tx_phy;
