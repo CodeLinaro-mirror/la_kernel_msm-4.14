@@ -265,7 +265,9 @@ static int __init ls_pcie_ep_probe(struct platform_device *pdev)
 
 	pcie->big_endian = of_property_read_bool(dev->of_node, "big-endian");
 
-	dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64));
+	/* set 64-bit DMA mask and coherent DMA mask */
+	if (dma_set_mask_and_coherent(dev, DMA_BIT_MASK(64)))
+		dev_warn(dev, "Failed to set 64-bit DMA mask.\n");
 
 	platform_set_drvdata(pdev, pcie);
 
