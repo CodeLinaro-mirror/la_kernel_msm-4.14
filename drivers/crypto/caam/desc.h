@@ -153,6 +153,7 @@
  * with the TDKEK if TK is set
  */
 #define KEY_ENC			0x00400000
+#define KEY_ENC_OFFSET		22
 
 /*
  * No Write Back - Do not allow key to be FIFO STOREd
@@ -169,6 +170,7 @@
  * Encrypted with Trusted Key
  */
 #define KEY_TK			0x00008000
+#define KEY_TK_OFFSET		15
 
 /*
  * KDEST - Key Destination: 0 - class key register,
