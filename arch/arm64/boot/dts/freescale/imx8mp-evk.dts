@@ -570,7 +570,7 @@
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
 
-	camera@3c {
+	ov5640_0: ov5640_mipi@3c {
 	       compatible = "ovti,ov5640";
 	       reg = <0x3c>;
 	       pinctrl-names = "default";
@@ -682,6 +682,32 @@
 			"EXP_P1_6",
 			"EXP_P1_7";
 	};
+
+	ov5640_1: ov5640_mipi@3c {
+		compatible = "ovti,ov5640";
+		reg = <0x3c>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_csi0_pwn>, <&pinctrl_csi0_rst>, <&pinctrl_csi_mclk>;
+		clocks = <&clk IMX8MP_CLK_IPP_DO_CLKO2>;
+		clock-names = "xclk";
+		assigned-clocks = <&clk IMX8MP_CLK_IPP_DO_CLKO2>;
+		assigned-clock-parents = <&clk IMX8MP_CLK_24M>;
+		assigned-clock-rates = <24000000>;
+		csi_id = <0>;
+		powerdown-gpios = <&gpio4 1 GPIO_ACTIVE_HIGH>;
+		mclk = <24000000>;
+		mclk_source = <0>;
+		mipi_csi;
+		status = "disabled";
+
+		port {
+			ov5640_mipi_1_ep: endpoint {
+				remote-endpoint = <&mipi_csi1_ep>;
+				data-lanes = <1 2>;
+				clock-lanes = <0>;
+			};
+		};
+	};
 };
 
 /* I2C on expansion connector J22. */
@@ -699,8 +725,28 @@
 	 */
 };
 
+&cameradev {
+	status = "okay";
+};
+
 &isi_0 {
 	status = "okay";
+
+	cap_device {
+		status = "okay";
+	};
+
+	m2m_device {
+		status = "okay";
+	};
+};
+
+&isi_1 {
+	status = "disabled";
+
+	cap_device {
+		status = "okay";
+	};
 };
 
 &lcdif1 {
@@ -724,13 +770,31 @@
 &mipi_csi_0 {
 	status = "okay";
 
-	ports {
-	       port@0 {
-		       mipi_csi0_ep: endpoint {
-				remote-endpoint = <&ov5640_mipi_0_ep>;
-				data-lanes = <1 2>;
-		       };
-	       };
+	port {
+		mipi_csi0_ep: endpoint {
+			remote-endpoint = <&ov5640_mipi_0_ep>;
+			data-lanes = <2>;
+			csis-hs-settle = <13>;
+			csis-clk-settle = <2>;
+			csis-wclk;
+		};
+	};
+};
+
+&mipi_csi_1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "disabled";
+
+	port@1 {
+		reg = <1>;
+		mipi_csi1_ep: endpoint {
+			remote-endpoint = <&ov5640_mipi_1_ep>;
+			data-lanes = <2>;
+			csis-hs-settle = <13>;
+			csis-clk-settle = <2>;
+			csis-wclk;
+		};
 	};
 };
 
