@@ -306,6 +306,7 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk.dtb imx8mp-evk-rm67191.dtb imx8mp-evk-it626
 			  imx8mp-evk-flexcan2.dtb \
 			  imx8mp-evk-rpmsg.dtb imx8mp-evk-ecspi-slave.dtb \
 			  imx8mp-evk-root.dtb imx8mp-evk-inmate.dtb imx8mp-evk-ov2775.dtb \
+			  imx8mp-evk-ov2775-ov5640.dtb \
 			  imx8mp-evk-spdif-lb.dtb imx8mp-evk-dsp.dtb \
 			  imx8mp-evk-sof-wm8960.dtb imx8mp-evk-sof-pdm.dtb \
 			  imx8mp-evk-os08a20-ov5640.dtb imx8mp-evk-os08a20.dtb \
