@@ -318,6 +318,10 @@
 	cpu-supply = <&reg_arm>;
 };
 
+&dsp {
+	status = "okay";
+};
+
 &aud2htx {
 	status = "okay";
 };
