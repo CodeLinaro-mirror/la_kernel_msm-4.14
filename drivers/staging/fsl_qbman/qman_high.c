@@ -30,6 +30,7 @@
  */
 
 #include "qman_low.h"
+#include <linux/dma-map-ops.h>
 #include <linux/platform_device.h>
 
 /* Compilation constants */
