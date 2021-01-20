@@ -3,6 +3,7 @@
 name: imx-kernel
 type: kernel
 build-base: core26
+adopt-info: kernel
 summary: The i.MX family Linux kernel
 description: |
   This snap provides the kernel, modules, firmware, and initrd required to
@@ -36,6 +37,23 @@ platforms:
   arm64:
     build-on: [amd64, arm64]
     build-for: arm64
+
+parts:
+  # Provide the kernel.
+  # Trimming any modules we know a priori to not be needed by the target device
+  # can marginally reduce kernel snap size.
+  kernel:
+    plugin: kernel
+    kernel-ubuntu-kconfigflavour: imx
+    build-environment:
+      - KERNEL_IMAGE: Image
+      - PATH: "/usr/lib/ccache:${PATH}"
+    override-build: |
+      craftctl default
+      craftctl set version=$(git --git-dir=${CRAFT_PROJECT_DIR}/.git describe --tags | cut -c 12-42 | sed 's/-snap$//')
+    prime:
+      - -vmlinuz*
+      - -dtbs
 
 build-packages:
   - bison
