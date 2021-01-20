@@ -31,3 +31,28 @@ grade: stable
 confinement: strict
 
 license: "GPL-2.0 AND GPL-3.0 AND CC-BY-SA-4.0"
+
+build-packages:
+  - bison
+  - ccache
+  - cpio
+  - device-tree-compiler
+  - dpkg-dev
+  - flex
+  - gawk
+  - libdw-dev
+  - libfdt-dev
+  - libssl-dev
+  - pkgconf
+  - python3-cryptography
+  - python3-pycryptodome
+  - python3-pyelftools
+  - python3-serial
+  - sbsigntool
+  - u-boot-tools
+  - uuid-dev
+  - wget
+  - on amd64:
+    - gcc-aarch64-linux-gnu
+  - on arm64:
+    - gcc
