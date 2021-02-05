@@ -489,9 +489,6 @@ static int isi_m2m_try_fmt(struct mxc_isi_frame *frame,
 	pix->num_planes = fmt->memplanes;
 	pix->pixelformat = fmt->fourcc;
 	pix->field = V4L2_FIELD_NONE;
-	pix->colorspace = V4L2_COLORSPACE_SRGB;
-	pix->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(pix->colorspace);
-	pix->quantization = V4L2_QUANTIZATION_FULL_RANGE;
 	pix->width  = frame->width;
 	pix->height = frame->height;
 	memset(pix->reserved, 0x00, sizeof(pix->reserved));
@@ -662,9 +659,13 @@ static int mxc_isi_m2m_try_fmt_vid_out(struct file *file, void *fh,
 				   struct v4l2_format *f)
 {
 	struct mxc_isi_m2m_dev *isi_m2m = video_drvdata(file);
+	struct v4l2_pix_format_mplane *pix = &f->fmt.pix_mp;
 
 	if (f->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		return -EINVAL;
+
+	if (!pix->colorspace)
+		pix->colorspace = V4L2_COLORSPACE_SRGB;
 
 	return isi_m2m_try_fmt(&isi_m2m->src_f, f);
 }
@@ -673,9 +674,15 @@ static int mxc_isi_m2m_try_fmt_vid_cap(struct file *file, void *fh,
 				   struct v4l2_format *f)
 {
 	struct mxc_isi_m2m_dev *isi_m2m = video_drvdata(file);
+	struct v4l2_pix_format_mplane *pix = &f->fmt.pix_mp;
 
 	if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
 		return -EINVAL;
+
+	pix->colorspace = isi_m2m->colorspace;
+	pix->ycbcr_enc  = isi_m2m->ycbcr_enc;
+	pix->xfer_func  = isi_m2m->xfer_func;
+	pix->quantization = isi_m2m->quant;
 
 	return isi_m2m_try_fmt(&isi_m2m->dst_f, f);
 }
@@ -691,11 +698,13 @@ static int mxc_isi_m2m_s_fmt_vid_out(struct file *file, void *priv,
 	struct mxc_isi_fmt *fmt;
 	struct vb2_queue *vq;
 	int bpl, i;
+	int ret;
 
 	dev_dbg(&isi_m2m->pdev->dev, "%s\n", __func__);
 
-	if (f->type != V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
-		return -EINVAL;
+	ret = mxc_isi_m2m_try_fmt_vid_out(file, priv, f);
+	if (ret)
+		return ret;
 
 	vq = v4l2_m2m_get_vq(fh->m2m_ctx, f->type);
 	if (!vq)
@@ -725,6 +734,7 @@ static int mxc_isi_m2m_s_fmt_vid_out(struct file *file, void *priv,
 	frame->height = pix->height;
 	frame->width = pix->width;
 
+	pix->field = V4L2_FIELD_NONE;
 	pix->num_planes = fmt->memplanes;
 	for (i = 0; i < pix->num_planes; i++) {
 		bpl = pix->plane_fmt[i].bytesperline;
@@ -744,6 +754,11 @@ static int mxc_isi_m2m_s_fmt_vid_out(struct file *file, void *priv,
 	set_frame_bounds(frame, pix->width, pix->height);
 	mxc_isi_m2m_config_src(mxc_isi, frame);
 
+	isi_m2m->colorspace = pix->colorspace;
+	isi_m2m->xfer_func = pix->xfer_func;
+	isi_m2m->ycbcr_enc = pix->ycbcr_enc;
+	isi_m2m->quant = pix->quantization;
+
 	return 0;
 }
 
@@ -758,11 +773,13 @@ static int mxc_isi_m2m_s_fmt_vid_cap(struct file *file, void *priv,
 	struct mxc_isi_fmt *fmt;
 	struct vb2_queue *vq;
 	int bpl, i;
+	int ret;
 
 	dev_dbg(&isi_m2m->pdev->dev, "%s\n", __func__);
 
-	if (f->type != V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
-		return -EINVAL;
+	ret = mxc_isi_m2m_try_fmt_vid_cap(file, priv, f);
+	if (ret)
+		return ret;
 
 	vq = v4l2_m2m_get_vq(fh->m2m_ctx, f->type);
 	if (!vq)
@@ -837,7 +854,6 @@ static int mxc_isi_m2m_s_fmt_vid_cap(struct file *file, void *priv,
 		frame->sizeimage[0] = frame->height * frame->bytesperline[0];
 	}
 
-	/*memcpy(&isi_m2m->pix, pix, sizeof(*pix));*/
 	memcpy(&isi_m2m->pix, pix, sizeof(*pix));
 
 	set_frame_bounds(frame, pix->width, pix->height);
@@ -863,9 +879,10 @@ static int mxc_isi_m2m_g_fmt_vid_cap(struct file *file, void *fh,
 	pix->height = frame->o_height;
 	pix->field = V4L2_FIELD_NONE;
 	pix->pixelformat = frame->fmt->fourcc;
-	pix->colorspace = V4L2_COLORSPACE_SRGB;
-	pix->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(pix->colorspace);
-	pix->quantization = V4L2_QUANTIZATION_FULL_RANGE;
+	pix->colorspace = isi_m2m->colorspace;
+	pix->xfer_func = isi_m2m->xfer_func;
+	pix->ycbcr_enc = isi_m2m->ycbcr_enc;
+	pix->quantization = isi_m2m->quant;
 	pix->num_planes = frame->fmt->memplanes;
 
 	for (i = 0; i < pix->num_planes; ++i) {
@@ -893,10 +910,11 @@ static int mxc_isi_m2m_g_fmt_vid_out(struct file *file, void *fh,
 	pix->height = frame->o_height;
 	pix->field  = V4L2_FIELD_NONE;
 	pix->pixelformat  = frame->fmt->fourcc;
-	pix->colorspace   = V4L2_COLORSPACE_SRGB;
-	pix->ycbcr_enc    = V4L2_MAP_YCBCR_ENC_DEFAULT(pix->colorspace);
 	pix->num_planes   = frame->fmt->memplanes;
-	pix->quantization = V4L2_QUANTIZATION_FULL_RANGE;
+	pix->colorspace   = isi_m2m->colorspace;
+	pix->xfer_func    = isi_m2m->xfer_func;
+	pix->ycbcr_enc    = isi_m2m->ycbcr_enc;
+	pix->quantization = isi_m2m->quant;
 
 	for (i = 0; i < pix->num_planes; ++i) {
 		pix->plane_fmt[i].bytesperline = frame->bytesperline[i];
@@ -1220,6 +1238,11 @@ static int isi_m2m_probe(struct platform_device *pdev)
 	}
 	mxc_isi->isi_m2m = isi_m2m;
 	isi_m2m->id = mxc_isi->id;
+
+	isi_m2m->colorspace = V4L2_COLORSPACE_SRGB;
+	isi_m2m->quant = V4L2_QUANTIZATION_FULL_RANGE;
+	isi_m2m->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(isi_m2m->colorspace);
+	isi_m2m->xfer_func = V4L2_XFER_FUNC_SRGB;
 
 	spin_lock_init(&isi_m2m->slock);
 	mutex_init(&isi_m2m->lock);
