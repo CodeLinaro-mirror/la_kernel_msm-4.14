@@ -16,6 +16,7 @@
 #include <linux/pm_runtime.h>
 
 #include "core.h"
+#include "../host/xhci.h"
 
 /* USB wakeup registers */
 #define USB_WAKEUP_CTRL			0x00
@@ -144,6 +145,23 @@ static irqreturn_t dwc3_imx8mp_interrupt(int irq, void *_dwc3_imx)
 	return IRQ_HANDLED;
 }
 
+static struct xhci_plat_priv dwc3_imx8mp_xhci_priv = {
+	.quirks = XHCI_MISSING_CAS |
+		  XHCI_SKIP_PHY_INIT,
+};
+
+static struct dwc3_platform_data dwc3_imx8mp_pdata = {
+	.xhci_priv = &dwc3_imx8mp_xhci_priv,
+};
+
+static struct of_dev_auxdata dwc3_imx8mp_auxdata[] = {
+	{
+	.compatible = "snps,dwc3",
+	.platform_data = &dwc3_imx8mp_pdata,
+	},
+	{},
+};
+
 static int dwc3_imx8mp_probe(struct platform_device *pdev)
 {
 	struct device		*dev = &pdev->dev;
@@ -226,7 +244,7 @@ static int dwc3_imx8mp_probe(struct platform_device *pdev)
 		goto disable_rpm;
 	}
 
-	err = of_platform_populate(node, NULL, NULL, dev);
+	err = of_platform_populate(node, NULL, dwc3_imx8mp_auxdata, dev);
 	if (err) {
 		dev_err(&pdev->dev, "failed to create dwc3 core\n");
 		goto err_node_put;
