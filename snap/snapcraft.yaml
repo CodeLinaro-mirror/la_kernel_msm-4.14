@@ -107,6 +107,23 @@ parts:
     prime:
       - -*
 
+  firmware-imx:
+    after:
+      - initrd
+    plugin: dump
+    source: https://github.com/nxp-imx/imx-firmware.git
+    source-type: git
+    source-depth: 1
+    source-tag: lf-6.18.20-2.0.0
+    organize:
+      'FwImage_9098_PCIE/uart9098_bt_v1.bin': firmware/nxp/pcieuart9098_bt_v1.bin
+      'FwImage_9098_*/*':   firmware/nxp/
+      'FwImage_IW610_SD/*': firmware/nxp/
+      'FwImage_IW612_SD/*': firmware/nxp/
+      'wifi_mod_para.conf': firmware/nxp/
+    stage:
+      - firmware/nxp
+
 build-packages:
   - bison
   - ccache
