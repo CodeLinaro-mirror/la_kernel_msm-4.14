@@ -1,0 +1,245 @@
+/*
+ * Ubuntu Core uImage source file with Ubuntu Kernel, Ubuntu Core ramdisks and multiple FDT blobs
+ */
+
+/dts-v1/;
+
+/ {
+	description = "Ubuntu Core kernel, ramdisk and FDT blobs for i.MX family";
+	#address-cells = <1>;
+	images {
+		kernel-efi {
+			description = "Ubuntu Kernel";
+			data = /incbin/("./vmlinuz.signed");
+			type = "kernel_noload";
+			arch = "arm64";
+			os = "efi";
+			compression = "none";
+			load =  <0x0>;
+			entry = <0x0>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		ramdisk-uc {
+			description = "Ubuntu Core ramdisk";
+			data = /incbin/("./initrd.img");
+			type = "ramdisk";
+			arch = "arm64";
+			os = "linux";
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx8mm-evk {
+			description = "i.MX8M Mini EVKB dtb, PCA9450 PMIC (BSP imx8mm-evk.dts)";
+			data = /incbin/("./dtbs/freescale/imx8mm-evk.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx8mm-evk-revb-qca-wifi {
+			description = "i.MX8M Mini EVK rev B dtb, BD71847 PMIC";
+			data = /incbin/("./dtbs/freescale/imx8mm-evk-revb-qca-wifi.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx8mp-evk {
+			description = "i.MX8M Plus evk dtb";
+			data = /incbin/("./dtbs/freescale/imx8mp-evk.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx93-11x11-evk {
+			description = "i.MX93 evk dtb";
+			data = /incbin/("./dtbs/freescale/imx93-11x11-evk.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx93-9x9-qsb {
+			description = "i.MX93 qsb dtb";
+			data = /incbin/("./dtbs/freescale/imx93-9x9-qsb.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx93-11x11-frdm {
+			description = "i.MX93 FRDM dtb";
+			data = /incbin/("./dtbs/freescale/imx93-11x11-frdm.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx91-11x11-evk {
+			description = "i.MX91 evk dtb";
+			data = /incbin/("./dtbs/freescale/imx91-11x11-evk.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		fdt-imx91-11x11-frdm {
+			description = "i.MX91 FRDM dtb";
+			data = /incbin/("./dtbs/freescale/imx91-11x11-frdm.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load =  <0x84000000>;
+			entry = <0x84000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+	};
+
+	configurations {
+		default = "imx8mm-evk.dtb";
+		/*
+		 * configuration names follow mainline: imx8mm-evk is the EVK with the
+		 * BD71847 PMIC (revisions A and B), imx8mm-evkb the EVKB with the
+		 * PCA9450. The BSP's own imx8mm-evk.dts describes the EVKB, so the two
+		 * BSP dtbs are swapped here. U-Boot picks the name by the PMIC it finds
+		 */
+		imx8mm-evk.dtb {
+			description = "i.MX8M Mini EVK, BD71847 PMIC";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx8mm-evk-revb-qca-wifi";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx8mm-evkb.dtb {
+			description = "i.MX8M Mini EVKB, PCA9450 PMIC";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx8mm-evk";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx8mp-evk.dtb {
+			description = "i.MX8M Plus evk";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx8mp-evk";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx93-11x11-evk.dtb {
+			description = "i.MX93 evk";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx93-11x11-evk";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx93-9x9-qsb.dtb {
+			description = "i.MX93 qsb";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx93-9x9-qsb";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx93-11x11-frdm.dtb {
+			description = "i.MX93 FRDM";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx93-11x11-frdm";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx91-11x11-evk.dtb {
+			description = "i.MX91 evk";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx91-11x11-evk";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+
+		imx91-11x11-frdm.dtb {
+			description = "i.MX91 FRDM";
+			kernel = "kernel-efi";
+			ramdisk = "ramdisk-uc";
+			fdt = "fdt-imx91-11x11-frdm";
+			signature-1 {
+				algo = "sha256,rsa2048";
+				key-name-hint="dev-fit-key";
+				sign-images="kernel", "fdt", "ramdisk";
+			};
+		};
+	};
+};

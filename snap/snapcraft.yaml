@@ -147,6 +147,22 @@ parts:
     prime:
       - -*
 
+  fit-image:
+    after:
+      - initrd
+      - sign-kernel-bin
+      - test-signing-keys
+    plugin: nil
+    override-build: |
+      cp ${CRAFT_PROJECT_DIR}/kernel_${CRAFT_ARCH_BUILD_FOR}.its \
+         ${CRAFT_STAGE}/kernel_${CRAFT_ARCH_BUILD_FOR}.its
+      # include key dir in case there are keys available
+      mkimage \
+        -f ${CRAFT_STAGE}/kernel_${CRAFT_ARCH_BUILD_FOR}.its \
+        -r ${CRAFT_PART_INSTALL}/kernel.img \
+        -k ${CRAFT_STAGE}/signing-key
+      rm ${CRAFT_STAGE}/kernel_${CRAFT_ARCH_BUILD_FOR}.its
+
 build-packages:
   - bison
   - ccache
