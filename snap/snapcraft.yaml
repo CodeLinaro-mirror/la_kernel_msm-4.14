@@ -64,6 +64,7 @@ parts:
     after:
       - firmware
       - kernel
+      - test-signing-keys
     plugin: initrd
     initrd-firmware:
       - firmware/imx/sdma/sdma-imx7d.bin
@@ -123,6 +124,16 @@ parts:
       'wifi_mod_para.conf': firmware/nxp/
     stage:
       - firmware/nxp
+
+  test-signing-keys:
+    plugin: dump
+    source: https://git.launchpad.net/~ondrak/+git/dev-keys
+    source-type: git
+    source-branch: master
+    organize:
+      '*': signing-key/
+    prime:
+      - -*
 
 build-packages:
   - bison
