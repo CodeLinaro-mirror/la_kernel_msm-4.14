@@ -34,6 +34,7 @@ properties:
               - fsl,imx8mq-ocotp
               - fsl,imx8mm-ocotp
               - fsl,imx93-ocotp
+              - fsl,imx8ulp-ocotp
           - const: syscon
       - items:
           - enum:
