@@ -106,6 +106,7 @@ config CLK_IMX8ULP
 	depends on ARCH_MXC || COMPILE_TEST
 	select MXC_CLK
 	select AUXILIARY_BUS
+	select RESET_CONTROLLER
 	help
 	    Build the driver for i.MX8ULP CCM Clock Driver
 
