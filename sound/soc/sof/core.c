@@ -182,7 +182,7 @@ static int sof_machine_check(struct snd_sof_dev *sdev)
 
 		/* find machine */
 		mach = snd_sof_machine_select(sdev);
-		if (mach) {
+		if (mach || sof_pdata->machine_drv_name) {
 			sof_pdata->machine = mach;
 
 			if (sof_pdata->subsystem_id_set) {
