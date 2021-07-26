@@ -13,6 +13,7 @@
 #define SPINOR_REG_MXIC_CR2_MODE	0x00000000	/* For setting octal DTR mode */
 #define SPINOR_REG_MXIC_OPI_DTR_EN	0x2		/* Enable Octal DTR */
 #define SPINOR_REG_MXIC_SPI_EN		0x0		/* Enable SPI */
+#define SPINOR_OP_OPI_DTR_RD		0xEE		/* OPI DTR first read opcode */
 
 static int
 mx25l25635_post_bfpt_fixups(struct spi_nor *nor,
@@ -115,6 +116,21 @@ static void octaflash_default_init(struct spi_nor *nor)
 
 static struct spi_nor_fixups octaflash_fixups = {
 	.default_init = octaflash_default_init,
+};
+
+static int mx25uw51345g_post_sfdp_fixup(struct spi_nor *nor)
+{
+	nor->params->hwcaps.mask |= SNOR_HWCAPS_READ_8_8_8_DTR;
+	spi_nor_set_read_settings(&nor->params->reads[SNOR_CMD_READ_8_8_8_DTR],
+				  0, 20, SPINOR_OP_OPI_DTR_RD,
+				  SNOR_PROTO_8_8_8_DTR);
+
+	return 0;
+}
+
+static struct spi_nor_fixups mx25uw51345g_fixups = {
+	.default_init = octaflash_default_init,
+	.post_sfdp = mx25uw51345g_post_sfdp_fixup,
 };
 
 static const struct flash_info macronix_nor_parts[] = {
@@ -361,7 +377,7 @@ static const struct flash_info macronix_nor_parts[] = {
 		.size = SZ_64M,
 		.no_sfdp_flags = SECT_4K | SPI_NOR_OCTAL_DTR_READ | SPI_NOR_OCTAL_DTR_PP,
 		.fixup_flags = SPI_NOR_4B_OPCODES,
-		.fixups = &octaflash_fixups,
+		.fixups = &mx25uw51345g_fixups,
 	}, {
 		.id = SNOR_ID(0xc2, 0x84, 0x3c),
 		.name = "mx66uw2g345g",
