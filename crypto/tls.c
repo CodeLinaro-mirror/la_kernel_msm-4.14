@@ -431,13 +431,7 @@ static int crypto_tls_init_tfm(struct crypto_aead *tfm)
 	 * and the other will be calculated. For encryption, one digest is
 	 * padded (up to a cipher blocksize) and chained with the payload
 	 */
-<<<<<<< HEAD
 	ctx->reqoff = crypto_ahash_digestsize(auth) +
-=======
-	ctx->reqoff = ALIGN(crypto_ahash_digestsize(auth) +
-			    crypto_ahash_alignmask(auth),
-			    crypto_ahash_alignmask(auth) + 1) +
->>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 			    max(crypto_ahash_digestsize(auth),
 				crypto_skcipher_blocksize(enc));
 
@@ -483,11 +477,7 @@ static int crypto_tls_create(struct crypto_template *tmpl, struct rtattr **tb)
 	struct aead_instance *inst;
 	struct hash_alg_common *auth;
 	struct crypto_alg *auth_base;
-<<<<<<< HEAD
 	struct skcipher_alg_common *enc;
-=======
-	struct skcipher_alg *enc;
->>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 	struct tls_instance_ctx *ctx;
 	u32 mask;
 	int err;
@@ -519,11 +509,7 @@ static int crypto_tls_create(struct crypto_template *tmpl, struct rtattr **tb)
 				   crypto_attr_alg_name(tb[2]), 0, mask);
 	if (err)
 		goto err_free_inst;
-<<<<<<< HEAD
 	enc = crypto_spawn_skcipher_alg_common(&ctx->enc);
-=======
-	enc = crypto_spawn_skcipher_alg(&ctx->enc);
->>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 
 	err = -ENAMETOOLONG;
 	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
@@ -545,13 +531,8 @@ static int crypto_tls_create(struct crypto_template *tmpl, struct rtattr **tb)
 					enc->base.cra_alignmask;
 	inst->alg.base.cra_ctxsize = sizeof(struct crypto_tls_ctx);
 
-<<<<<<< HEAD
 	inst->alg.ivsize = enc->ivsize;
 	inst->alg.chunksize = enc->chunksize;
-=======
-	inst->alg.ivsize = crypto_skcipher_alg_ivsize(enc);
-	inst->alg.chunksize = crypto_skcipher_alg_chunksize(enc);
->>>>>>> 94d2863cea666 (crypto: add support for TLS 1.0 record encryption)
 	inst->alg.maxauthsize = auth->digestsize;
 
 	inst->alg.init = crypto_tls_init_tfm;
