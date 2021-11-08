@@ -1146,16 +1146,15 @@ error_cleanup_mc_io:
 }
 
 /*
- * fsl_mc_bus_remove - callback invoked when the root MC bus is being
- * removed
+ * fsl_mc_bus_shutdown - callback invoked when the root MC bus is being
+ * shutdown
  */
-static void fsl_mc_bus_remove(struct platform_device *pdev)
+static void fsl_mc_bus_shutdown(struct platform_device *pdev)
 {
 	struct fsl_mc *mc = platform_get_drvdata(pdev);
 	struct fsl_mc_io *mc_io;
 
 	mc_io = mc->root_mc_bus_dev->mc_io;
-	fsl_mc_device_remove(mc->root_mc_bus_dev);
 	fsl_destroy_mc_io(mc_io);
 
 	bus_unregister_notifier(&fsl_mc_bus_type, &fsl_mc_nb);
@@ -1169,6 +1168,19 @@ static void fsl_mc_bus_remove(struct platform_device *pdev)
 		       (GCR1_P1_STOP | GCR1_P2_STOP),
 		       mc->fsl_mc_regs + FSL_MC_GCR1);
 	}
+}
+
+/*
+ * fsl_mc_bus_remove - callback invoked when the root MC bus is being
+ * removed
+ */
+static void fsl_mc_bus_remove(struct platform_device *pdev)
+{
+	struct fsl_mc *mc = platform_get_drvdata(pdev);
+
+	fsl_mc_device_remove(mc->root_mc_bus_dev);
+
+	fsl_mc_bus_shutdown(pdev);
 }
 
 static const struct of_device_id fsl_mc_bus_match_table[] = {
