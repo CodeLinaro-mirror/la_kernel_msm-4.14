@@ -1432,6 +1432,9 @@ uninit_regulators:
 err_of_node_put:
 	of_node_put(adv7511->host_node);
 #if IS_ENABLED(CONFIG_OF_DYNAMIC)
+	if (ret == -EPROBE_DEFER)
+		return ret;
+
 	endpoint = of_graph_get_next_endpoint(dev->of_node, NULL);
 	if (endpoint)
 		remote_node = of_graph_get_remote_port_parent(endpoint);
