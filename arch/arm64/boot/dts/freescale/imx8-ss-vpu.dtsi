@@ -12,7 +12,7 @@ vpu: vpu@2c000000 {
 	power-domains = <&pd IMX_SC_R_VPU>;
 	status = "disabled";
 
-	vpu_lpcg: clock-controller@2d000000 {
+	vpu_lpcg: clock-controller@2c000000 {
 		compatible = "fsl,imx8qxp-lpcg-vpu";
 		reg = <0x2c000000 0x2000000>;
 		#clock-cells = <1>;
