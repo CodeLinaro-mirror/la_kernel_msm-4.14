@@ -250,6 +250,10 @@
 	status = "okay";
 };
 
+&dphy {
+	status = "okay";
+};
+
 &eqos {
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&pinctrl_eqos>;
