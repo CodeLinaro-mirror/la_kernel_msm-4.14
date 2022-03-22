@@ -1362,6 +1362,25 @@
 				power-domains = <&media_blk_ctrl IMX93_MEDIABLK_PD_MIPI_DSI>;
 				status = "disabled";
 			};
+
+			parallel_disp_fmt: dpi {
+				compatible = "fsl,imx93-parallel-display-format";
+				power-domains = <&mediamix>;
+				status = "disabled";
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+
+						dpi_to_lcdif: endpoint {
+							remote-endpoint = <&lcdif_to_dpi>;
+						};
+					};
+				};
+			};
 		};
 
 		ddr-pmu@4e300dc0 {
@@ -1497,6 +1516,7 @@
 
 				lcdif_to_dpi: endpoint@2 {
 					reg = <2>;
+					remote-endpoint = <&dpi_to_lcdif>;
 				};
 			};
 		};
