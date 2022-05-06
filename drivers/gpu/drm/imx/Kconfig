@@ -98,12 +98,18 @@ config DRM_IMX93_PARALLEL_DISPLAY_FORMAT
 	  Choose this to enable the internal parallel display format
 	  configuration found on i.MX93 processors.
 
+config IMX8MP_HDMI_PAVI
+	tristate "NXP i.MX8MP HDMI Audio Video (PVI/PAI)"
+	help
+	  Choose this if you want to use HDMI PAI/PVI on i.MX8MP.
+
 config DRM_IMX_HDMI
 	tristate "Freescale i.MX DRM HDMI"
 	select DRM_DW_HDMI
+	select IMX8MP_HDMI_PAVI
 	depends on DRM_IMX && OF
 	help
-	  Choose this if you want to use HDMI on i.MX6.
+	  Choose this if you want to use HDMI on i.MX6/i.MX8.
 
 config DRM_IMX_SEC_DSIM
 	tristate "Support for Samsung MIPI DSIM displays"
