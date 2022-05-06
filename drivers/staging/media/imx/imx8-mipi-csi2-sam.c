@@ -1564,7 +1564,7 @@ static int mipi_csis_imx8mn_parse_resets(struct csi_state *state)
 	ret = of_parse_phandle_with_args(np, "resets", "#reset-cells",
 					 0, &args);
 	if (ret)
-		return ret;
+		return ret == -ENOENT ? 0 : ret;
 
 	parent = args.np;
 	for_each_child_of_node(parent, child) {
@@ -1603,7 +1603,7 @@ static int mipi_csis_imx8mn_parse_resets(struct csi_state *state)
 static int mipi_csis_imx8mn_resets_assert(struct csi_state *state)
 {
 	if (!state->soft_resetn)
-		return -EINVAL;
+		return 0;
 
 	return reset_control_assert(state->soft_resetn);
 }
@@ -1611,7 +1611,7 @@ static int mipi_csis_imx8mn_resets_assert(struct csi_state *state)
 static int mipi_csis_imx8mn_resets_deassert(struct csi_state *state)
 {
 	if (!state->soft_resetn)
-		return -EINVAL;
+		return 0;
 
 	return reset_control_deassert(state->soft_resetn);
 }
@@ -1633,7 +1633,7 @@ static int mipi_csis_imx8mn_gclk_get(struct csi_state *state)
 static int mipi_csis_imx8mn_gclk_enable(struct csi_state *state)
 {
 	if (!state->clk_enable)
-		return -EINVAL;
+		return 0;
 
 	return reset_control_assert(state->clk_enable);
 }
@@ -1641,7 +1641,7 @@ static int mipi_csis_imx8mn_gclk_enable(struct csi_state *state)
 static int mipi_csis_imx8mn_gclk_disable(struct csi_state *state)
 {
 	if (!state->clk_enable)
-		return -EINVAL;
+		return 0;
 
 	return reset_control_deassert(state->clk_enable);
 }
