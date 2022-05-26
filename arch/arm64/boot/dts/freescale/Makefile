@@ -686,6 +686,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk.dtb \
 imx93-11x11-evk-i2c-spi-slave-dtbs := imx93-11x11-evk.dtb imx93-11x11-evk-i2c-spi-slave.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-i2c-spi-slave.dtb
 
+imx93-11x11-evk-i3c-dtbs += imx93-11x11-evk.dtb imx93-11x11-evk-i3c.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-i3c.dtb
+
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-frdm.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-14x14-evk.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-kontron-bl-osm-s.dtb
