@@ -12,6 +12,7 @@ imx-ipuv3-crtc-objs  := ipuv3-crtc.o ipuv3-plane.o
 obj-$(CONFIG_DRM_IMX_IPUV3)	+= imx-ipuv3-crtc.o
 obj-$(CONFIG_DRM_IMX_DCNANO) += dcnano/
 obj-$(CONFIG_DRM_IMX_DPU) += dpu/
+obj-$(CONFIG_DRM_IMX_DW_MIPI_DSI) += dw_mipi_dsi-imx.o
 obj-$(CONFIG_DRM_IMX_HDMI) += dw_hdmi-imx.o
 obj-$(CONFIG_DRM_IMX) += ipuv3/
 obj-$(CONFIG_DRM_IMX8_DC) += dc/
