@@ -2369,6 +2369,7 @@ static int dpaa2_switch_port_bond_join(struct net_device *netdev,
 {
 	struct ethsw_port_priv *port_priv = netdev_priv(netdev);
 	struct ethsw_core *ethsw = port_priv->ethsw_data;
+	struct dpaa2_switch_fdb *old_fdb = port_priv->fdb;
 	struct ethsw_port_priv *other_port_priv;
 	struct net_device *other_dev;
 	struct list_head *iter;
@@ -2397,6 +2398,11 @@ static int dpaa2_switch_port_bond_join(struct net_device *netdev,
 	err = dpaa2_switch_fdb_set_egress_flood(ethsw, port_priv->fdb->fdb_id);
 	if (err)
 		goto err_egress_flood;
+
+	/* Recreate the egress flood domain of the FDB that we just left. */
+	err = dpaa2_switch_fdb_set_egress_flood(ethsw, old_fdb->fdb_id);
+	if (err)
+		return err;
 
 	/* Setup the port_priv->lag pointer for this switch port */
 	err = dpaa2_switch_port_set_lag_group(port_priv, bond_dev);
