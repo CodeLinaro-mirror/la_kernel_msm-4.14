@@ -1678,7 +1678,7 @@ static int mipi_csis_imx8mp_parse_resets(struct csi_state *state)
 	struct device *dev = state->dev;
 	struct reset_control *reset;
 
-	reset = devm_reset_control_get(dev, "csi_rst_pclk");
+	reset = devm_reset_control_get_optional(dev, "csi_rst_pclk");
 	if (IS_ERR(reset)) {
 		if (PTR_ERR(reset) != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get csi pclk reset control\n");
@@ -1686,7 +1686,7 @@ static int mipi_csis_imx8mp_parse_resets(struct csi_state *state)
 	}
 	state->csi_rst_pclk = reset;
 
-	reset = devm_reset_control_get(dev, "csi_rst_aclk");
+	reset = devm_reset_control_get_optional(dev, "csi_rst_aclk");
 	if (IS_ERR(reset)) {
 		if (PTR_ERR(reset) != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get csi aclk reset control\n");
@@ -1703,7 +1703,7 @@ static int mipi_csis_imx8mp_resets_assert(struct csi_state *state)
 	int ret;
 
 	if (!state->csi_rst_pclk || !state->csi_rst_aclk)
-		return -EINVAL;
+		return 0;
 
 	ret = reset_control_assert(state->csi_rst_pclk);
 	if (ret) {
@@ -1723,7 +1723,7 @@ static int mipi_csis_imx8mp_resets_assert(struct csi_state *state)
 static int mipi_csis_imx8mp_resets_deassert(struct csi_state *state)
 {
 	if (!state->csi_rst_pclk || !state->csi_rst_aclk)
-		return -EINVAL;
+		return 0;
 
 	reset_control_deassert(state->csi_rst_pclk);
 	reset_control_deassert(state->csi_rst_aclk);
