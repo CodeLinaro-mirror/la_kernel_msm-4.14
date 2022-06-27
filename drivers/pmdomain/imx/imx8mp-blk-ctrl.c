@@ -14,6 +14,7 @@
 #include <linux/pm_domain.h>
 #include <linux/pm_runtime.h>
 #include <linux/regmap.h>
+#include <linux/mfd/syscon.h>
 
 #include <dt-bindings/power/imx8mp-power.h>
 
@@ -39,11 +40,21 @@ struct imx8mp_blk_ctrl {
 	struct notifier_block power_nb;
 	struct device *bus_power_dev;
 	struct regmap *regmap;
+	struct regmap *noc_regmap;
 	struct imx8mp_blk_ctrl_domain *domains;
 	struct genpd_onecell_data onecell_data;
 	void (*power_off) (struct imx8mp_blk_ctrl *bc, struct imx8mp_blk_ctrl_domain *domain);
 	void (*power_on) (struct imx8mp_blk_ctrl *bc, struct imx8mp_blk_ctrl_domain *domain);
 };
+
+struct imx8mp_blk_ctrl_noc_data {
+	u32 off;
+	u32 priority;
+	u32 mode;
+	u32 extctrl;
+};
+
+#define DOMAIN_MAX_NOC	3
 
 struct imx8mp_blk_ctrl_domain_data {
 	const char *name;
@@ -51,6 +62,7 @@ struct imx8mp_blk_ctrl_domain_data {
 	int num_clks;
 	const char *gpc_name;
 	const unsigned int flags;
+	const struct imx8mp_blk_ctrl_noc_data *noc_data[DOMAIN_MAX_NOC];
 };
 
 #define DOMAIN_MAX_CLKS 3
@@ -167,6 +179,27 @@ static int imx8mp_hsio_blk_ctrl_probe(struct imx8mp_blk_ctrl *bc)
 	return devm_of_clk_add_hw_provider(bc->dev, of_clk_hw_simple_get, hw);
 }
 
+static int imx8mp_noc_set(struct imx8mp_blk_ctrl_domain *domain)
+{
+	const struct imx8mp_blk_ctrl_domain_data *data = domain->data;
+	struct imx8mp_blk_ctrl *bc = domain->bc;
+	struct regmap *regmap = bc->noc_regmap;
+	int i;
+
+	if (!data || !regmap)
+		return 0;
+
+	for (i = 0; i < DOMAIN_MAX_NOC; i++) {
+		if (!data->noc_data[i])
+			continue;
+		regmap_write(regmap, data->noc_data[i]->off + 0x8, data->noc_data[i]->priority);
+		regmap_write(regmap, data->noc_data[i]->off + 0xc, data->noc_data[i]->mode);
+		regmap_write(regmap, data->noc_data[i]->off + 0x18, data->noc_data[i]->extctrl);
+	}
+
+	return 0;
+}
+
 static void imx8mp_hsio_blk_ctrl_power_on(struct imx8mp_blk_ctrl *bc,
 					  struct imx8mp_blk_ctrl_domain *domain)
 {
@@ -248,12 +281,40 @@ static int imx8mp_hsio_power_notifier(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
+#define IMX8MP_HSIOBLK_NOC_PCIE	0
+#define IMX8MP_HSIOBLK_USB1	1
+#define IMX8MP_HSIOBLK_USB2	2
+#define IMX8MP_HSIOBLK_PCIE	3
+
+static const struct imx8mp_blk_ctrl_noc_data imx8mp_hsio_noc_data[] = {
+	[IMX8MP_HSIOBLK_NOC_PCIE] = {
+		.off = 0x780,
+		.priority = 0x80000303,
+	},
+	[IMX8MP_HSIOBLK_USB1] = {
+		.off = 0x800,
+		.priority = 0x80000303,
+	},
+	[IMX8MP_HSIOBLK_USB2] = {
+		.off = 0x880,
+		.priority = 0x80000303,
+	},
+	[IMX8MP_HSIOBLK_PCIE] = {
+		.off = 0x900,
+		.priority = 0x80000303,
+	},
+};
+
 static const struct imx8mp_blk_ctrl_domain_data imx8mp_hsio_domain_data[] = {
 	[IMX8MP_HSIOBLK_PD_USB] = {
 		.name = "hsioblk-usb",
 		.clk_names = (const char *[]){ "usb" },
 		.num_clks = 1,
 		.gpc_name = "usb",
+		.noc_data = {
+			&imx8mp_hsio_noc_data[IMX8MP_HSIOBLK_USB1],
+			&imx8mp_hsio_noc_data[IMX8MP_HSIOBLK_USB2]
+		},
 	},
 	[IMX8MP_HSIOBLK_PD_USB_PHY1] = {
 		.name = "hsioblk-usb-phy1",
@@ -270,6 +331,10 @@ static const struct imx8mp_blk_ctrl_domain_data imx8mp_hsio_domain_data[] = {
 		.clk_names = (const char *[]){ "pcie" },
 		.num_clks = 1,
 		.gpc_name = "pcie",
+		.noc_data = {
+			&imx8mp_hsio_noc_data[IMX8MP_HSIOBLK_NOC_PCIE],
+			&imx8mp_hsio_noc_data[IMX8MP_HSIOBLK_PCIE]
+		},
 	},
 	[IMX8MP_HSIOBLK_PD_PCIE_PHY] = {
 		.name = "hsioblk-pcie-phy",
@@ -352,6 +417,9 @@ static void imx8mp_hdmi_blk_ctrl_power_on(struct imx8mp_blk_ctrl *bc,
 	default:
 		break;
 	}
+
+	imx8mp_noc_set(domain);
+
 }
 
 static void imx8mp_hdmi_blk_ctrl_power_off(struct imx8mp_blk_ctrl *bc,
@@ -442,6 +510,27 @@ static int imx8mp_hdmi_power_notifier(struct notifier_block *nb,
 	return NOTIFY_OK;
 }
 
+#define IMX8MP_HDMIBLK_NOC_HRV		0
+#define IMX8MP_HDMIBLK_NOC_LCDIFHDMI	1
+#define IMX8MP_HDMIBLK_NOC_HDCP		2
+
+static const struct imx8mp_blk_ctrl_noc_data imx8mp_hdmi_noc_data[] = {
+	[IMX8MP_HDMIBLK_NOC_HRV] = {
+		.off = 0x600,
+		.priority = 0x80000202,
+		.extctrl = 1,
+	},
+	[IMX8MP_HDMIBLK_NOC_LCDIFHDMI] = {
+		.off = 0x680,
+		.priority = 0x80000202,
+		.extctrl = 1,
+	},
+	[IMX8MP_HDMIBLK_NOC_HDCP] = {
+		.off = 0x700,
+		.priority = 0x80000505,
+	}
+};
+
 static const struct imx8mp_blk_ctrl_domain_data imx8mp_hdmi_domain_data[] = {
 	[IMX8MP_HDMIBLK_PD_IRQSTEER] = {
 		.name = "hdmiblk-irqsteer",
@@ -454,6 +543,9 @@ static const struct imx8mp_blk_ctrl_domain_data imx8mp_hdmi_domain_data[] = {
 		.clk_names = (const char *[]){ "axi", "apb", "fdcc" },
 		.num_clks = 3,
 		.gpc_name = "lcdif",
+		.noc_data = {
+			&imx8mp_hdmi_noc_data[IMX8MP_HDMIBLK_NOC_LCDIFHDMI],
+		},
 	},
 	[IMX8MP_HDMIBLK_PD_PAI] = {
 		.name = "hdmiblk-pai",
@@ -490,12 +582,18 @@ static const struct imx8mp_blk_ctrl_domain_data imx8mp_hdmi_domain_data[] = {
 		.clk_names = (const char *[]){ "axi", "apb" },
 		.num_clks = 2,
 		.gpc_name = "hrv",
+		.noc_data = {
+			&imx8mp_hdmi_noc_data[IMX8MP_HDMIBLK_NOC_HRV],
+		},
 	},
 	[IMX8MP_HDMIBLK_PD_HDCP] = {
 		.name = "hdmiblk-hdcp",
 		.clk_names = (const char *[]){ "axi", "apb" },
 		.num_clks = 2,
 		.gpc_name = "hdcp",
+		.noc_data = {
+			&imx8mp_hdmi_noc_data[IMX8MP_HDMIBLK_NOC_HDCP],
+		},
 	},
 };
 
@@ -599,6 +697,7 @@ static int imx8mp_blk_ctrl_probe(struct platform_device *pdev)
 	const struct imx8mp_blk_ctrl_data *bc_data;
 	struct device *dev = &pdev->dev;
 	struct imx8mp_blk_ctrl *bc;
+	struct regmap *regmap;
 	void __iomem *base;
 	int num_domains, i, ret;
 
@@ -647,6 +746,10 @@ static int imx8mp_blk_ctrl_probe(struct platform_device *pdev)
 
 	bc->power_off = bc_data->power_off;
 	bc->power_on = bc_data->power_on;
+
+	regmap = syscon_regmap_lookup_by_compatible("fsl,imx8m-noc");
+	if (!IS_ERR(regmap))
+		bc->noc_regmap = regmap;
 
 	for (i = 0; i < num_domains; i++) {
 		const struct imx8mp_blk_ctrl_domain_data *data = &bc_data->domains[i];
