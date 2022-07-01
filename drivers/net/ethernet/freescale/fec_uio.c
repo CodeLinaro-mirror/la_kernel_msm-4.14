@@ -11,11 +11,14 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/clk.h>
+#include <linux/of_device.h>
 #include <linux/of_gpio.h>
 #include <linux/of_net.h>
 #include <linux/busfreq-imx.h>
 #include <linux/of_mdio.h>
 #include "fec.h"
+#include <linux/pinctrl/consumer.h>
+#include <linux/platform_device.h>
 
 struct fec_dev *fec_dev;
 static const char fec_uio_version[] = "FEC UIO driver v1.0";
