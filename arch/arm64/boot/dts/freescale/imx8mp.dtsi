@@ -1610,6 +1610,16 @@
 			interrupt-parent = <&gic>;
 		};
 
+		vpumix_blk_ctl: blk-ctl@38330000 {
+			compatible = "fsl,imx8mp-vpu-blk-ctrl", "syscon";
+			reg = <0x38330000 0x100>;
+			#power-domain-cells = <1>;
+			power-domains = <&pgc_vpumix>, <&pgc_vpu_g1>, <&pgc_vpu_g2>, <&pgc_vpu_vc8000e>;
+			power-domain-names = "bus", "g1", "g2", "h1";
+			clocks = <&clk IMX8MP_CLK_VPU_G1_ROOT>, <&clk IMX8MP_CLK_VPU_G2_ROOT>, <&clk IMX8MP_CLK_VPU_VC8KE_ROOT>;
+			clock-names = "g1", "g2", "h1";
+		};
+
 		edacmc: memory-controller@3d400000 {
 			compatible = "snps,ddrc-3.80a";
 			reg = <0x3d400000 0x400000>;
