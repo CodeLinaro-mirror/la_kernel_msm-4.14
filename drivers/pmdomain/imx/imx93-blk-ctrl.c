@@ -298,7 +298,15 @@ static int imx93_blk_ctrl_probe(struct platform_device *pdev)
 		goto cleanup_pds;
 	}
 
+	ret = devm_add_action_or_reset(dev, imx93_release_genpd_provider, dev->of_node);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to add genpd_provider release callback\n");
+
 	dev_set_drvdata(dev, bc);
+
+	ret = devm_of_platform_populate(dev);
+	if (ret)
+		return dev_err_probe(dev, ret, "failed to populate blk-ctrl sub-devices\n");
 
 	return 0;
 
@@ -442,6 +450,36 @@ static const struct imx93_blk_ctrl_data imx93_media_blk_ctl_dev_data = {
 	.reg_access_table = &imx93_media_blk_ctl_access_table,
 };
 
+#ifdef CONFIG_PM_SLEEP
+static int imx93_blk_ctrl_suspend(struct device *dev)
+{
+	struct imx93_blk_ctrl *bc = dev_get_drvdata(dev);
+
+	/*
+	 * This may look strange, but is done so the generic PM_SLEEP code
+	 * can power down our domains and more importantly power them up again
+	 * after resume, without tripping over our usage of runtime PM to
+	 * control the upstream GPC domains. Things happen in the right order
+	 * in the system suspend/resume paths due to the device parent/child
+	 * hierarchy.
+	 */
+	return pm_runtime_resume_and_get(bc->dev);
+}
+
+static int imx93_blk_ctrl_resume(struct device *dev)
+{
+	struct imx93_blk_ctrl *bc = dev_get_drvdata(dev);
+
+	pm_runtime_put(bc->dev);
+
+	return 0;
+}
+#endif
+
+static const struct dev_pm_ops imx93_blk_ctrl_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(imx93_blk_ctrl_suspend, imx93_blk_ctrl_resume)
+};
+
 static const struct of_device_id imx93_blk_ctrl_of_match[] = {
 	{
 		.compatible = "fsl,imx91-media-blk-ctrl",
@@ -460,6 +498,7 @@ static struct platform_driver imx93_blk_ctrl_driver = {
 	.remove = imx93_blk_ctrl_remove,
 	.driver = {
 		.name = "imx93-blk-ctrl",
+		.pm = &imx93_blk_ctrl_pm_ops,
 		.of_match_table = imx93_blk_ctrl_of_match,
 	},
 };
