@@ -973,10 +973,6 @@ static int lpi2c_imx_probe(struct platform_device *pdev)
 	i2c_set_adapdata(&lpi2c_imx->adapter, lpi2c_imx);
 	platform_set_drvdata(pdev, lpi2c_imx);
 
-	ret = clk_bulk_prepare_enable(lpi2c_imx->num_clks, lpi2c_imx->clks);
-	if (ret)
-		return ret;
-
 	/*
 	 * Lock the parent clock rate to avoid getting parent clock upon
 	 * each transfer
