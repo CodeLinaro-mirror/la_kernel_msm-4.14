@@ -77,10 +77,8 @@ source "drivers/gpu/drm/imx/dcif/Kconfig"
 source "drivers/gpu/drm/imx/dcnano/Kconfig"
 source "drivers/gpu/drm/imx/dpu/Kconfig"
 source "drivers/gpu/drm/imx/dcss/Kconfig"
-<<<<<<< HEAD
 source "drivers/gpu/drm/imx/mhdp/Kconfig"
 source "drivers/gpu/drm/imx/ipuv3/Kconfig"
-=======
 source "drivers/gpu/drm/imx/lcdif/Kconfig"
->>>>>>> ab37b39ca8db7 (MLK-18535-5 drm/imx: add LCDIF DRM/KMS driver)
+source "drivers/gpu/drm/imx/lcdifv3/Kconfig"
 source "drivers/gpu/drm/imx/lcdc/Kconfig"
