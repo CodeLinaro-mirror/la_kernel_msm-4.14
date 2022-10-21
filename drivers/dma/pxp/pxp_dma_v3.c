@@ -985,6 +985,7 @@ struct pxp_devdata {
 	void (*pxp_data_path_config)(struct pxps *pxp);
 	void (*pxp_restart)(struct pxps *pxp);
 	unsigned int version;
+	bool input_fetch_arbit_en;
 };
 
 static const struct pxp_devdata pxp_devdata[] = {
@@ -998,6 +999,7 @@ static const struct pxp_devdata pxp_devdata[] = {
 		.pxp_data_path_config = NULL,
 		.pxp_restart = NULL,
 		.version = PXP_V3,
+		.input_fetch_arbit_en = false,
 	},
 	[PXP_V3P] = {
 		.pxp_wfe_a_configure = pxp_wfe_a_configure_v3p,
@@ -1009,6 +1011,7 @@ static const struct pxp_devdata pxp_devdata[] = {
 		.pxp_data_path_config = pxp_data_path_config_v3p,
 		.pxp_restart = NULL,
 		.version = PXP_V3P,
+		.input_fetch_arbit_en = false,
 	},
 	[PXP_V3_8ULP] = {
 		.pxp_wfe_a_configure = pxp_wfe_a_configure,
@@ -1020,6 +1023,7 @@ static const struct pxp_devdata pxp_devdata[] = {
 		.pxp_data_path_config = NULL,
 		.pxp_restart = pxp_software_restart,
 		.version = PXP_V3_8ULP,
+		.input_fetch_arbit_en = false,
 	},
 	[PXP_V3_IMX93] = {
 		.pxp_wfe_a_configure = NULL,
@@ -1031,6 +1035,11 @@ static const struct pxp_devdata pxp_devdata[] = {
 		.pxp_data_path_config = NULL,
 		.pxp_restart = imx93_pxp_software_restart,
 		.version = PXP_V3_IMX93,
+		/*
+		 * Due to iMX93 only connect one AXI bus to PXP, so need to
+		 * enable arbitration when use two PXP input fetch channels
+		 */
+		.input_fetch_arbit_en = true,
 	},
 };
 
@@ -1892,6 +1901,10 @@ static int pxp_start(struct pxps *pxp)
 {
 	struct pxp_proc_data *proc_data = &pxp->pxp_conf_state.proc_data;
 	u32 val;
+
+	if (pxp->devdata && pxp->devdata->input_fetch_arbit_en)
+		__raw_writel(BF_PXP_INPUT_FETCH_CTRL_CH0_ARBIT_EN(1),
+			     pxp->base + HW_PXP_INPUT_FETCH_CTRL_CH0_SET);
 
 	val = (BM_PXP_CTRL_ENABLE | BM_PXP_CTRL_BLOCK_SIZE);
 
