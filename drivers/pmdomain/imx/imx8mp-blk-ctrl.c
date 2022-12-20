@@ -865,6 +865,9 @@ static int imx8mp_blk_ctrl_probe(struct platform_device *pdev)
 				  &blk_ctrl_genpd_lock_class);
 
 		bc->onecell_data.domains[i] = &domain->genpd;
+
+		if (data->flags & GENPD_FLAG_ACTIVE_WAKEUP)
+			device_set_wakeup_capable(domain->power_dev, true);
 	}
 
 	ret = of_genpd_add_provider_onecell(dev->of_node, &bc->onecell_data);
