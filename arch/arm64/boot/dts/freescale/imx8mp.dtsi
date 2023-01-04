@@ -1776,7 +1776,7 @@
 		};
 
 		noc: interconnect@32700000 {
-			compatible = "fsl,imx8mp-noc", "fsl,imx8m-noc";
+			compatible = "fsl,imx8mp-noc", "fsl,imx8m-noc", "syscon";
 			reg = <0x32700000 0x100000>;
 			clocks = <&clk IMX8MP_CLK_NOC>;
 			#interconnect-cells = <1>;
