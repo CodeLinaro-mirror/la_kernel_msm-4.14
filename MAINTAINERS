@@ -7122,7 +7122,7 @@ S:	Maintained
 T:	git git://anongit.freedesktop.org/drm/drm-misc
 T:	git git://git.pengutronix.de/git/pza/linux
 F:	Documentation/devicetree/bindings/display/imx/
-F:	drivers/gpu/drm/imx/ipuv3/
+F:	drivers/gpu/drm/imx/
 F:	drivers/gpu/ipu-v3/
 
 DRM DRIVERS FOR FREESCALE IMX BRIDGE
