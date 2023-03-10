@@ -50,9 +50,9 @@ struct async_op {
 	int err;
 };
 
-static void tls_async_op_done(struct crypto_async_request *req, int err)
+static void tls_async_op_done(void *data, int err)
 {
-	struct async_op *areq = req->data;
+	struct async_op *areq = data;
 
 	if (err == -EINPROGRESS)
 		return;
