@@ -691,7 +691,8 @@ dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk.dtb \
 			  imx93-11x11-evk-lpuart.dtb \
 			  imx93-11x11-evk-mqs.dtb imx93-11x11-evk-aud-hat.dtb \
 			  imx93-11x11-evk-rm67199.dtb imx93-11x11-evk-boe-wxga-lvds-panel.dtb \
-			  imx93-11x11-evk-flexspi-m2.dtb
+			  imx93-11x11-evk-flexspi-m2.dtb \
+			  imx93-11x11-evk-ld.dtb
 
 imx93-11x11-evk-i2c-spi-slave-dtbs := imx93-11x11-evk.dtb imx93-11x11-evk-i2c-spi-slave.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-i2c-spi-slave.dtb
