@@ -990,6 +990,8 @@ static bool vdec_check_source_change(struct vpu_inst *inst, struct vpu_dec_codec
 	     hdr->matrix_coeffs != vdec->codec_info.matrix_coeffs ||
 	     hdr->full_range != vdec->codec_info.full_range))
 		return true;
+	if (!vdec->codec_info.progressive)
+		return true;
 
 	return false;
 }
