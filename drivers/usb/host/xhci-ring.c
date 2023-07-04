@@ -731,7 +731,7 @@ deq_found:
 		trb_sct = SCT_FOR_TRB(SCT_PRI_TR);
 	ret = queue_command(xhci, cmd,
 		lower_32_bits(addr) | trb_sct | new_cycle,
-		upper_32_bits(addr),
+		upper_32_bits((u64) addr),
 		STREAM_ID_FOR_TRB(stream_id), SLOT_ID_FOR_TRB(slot_id) |
 		EP_ID_FOR_TRB(ep_index) | TRB_TYPE(TRB_SET_DEQ), false);
 	if (ret < 0) {
@@ -4093,7 +4093,7 @@ int xhci_submit_single_step_set_feature(struct usb_hcd *hcd,
 		field |= TRB_DIR_IN;
 		queue_trb(xhci, ep_ring, true,
 				lower_32_bits(urb->transfer_dma),
-				upper_32_bits(urb->transfer_dma),
+				upper_32_bits((u64) urb->transfer_dma),
 				length_field,
 				field | ep_ring->cycle_state);
 	}
@@ -4613,7 +4613,7 @@ int xhci_queue_address_device(struct xhci_hcd *xhci, struct xhci_command *cmd,
 		dma_addr_t in_ctx_ptr, u32 slot_id, enum xhci_setup_dev setup)
 {
 	return queue_command(xhci, cmd, lower_32_bits(in_ctx_ptr),
-			upper_32_bits(in_ctx_ptr), 0,
+			upper_32_bits((u64) in_ctx_ptr), 0,
 			TRB_TYPE(TRB_ADDR_DEV) | SLOT_ID_FOR_TRB(slot_id)
 			| (setup == SETUP_CONTEXT_ONLY ? TRB_BSR : 0), false);
 }
@@ -4639,7 +4639,7 @@ int xhci_queue_configure_endpoint(struct xhci_hcd *xhci,
 		u32 slot_id, bool command_must_succeed)
 {
 	return queue_command(xhci, cmd, lower_32_bits(in_ctx_ptr),
-			upper_32_bits(in_ctx_ptr), 0,
+			upper_32_bits((u64) in_ctx_ptr), 0,
 			TRB_TYPE(TRB_CONFIG_EP) | SLOT_ID_FOR_TRB(slot_id),
 			command_must_succeed);
 }
@@ -4649,7 +4649,7 @@ int xhci_queue_evaluate_context(struct xhci_hcd *xhci, struct xhci_command *cmd,
 		dma_addr_t in_ctx_ptr, u32 slot_id, bool command_must_succeed)
 {
 	return queue_command(xhci, cmd, lower_32_bits(in_ctx_ptr),
-			upper_32_bits(in_ctx_ptr), 0,
+			upper_32_bits((u64) in_ctx_ptr), 0,
 			TRB_TYPE(TRB_EVAL_CONTEXT) | SLOT_ID_FOR_TRB(slot_id),
 			command_must_succeed);
 }
