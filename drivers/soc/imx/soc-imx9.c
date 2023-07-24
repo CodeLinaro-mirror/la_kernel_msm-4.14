@@ -58,6 +58,9 @@ static int imx9_soc_probe(struct platform_device *pdev)
 	uid63_0 = res.a3;
 	attr->serial_number = devm_kasprintf(dev, GFP_KERNEL, "%016llx%016llx", uid127_64, uid63_0);
 
+	if (of_machine_is_compatible("fsl,imx91p"))
+		attr->soc_id = kasprintf(GFP_KERNEL, "i.MX91P");
+
 	sdev = soc_device_register(attr);
 	if (IS_ERR(sdev))
 		return dev_err_probe(dev, PTR_ERR(sdev),
