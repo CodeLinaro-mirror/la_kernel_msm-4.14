@@ -135,6 +135,11 @@ int simple_util_parse_daifmt(struct device *dev,
 			     struct device_node *codec,
 			     char *prefix,
 			     unsigned int *retfmt);
+int simple_parse_link_direction(struct device *dev,
+				     struct device_node *node,
+				     char *prefix,
+				     bool *is_playback_only,
+				     bool *is_capture_only);
 int simple_util_parse_tdm_width_map(struct device *dev, struct device_node *np,
 				    struct simple_util_dai *dai);
 
