@@ -62,6 +62,29 @@ union phy_notify {
 	enum phy_ufs_state ufs_state;
 };
 
+enum phy_status_type {
+	/* Valid for PHY_MODE_ETHERNET */
+	PHY_STATUS_CDR_LOCK,
+};
+
+/* If the CDR (Clock and Data Recovery) block is able to lock onto the RX bit
+ * stream, it means that the stream contains valid bit transitions for the
+ * configured protocol. This indicates that a link partner is physically
+ * present and powered on.
+ */
+struct phy_status_opts_cdr {
+	bool cdr_locked;
+};
+
+/**
+ * union phy_status_opts - Opaque generic phy status
+ *
+ * @cdr:	Configuration set applicable for PHY_STATUS_CDR_LOCK.
+ */
+union phy_status_opts {
+	struct phy_status_opts_cdr		cdr;
+};
+
 /**
  * union phy_configure_opts - Opaque generic phy configuration
  *
@@ -93,6 +116,7 @@ union phy_configure_opts {
  * @reset: resetting the phy
  * @calibrate: calibrate the phy
  * @notify_phystate: notify and configure the phy for a particular state
+ * @get_status: get the mode-specific status of the phy
  * @release: ops to be performed while the consumer relinquishes the PHY
  * @owner: the module owner containing the ops
  */
@@ -143,6 +167,21 @@ struct phy_ops {
 	int	(*disconnect)(struct phy *phy, int port);
 
 	int	(*notify_phystate)(struct phy *phy, union phy_notify state);
+
+	/**
+	 * @get_status:
+	 *
+	 * Optional.
+	 *
+	 * Used to query the mode-specific status of the phy. Must have no side
+	 * effects.
+	 *
+	 * Returns: 0 if the operation was successful, negative error code
+	 * otherwise.
+	 */
+	int	(*get_status)(struct phy *phy, enum phy_status_type type,
+			      union phy_status_opts *opts);
+
 	void	(*release)(struct phy *phy);
 	struct module *owner;
 };
@@ -257,6 +296,8 @@ int phy_set_speed(struct phy *phy, int speed);
 int phy_configure(struct phy *phy, union phy_configure_opts *opts);
 int phy_validate(struct phy *phy, enum phy_mode mode, int submode,
 		 union phy_configure_opts *opts);
+int phy_get_status(struct phy *phy, enum phy_status_type type,
+		   union phy_status_opts *opts);
 
 static inline enum phy_mode phy_get_mode(struct phy *phy)
 {
@@ -439,6 +480,15 @@ static inline int phy_configure(struct phy *phy,
 
 static inline int phy_validate(struct phy *phy, enum phy_mode mode, int submode,
 			       union phy_configure_opts *opts)
+{
+	if (!phy)
+		return 0;
+
+	return -ENOSYS;
+}
+
+static inline int phy_get_status(struct phy *phy, enum phy_status_type type,
+				 union phy_status_opts *opts)
 {
 	if (!phy)
 		return 0;
