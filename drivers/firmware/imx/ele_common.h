@@ -29,4 +29,6 @@ static inline int ele_trng_init(struct device *dev)
 	return 0;
 }
 #endif
+
+int ele_do_start_rng(struct device *dev);
 #endif
