@@ -722,3 +722,9 @@ ethtool_forced_speed_maps_init(struct ethtool_forced_speed_map *maps, u32 size)
 	}
 }
 EXPORT_SYMBOL_GPL(ethtool_forced_speed_maps_init);
+
+const char *ethtool_link_mode_str(enum ethtool_link_mode_bit_indices link_mode)
+{
+	return link_mode_names[link_mode];
+}
+EXPORT_SYMBOL(ethtool_link_mode_str);
