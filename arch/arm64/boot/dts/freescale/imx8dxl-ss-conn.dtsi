@@ -16,16 +16,16 @@
 		clock-frequency = <250000000>;
 		clock-output-names = "conn_enet0_root_clk";
 	};
+};
 
+&conn_subsys {
 	clk_dummy: clock-dummy {
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <0>;
 		clock-output-names = "clk_dummy";
 	};
-};
 
-&conn_subsys {
 	eqos: ethernet@5b050000 {
 		compatible = "nxp,imx8dxl-dwmac-eqos", "snps,dwmac-5.10a";
 		reg = <0x5b050000 0x10000>;
