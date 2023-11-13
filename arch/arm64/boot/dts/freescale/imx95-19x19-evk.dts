@@ -77,6 +77,11 @@
 			linux,cma-default;
 			reusable;
 		};
+
+		mali_protected: mali_protected {
+			reg = <0 0xa0100000 0 0x1000000>;
+			no-map;
+		};
 	};
 
 	flexcan1_phy: can-phy0 {
@@ -240,6 +245,11 @@
 				"AMIC", "MICBIAS",
 				"IN3R", "AMIC",
 				"IN1R", "AMIC";
+	};
+
+	mali_pma: protected-memory-allocator {
+		 compatible = "arm,protected-memory-allocator";
+		 memory-region = <&mali_protected>;
 	};
 };
 
@@ -1155,6 +1165,10 @@
 			};
 		};
 	};
+};
+
+&gpu {
+	protected-memory-allocator = <&mali_pma>;
 };
 
 &tpm6 {
