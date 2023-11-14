@@ -78,6 +78,11 @@
 			reusable;
 		};
 
+		vpu_boot: vpu_boot@a0000000 {
+			reg = <0 0xa0000000 0 0x100000>;
+			no-map;
+		};
+
 		mali_protected: mali_protected {
 			reg = <0 0xa0100000 0 0x1000000>;
 			no-map;
@@ -1175,4 +1180,9 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_tpm6>;
 	status = "okay";
+};
+
+&vpuctrl {
+	boot = <&vpu_boot>;
+	sram = <&sram1>;
 };
