@@ -280,7 +280,8 @@
 						<&A53_0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
 						<&A53_1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
 						<&A53_2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
-						<&A53_3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+						<&A53_3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+						<&imx8_gpu_ss 0 1>;
 				};
 			};
 		};
@@ -1475,7 +1476,7 @@
 			assigned-clocks = <&clk IMX8MM_CLK_GPU3D_CORE>,
 					  <&clk IMX8MM_GPU_PLL_OUT>;
 			assigned-clock-parents = <&clk IMX8MM_GPU_PLL_OUT>;
-			assigned-clock-rates = <0>, <800000000>;
+			assigned-clock-rates = <0>, <1000000000>;
 			power-domains = <&pgc_gpu>;
 		};
 
@@ -1490,7 +1491,7 @@
 			assigned-clocks = <&clk IMX8MM_CLK_GPU2D_CORE>,
 					  <&clk IMX8MM_GPU_PLL_OUT>;
 			assigned-clock-parents = <&clk IMX8MM_GPU_PLL_OUT>;
-			assigned-clock-rates = <0>, <800000000>;
+			assigned-clock-rates = <0>, <1000000000>;
 			power-domains = <&pgc_gpu>;
 		};
 
@@ -1572,5 +1573,15 @@
 
 	vpu_v4l2: vpu_v4l2 {
 		compatible = "nxp,imx8m-vsiv4l2";
+	};
+
+	imx8_gpu_ss: imx8_gpu_ss {
+		compatible = "fsl,imx8mm-gpu", "fsl,imx8-gpu-ss";
+		cores = <&gpu_3d>, <&gpu_2d>;
+		reg = <0x0 0x40000000 0x0 0x80000000>, <0x0 0x0 0x0 0x8000000>;
+		reg-names = "phys_baseaddr", "contiguous_mem";
+
+		throttle,max_state = <1>;
+		#cooling-cells = <2>;
 	};
 };
