@@ -15,3 +15,4 @@ obj-$(CONFIG_BCM2835_VCHIQ)	+= vc04_services/
 obj-$(CONFIG_XIL_AXIS_FIFO)	+= axis-fifo/
 obj-$(CONFIG_FSL_PPFE)		+= fsl_ppfe/
 obj-$(CONFIG_ETHOSU)		+= ethosu/
+obj-$(CONFIG_NEUTRON)		+= neutron/
