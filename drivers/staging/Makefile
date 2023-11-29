@@ -30,3 +30,4 @@ obj-$(CONFIG_XIL_AXIS_FIFO)	+= axis-fifo/
 obj-$(CONFIG_FIELDBUS_DEV)     += fieldbus/
 obj-$(CONFIG_FSL_PPFE)		+= fsl_ppfe/
 obj-$(CONFIG_ETHOSU)		+= ethosu/
+obj-$(CONFIG_NEUTRON)		+= neutron/
