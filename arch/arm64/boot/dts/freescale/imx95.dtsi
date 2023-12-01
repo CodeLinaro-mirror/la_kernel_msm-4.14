@@ -2900,6 +2900,24 @@
 				 <&vpu_blk_ctrl IMX95_CLK_VPUBLK_WAVE>;
 			power-domains = <&scmi_devpd IMX95_PD_VPU>;
 		};
+
+		neutron_core: imx95-neutron-remoteproc@4ab00000 {
+			compatible = "fsl,imx95-neutron-rproc";
+			reg = <0x0 0x4ab00000 0x0 0x4>;
+			power-domains = <&scmi_devpd IMX95_PD_NPU>;
+		};
+
+		neutron: imx95-neutron@4ab00004 {
+			compatible = "fsl,imx95-neutron";
+			reg = <0x0 0x4ab00004 0x0 0x400>;
+			fsl,neutron-rproc = <&neutron_core>;
+			interrupts = <GIC_SPI 318 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&scmi_clk IMX95_CLK_NPU>,
+				 <&scmi_clk IMX95_CLK_NPUAPB>;
+			clock-names = "npu", "npu_apb";
+			power-domains = <&scmi_devpd IMX95_PD_NPU>;
+			iommus = <&smmu 0xd>;
+		};
 	};
 
 	ele_if0: secure-enclave-0 {
