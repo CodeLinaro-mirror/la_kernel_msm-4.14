@@ -866,6 +866,8 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-jdi-wuxga-lvds-panel.dtb
 imx95-19x19-evk-jtag-dtbs := imx95-19x19-evk.dtb imx95-19x19-evk-jtag.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-jtag.dtb
 
+dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-titan.dtb
+
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-evk.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk.dtb
