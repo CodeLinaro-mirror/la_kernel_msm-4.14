@@ -517,6 +517,13 @@ static int mxc_isi_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
+	ret = pm_runtime_resume_and_get(dev);
+	if (ret) {
+		dev_err_probe(dev, ret, "Failed to enable ISI\n");
+		pm_runtime_disable(dev);
+		return ret;
+	}
+
 	ret = mxc_isi_crossbar_init(isi);
 	if (ret)
 		return dev_err_probe(dev, ret,
@@ -539,11 +546,12 @@ static int mxc_isi_probe(struct platform_device *pdev)
 
 	mxc_isi_debug_init(isi);
 
+	pm_runtime_put(dev);
 	return 0;
 
 err_xbar:
 	mxc_isi_crossbar_cleanup(&isi->crossbar);
-
+	pm_runtime_put(dev);
 	return ret;
 }
 
