@@ -3,6 +3,7 @@
  * i.MX8 ISI - Input crossbar switch
  *
  * Copyright (c) 2022 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Copyright 2024-2025 NXP
  */
 
 #include <linux/device.h>
@@ -161,6 +162,13 @@ mxc_isi_crossbar_xlate_streams(struct mxc_isi_crossbar *xbar,
 	}
 
 	pad = media_pad_remote_pad_first(&xbar->pads[sink_pad]);
+	if (!pad) {
+		dev_err(xbar->isi->dev,
+			"no remote pad found for sink pad %u\n",
+			sink_pad);
+		return ERR_PTR(-EPIPE);
+	}
+
 	sd = media_entity_to_v4l2_subdev(pad->entity);
 	if (!sd) {
 		dev_dbg(xbar->isi->dev,
@@ -351,6 +359,85 @@ static int mxc_isi_crossbar_set_fmt(struct v4l2_subdev *sd,
 	return 0;
 }
 
+static int mxc_isi_get_frame_desc(struct v4l2_subdev *sd, unsigned int pad,
+				  struct v4l2_mbus_frame_desc *fd)
+{
+	struct mxc_isi_crossbar *xbar = to_isi_crossbar(sd);
+	struct device *dev = xbar->isi->dev;
+	struct v4l2_subdev_route *route;
+	struct v4l2_subdev_state *state;
+	int ret;
+
+	if (pad < xbar->num_sinks)
+		return -EINVAL;
+
+	memset(fd, 0, sizeof(*fd));
+
+	fd->type = V4L2_MBUS_FRAME_DESC_TYPE_CSI2;
+
+	state = v4l2_subdev_lock_and_get_active_state(sd);
+
+	for_each_active_route(&state->routing, route) {
+		struct v4l2_mbus_frame_desc_entry *source_entry = NULL;
+		struct v4l2_mbus_frame_desc source_fd;
+		struct v4l2_subdev *remote_sd = NULL;
+		struct media_pad *remote_pad;
+		unsigned int i;
+
+		if (route->source_pad != pad)
+			continue;
+
+		remote_pad = media_pad_remote_pad_first(&xbar->pads[route->sink_pad]);
+		if (remote_pad)
+			remote_sd = media_entity_to_v4l2_subdev(remote_pad->entity);
+		if (!remote_sd) {
+			dev_err(dev, "no entity connected to crossbar input %u\n",
+				route->sink_pad);
+			ret = -EPIPE;
+			goto out_unlock;
+		}
+
+		/* Don't call get_frame_desc if the remote_sd is not a CSI bridge */
+		if (remote_sd->entity.function == MEDIA_ENT_F_IO_DTV)
+			continue;
+
+		ret = v4l2_subdev_call(remote_sd, pad, get_frame_desc,
+				       remote_pad->index, &source_fd);
+		if (ret < 0) {
+			dev_err(dev, "Failed to get source frame desc from pad %u\n",
+				route->sink_pad);
+			goto out_unlock;
+		}
+
+		for (i = 0; i < source_fd.num_entries; i++) {
+			if (source_fd.entry[i].stream == route->sink_stream) {
+				source_entry = &source_fd.entry[i];
+				break;
+			}
+		}
+
+		if (!source_entry) {
+			dev_err(dev, "Failed to find stream from source frames desc, pad %u\n",
+				route->sink_pad);
+			ret = -EPIPE;
+			goto out_unlock;
+		}
+
+		fd->entry[fd->num_entries].stream = route->source_stream;
+		fd->entry[fd->num_entries].flags = source_entry->flags;
+		fd->entry[fd->num_entries].length = source_entry->length;
+		fd->entry[fd->num_entries].pixelcode = source_entry->pixelcode;
+		fd->entry[fd->num_entries].bus.csi2.vc = source_entry->bus.csi2.vc;
+		fd->entry[fd->num_entries].bus.csi2.dt = source_entry->bus.csi2.dt;
+
+		fd->num_entries++;
+	}
+
+out_unlock:
+	v4l2_subdev_unlock_state(state);
+	return ret;
+}
+
 static int mxc_isi_crossbar_set_routing(struct v4l2_subdev *sd,
 					struct v4l2_subdev_state *state,
 					enum v4l2_subdev_format_whence which,
@@ -468,6 +555,7 @@ static const struct v4l2_subdev_pad_ops mxc_isi_crossbar_subdev_pad_ops = {
 	.enum_mbus_code = mxc_isi_crossbar_enum_mbus_code,
 	.get_fmt = v4l2_subdev_get_fmt,
 	.set_fmt = mxc_isi_crossbar_set_fmt,
+	.get_frame_desc = mxc_isi_get_frame_desc,
 	.set_routing = mxc_isi_crossbar_set_routing,
 	.enable_streams = mxc_isi_crossbar_enable_streams,
 	.disable_streams = mxc_isi_crossbar_disable_streams,
