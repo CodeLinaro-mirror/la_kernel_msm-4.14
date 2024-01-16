@@ -888,6 +888,9 @@ imx95-19x19-titan-adv7535-ap1302-dtbs := imx95-19x19-titan.dtb \
 				       imx95-19x19-titan-ap1302.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-titan-adv7535-ap1302.dtb
 
+imx95-19x19-titan-os08a20-dtbs := imx95-19x19-titan.dtb imx95-19x19-titan-os08a20.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-titan-os08a20.dtb
+
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-evk.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk.dtb
