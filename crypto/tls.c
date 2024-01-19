@@ -194,17 +194,6 @@ static int crypto_tls_encrypt(struct aead_request *req)
 	int err;
 
 	/*
-	 * The hash result is saved at the beginning of the tls request ctx
-	 * and is aligned as required by the hash transform. Enough space was
-	 * allocated in crypto_tls_init_tfm to accommodate the difference. The
-	 * requests themselves start later at treq_ctx->tail + ctx->reqoff so
-	 * the result is not overwritten by the second (cipher) request.
-	 */
-	hash = (u8 *)ALIGN((unsigned long)hash +
-			   crypto_ahash_alignmask(ctx->auth),
-			   crypto_ahash_alignmask(ctx->auth) + 1);
-
-	/*
 	 * STEP 1: create ICV together with necessary padding
 	 */
 	err = crypto_tls_gen_padicv(hash, &phashlen, req);
@@ -355,13 +344,6 @@ static int crypto_tls_decrypt(struct aead_request *req)
 		if (padding[i] != pad_size)
 			paderr = -EBADMSG;
 
-	/*
-	 * Align the digest result as required by the hash transform. Enough
-	 * space was allocated in crypto_tls_init_tfm
-	 */
-	hash = (u8 *)ALIGN((unsigned long)hash +
-			   crypto_ahash_alignmask(ctx->auth),
-			   crypto_ahash_alignmask(ctx->auth) + 1);
 	/*
 	 * Step 3 - Verify hash
 	 * Two bytes at the end of the associated data make the length field.
