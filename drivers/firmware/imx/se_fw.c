@@ -43,7 +43,7 @@ static uint32_t v2x_fw_state;
 #define IMX_ELE_FW_DIR                 "/lib/firmware/imx/ele/"
 
 struct imx_info {
-	const uint8_t pdev_name[2][10];
+	const uint8_t pdev_name[10];
 	bool socdev;
 	uint8_t mu_id;
 	uint8_t mu_did;
@@ -82,7 +82,7 @@ static const struct imx_info_list imx8ulp_info = {
 	.soc_id = SOC_ID_OF_IMX8ULP,
 	.info = {
 			{
-				.pdev_name = {"se-fw2", "mu2"},
+				.pdev_name = {"se-fw2"},
 				.socdev = true,
 				.mu_id = 2,
 				.mu_did = 7,
@@ -92,7 +92,7 @@ static const struct imx_info_list imx8ulp_info = {
 				.success_tag = 0xd6,
 				.base_api_ver = MESSAGING_VERSION_6,
 				.fw_api_ver = MESSAGING_VERSION_7,
-				.se_name = "ele",
+				.se_name = "hsm1",
 				.mbox_tx_name = "tx",
 				.mbox_rx_name = "rx",
 				.pool_name = "sram",
@@ -114,7 +114,7 @@ static const struct imx_info_list imx93_info = {
 	.soc_id = SOC_ID_OF_IMX93,
 	.info = {
 			{
-				.pdev_name = {"se-fw2", "mu2"},
+				.pdev_name = {"se-fw2"},
 				.socdev = false,
 				.mu_id = 2,
 				.mu_did = 3,
@@ -124,7 +124,7 @@ static const struct imx_info_list imx93_info = {
 				.success_tag = 0xd6,
 				.base_api_ver = MESSAGING_VERSION_6,
 				.fw_api_ver = MESSAGING_VERSION_7,
-				.se_name = "ele",
+				.se_name = "hsm1",
 				.mbox_tx_name = "tx",
 				.mbox_rx_name = "rx",
 				.pool_name = NULL,
@@ -145,7 +145,7 @@ static const struct imx_info_list imx95_info = {
 	.soc_id = SOC_ID_OF_IMX95,
 	.info = {
 			{
-				.pdev_name = {"se-fw2", "mu2"},
+				.pdev_name = {"se-fw2"},
 				.socdev = false,
 				.mu_id = 2,
 				.mu_did = 3,
@@ -155,7 +155,7 @@ static const struct imx_info_list imx95_info = {
 				.success_tag = 0xd6,
 				.base_api_ver = MESSAGING_VERSION_6,
 				.fw_api_ver = MESSAGING_VERSION_7,
-				.se_name = "ele",
+				.se_name = "hsm1",
 				.mbox_tx_name = "tx",
 				.mbox_rx_name = "rx",
 				.pool_name = NULL,
@@ -169,7 +169,7 @@ static const struct imx_info_list imx95_info = {
 				.fw_name_in_rfs = NULL,
 			},
 			{
-				.pdev_name = {"v2x-fw0", "mu0"},
+				.pdev_name = {"v2x-fw0"},
 				.socdev = false,
 				.mu_id = 0,
 				.mu_did = 0,
@@ -193,7 +193,7 @@ static const struct imx_info_list imx95_info = {
 				.fw_name_in_rfs = NULL,
 			},
 			{
-				.pdev_name = {"v2x-fw6", "mu6"},
+				.pdev_name = {"v2x-fw6"},
 				.socdev = false,
 				.mu_id = 6,
 				.mu_did = 0,
@@ -252,7 +252,7 @@ static struct imx_info *get_imx_info(struct imx_info_list *info_list,
 	int i = 0;
 
 	for (i = 0; i < info_list->num_mu; i++)
-		if (!memcmp(info_list->info[i].pdev_name[0], pdev_name, len))
+		if (!memcmp(info_list->info[i].pdev_name, pdev_name, len))
 			return &info_list->info[i];
 
 	return NULL;
@@ -1429,9 +1429,9 @@ static int init_device_context(struct device *dev)
 		INIT_LIST_HEAD(&dev_ctx->pending_in);
 		sema_init(&dev_ctx->fops_lock, 1);
 
-		devname = devm_kasprintf(dev, GFP_KERNEL, "%s_%s_ch%d",
+		devname = devm_kasprintf(dev, GFP_KERNEL, "%s_ch%d",
 					 info->se_name,
-					 info->pdev_name[1], i);
+					 i);
 		if (!devname) {
 			ret = -ENOMEM;
 			dev_err(dev,
@@ -1644,7 +1644,7 @@ static int se_fw_probe(struct platform_device *pdev)
 	/* Assumed v2x_state_check is enabled for i.MX95 only. */
 	if (info->v2x_state_check) {
 		if (v2x_fw_state == V2X_FW_STATE_UNKNOWN &&
-				!memcmp(info->se_name, "ele", 4)) {
+				!memcmp(info->se_name, "hsm1", 5)) {
 			ret = ele_get_v2x_fw_state(dev, &v2x_fw_state);
 			if (ret)
 				dev_err(dev, "Failed to start ele rng\n");
@@ -1709,7 +1709,7 @@ static int se_fw_probe(struct platform_device *pdev)
 	}
 
 	dev_info(dev, "i.MX secure-enclave: %s interface to firmware, configured.\n",
-		info->pdev_name[1]);
+		 info->se_name);
 
 	return devm_of_platform_populate(dev);
 
