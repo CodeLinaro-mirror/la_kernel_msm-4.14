@@ -12,6 +12,32 @@
 	assigned-clock-rates = <625000000>, <625000000>;
 };
 
+/ {
+	model = "Freescale i.MX8QP";
+	compatible = "fsl,imx8qp", "fsl,imx8qm";
+};
+
+&cpus {
+	cpu-map {
+		cluster1 {
+			/delete-node/ core1;
+		};
+	};
+	/delete-node/ cpu@101;
+};
+
+&gpu_3d1 {
+      assigned-clock-rates = <625000000>, <625000000>;
+};
+
+&imx8_gpu_ss {/*<freq-kHz vol-uV>*/
+	operating-points = <
+	/*nominal*/	625000  0
+				625000  0
+/*underdrive*/	400000  0  /*core/shader clock share the same frequency on underdrive mode*/
+	>;
+};
+
 &thermal_zones {
 	cpu1-thermal {
 		cooling-maps {
