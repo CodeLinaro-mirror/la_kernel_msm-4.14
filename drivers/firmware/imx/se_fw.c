@@ -54,6 +54,7 @@ struct imx_info {
 	uint8_t *mbox_tx_name;
 	uint8_t *mbox_rx_name;
 	uint8_t *pool_name;
+	uint32_t mu_buff_size;
 	bool reserved_dma_ranges;
 	bool init_fw;
 	/* platform specific flag to enable/disable the ELE True RNG */
@@ -97,6 +98,7 @@ static const struct imx_info_list imx8ulp_info = {
 				.start_rng = ele_start_rng,
 				.enable_ele_trng = false,
 				.imem_mgmt = true,
+				.mu_buff_size = 0,
 			},
 	},
 };
@@ -126,6 +128,7 @@ static const struct imx_info_list imx93_info = {
 				.start_rng = ele_start_rng,
 				.enable_ele_trng = true,
 				.imem_mgmt = false,
+				.mu_buff_size = 0,
 			},
 	},
 };
@@ -155,6 +158,7 @@ static const struct imx_info_list imx95_info = {
 				.start_rng = ele_start_rng,
 				.enable_ele_trng = true,
 				.imem_mgmt = false,
+				.mu_buff_size = 0,
 			},
 			{
 				.pdev_name = {"v2x-fw0", "mu0"},
@@ -177,6 +181,7 @@ static const struct imx_info_list imx95_info = {
 				.start_rng = v2x_start_rng,
 				.enable_ele_trng = false,
 				.imem_mgmt = false,
+				.mu_buff_size = 0,
 			},
 			{
 				.pdev_name = {"v2x-fw6", "mu6"},
@@ -199,6 +204,7 @@ static const struct imx_info_list imx95_info = {
 				.start_rng = NULL,
 				.enable_ele_trng = false,
 				.imem_mgmt = false,
+				.mu_buff_size = 256,
 			},
 	}
 };
@@ -697,6 +703,7 @@ static ssize_t ele_mu_fops_read(struct file *fp, char __user *buf,
 	dev_ctx->non_secure_mem.pos = 0;
 
 	dev_ctx->pending_hdr = 0;
+	dev_ctx->mu_buff_offset = 0;
 
 exit:
 	/*
@@ -805,6 +812,7 @@ static int ele_mu_ioctl_setup_iobuf_handler(struct ele_mu_device_ctx *dev_ctx,
 	u8 *addr;
 
 	struct ele_mu_priv *priv = dev_get_drvdata(dev_ctx->dev);
+	struct imx_info *imx_info = (struct imx_info *)priv->info;
 
 	if (copy_from_user(&io, (u8 *)arg, sizeof(io))) {
 		dev_err(dev_ctx->priv->dev,
@@ -815,8 +823,15 @@ static int ele_mu_ioctl_setup_iobuf_handler(struct ele_mu_device_ctx *dev_ctx,
 	}
 
 	/* Function call to retrieve MU Buffer address */
-	if (io.flags & ELE_MU_IO_DATA_BUF_SHE_V2X)
+	if (io.flags & ELE_MU_IO_DATA_BUF_SHE_V2X) {
 		addr = get_mu_buf(priv->tx_chan);
+		addr = addr + dev_ctx->mu_buff_offset;
+		dev_ctx->mu_buff_offset = dev_ctx->mu_buff_offset + io.length;
+		if (dev_ctx->mu_buff_offset >= imx_info->mu_buff_size) {
+			err = -ENOMEM;
+			goto exit;
+		}
+	}
 
 	dev_dbg(dev_ctx->priv->dev,
 			"%s: io [buf: %p(%d) flag: %x]\n",
