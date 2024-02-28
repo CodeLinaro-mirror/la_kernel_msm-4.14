@@ -16,6 +16,7 @@
 
 enum qixis_cpld_gpio_type {
 	LX2160ARDB_CPLD_GPIO = 0,
+	LS1046AQDS_STAT_PRES2_CPLD_GPIO,
 };
 
 struct qixis_cpld_gpio_config {
@@ -28,12 +29,23 @@ static struct qixis_cpld_gpio_config lx2160ardb_cpld_gpio_cfg = {
 	.input_lines = GENMASK(7, 1),
 };
 
+static struct qixis_cpld_gpio_config ls1046aqds_stat_pres2_cpld_gpio_cfg = {
+	.type = LS1046AQDS_STAT_PRES2_CPLD_GPIO,
+	.input_lines = GENMASK(7, 0),
+};
+
+static const struct regmap_config regmap_config_8r_8v = {
+	.reg_bits = 8,
+	.val_bits = 8,
+};
+
 static int qixis_cpld_gpio_probe(struct platform_device *pdev)
 {
 	const struct qixis_cpld_gpio_config *cfg;
 	struct gpio_regmap_config config = {0};
 	unsigned long fixed_direction_output;
 	struct regmap *regmap;
+	void __iomem *reg;
 	u32 base;
 	int ret;
 
@@ -49,8 +61,23 @@ static int qixis_cpld_gpio_probe(struct platform_device *pdev)
 		return ret;
 
 	regmap = dev_get_regmap(pdev->dev.parent, NULL);
-	if (!regmap)
-		return -ENODEV;
+	if (!regmap) {
+		/* In case there is no regmap configured by the parent device,
+		 * create our own.
+		 */
+		reg = devm_platform_ioremap_resource(pdev, 0);
+		if (!reg)
+			return -ENODEV;
+
+		regmap = devm_regmap_init_mmio(&pdev->dev, reg, &regmap_config_8r_8v);
+		if (!regmap)
+			return -ENODEV;
+
+		/* In this case, the offset of our register is 0 inside the
+		 * regmap area that we just created.
+		 */
+		base = 0;
+	}
 
 	fixed_direction_output = GENMASK(7, 0) & ~cfg->input_lines;
 	config.fixed_direction_output = &fixed_direction_output;
@@ -76,6 +103,11 @@ static const struct of_device_id qixis_cpld_gpio_of_match[] = {
 		.compatible = "fsl,lx2160a-rdb-qixis-cpld-gpio",
 		.data = &lx2160ardb_cpld_gpio_cfg
 	},
+	{
+		.compatible = "fsl,ls1046a-qds-qixis-stat-pres2-cpld-gpio",
+		.data = &ls1046aqds_stat_pres2_cpld_gpio_cfg
+	},
+
 	{}
 };
 MODULE_DEVICE_TABLE(of, qixis_cpld_gpio_of_match);
