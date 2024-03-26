@@ -513,6 +513,7 @@ static int drain_mr_fqrni(struct qm_portal *p)
 {
 	const struct qm_mr_entry *msg;
 loop:
+	qm_mr_pvb_update(p);
 	msg = qm_mr_current(p);
 	if (!msg) {
 		/* if MR was full and h/w had other FQRNI entries to produce, we
@@ -531,6 +532,7 @@ loop:
 		do {
 			now = mfatb();
 		} while ((then + 10000) > now);
+		qm_mr_pvb_update(p);
 		msg = qm_mr_current(p);
 		if (!msg)
 			return 0;
