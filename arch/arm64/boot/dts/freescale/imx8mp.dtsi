@@ -1991,7 +1991,6 @@
 				clock-names = "ipg", "ahb";
 				#dma-cells = <3>;
 				fsl,sdma-ram-script-name = "imx/sdma/sdma-imx7d.bin";
-				fsl,ratio-1-1;
 				power-domains = <&audiomix_pd>;
 				status = "disabled";
 			};
@@ -2005,7 +2004,6 @@
 				clock-names = "ipg", "ahb";
 				#dma-cells = <3>;
 				fsl,sdma-ram-script-name = "imx/sdma/sdma-imx7d.bin";
-				fsl,ratio-1-1;
 				power-domains = <&audiomix_pd>;
 				status = "disabled";
 			};
