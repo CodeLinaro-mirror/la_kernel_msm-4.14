@@ -3082,6 +3082,10 @@
 		};
 	};
 
+	rpmsg-lifecycle {
+		compatible = "nxp,rpmsg-lifecycle";
+	};
+
 	ele_if0: secure-enclave-0 {
 		compatible = "fsl,imx95-se";
 		mbox-names = "tx", "rx";
