@@ -15,6 +15,7 @@
 #include <linux/firmware/imx/ele_mu_ioctl.h>
 #include <linux/firmware/imx/se_fw_inc.h>
 #include <linux/firmware/imx/v2x_base_msg.h>
+#include <linux/firmware/imx/svc/seco.h>
 #include <linux/genalloc.h>
 #include <linux/init.h>
 #include <linux/io.h>
@@ -37,6 +38,7 @@ static uint32_t v2x_fw_state;
 
 #define SOC_ID_OF_IMX8ULP		0x084D
 #define SOC_ID_OF_IMX93			0x9300
+#define SOC_ID_OF_IMX8DXL		0xE
 #define SOC_VER_MASK			0xFFFF0000
 #define SOC_ID_MASK			0x0000FFFF
 #define RESERVED_DMA_POOL		BIT(1)
@@ -60,6 +62,8 @@ struct imx_info {
 	uint32_t mu_buff_size;
 	bool reserved_dma_ranges;
 	bool init_fw;
+	int (*pre_if_config)(struct device *dev);
+	int (*post_if_config)(struct device *dev);
 	/* platform specific flag to enable/disable the ELE True RNG */
 	bool v2x_state_check;
 	int (*start_rng)(struct device *dev);
@@ -97,7 +101,8 @@ static const struct imx_info_list imx8ulp_info = {
 				.mbox_rx_name = "rx",
 				.pool_name = "sram",
 				.reserved_dma_ranges = true,
-				.init_fw = false,
+				.pre_if_config = false,
+				.post_if_config = false,
 				.v2x_state_check = false,
 				.start_rng = ele_start_rng,
 				.enable_ele_trng = false,
@@ -129,10 +134,43 @@ static const struct imx_info_list imx93_info = {
 				.mbox_rx_name = "rx",
 				.pool_name = NULL,
 				.reserved_dma_ranges = true,
-				.init_fw = true,
+				.pre_if_config = false,
+				.post_if_config = ele_init_fw,
 				.v2x_state_check = false,
 				.start_rng = ele_start_rng,
 				.enable_ele_trng = true,
+				.imem_mgmt = false,
+				.mu_buff_size = 0,
+				.fw_name_in_rfs = NULL,
+			},
+	},
+};
+
+static const struct imx_info_list imx8dxl_info = {
+	.num_mu = 1,
+	.soc_id = SOC_ID_OF_IMX8DXL,
+	.info = {
+			{
+				.pdev_name = {"se-fw2"},
+				.socdev = false,
+				.mu_id = 2,
+				.mu_did = 0,
+				.max_dev_ctx = 2,
+				.cmd_tag = 0x17,
+				.rsp_tag = 0xe1,
+				.success_tag = 0x00,
+				.base_api_ver = MESSAGING_VERSION_6,
+				.fw_api_ver = MESSAGING_VERSION_7,
+				.se_name = "hsm1",
+				.mbox_tx_name = "txdb",
+				.mbox_rx_name = "rxdb",
+				.pool_name = NULL,
+				.reserved_dma_ranges = false,
+				.pre_if_config = imx_scu_init_fw,
+				.post_if_config = false,
+				.v2x_state_check = false,
+				.start_rng = false,
+				.enable_ele_trng = false,
 				.imem_mgmt = false,
 				.mu_buff_size = 0,
 				.fw_name_in_rfs = NULL,
@@ -160,7 +198,8 @@ static const struct imx_info_list imx95_info = {
 				.mbox_rx_name = "rx",
 				.pool_name = NULL,
 				.reserved_dma_ranges = false,
-				.init_fw = true,
+				.pre_if_config = false,
+				.post_if_config = ele_init_fw,
 				.v2x_state_check = true,
 				.start_rng = ele_start_rng,
 				.enable_ele_trng = true,
@@ -184,7 +223,8 @@ static const struct imx_info_list imx95_info = {
 				.mbox_tx_name = "tx",
 				.mbox_rx_name = "rx",
 				.reserved_dma_ranges = false,
-				.init_fw = false,
+				.pre_if_config = false,
+				.post_if_config = false,
 				.v2x_state_check = true,
 				.start_rng = v2x_start_rng,
 				.enable_ele_trng = false,
@@ -208,7 +248,8 @@ static const struct imx_info_list imx95_info = {
 				.mbox_tx_name = "tx",
 				.mbox_rx_name = "rx",
 				.reserved_dma_ranges = false,
-				.init_fw = false,
+				.pre_if_config = false,
+				.post_if_config = false,
 				.v2x_state_check = true,
 				.start_rng = NULL,
 				.enable_ele_trng = false,
@@ -232,7 +273,8 @@ static const struct imx_info_list imx95_info = {
 				.mbox_tx_name = "tx",
 				.mbox_rx_name = "rx",
 				.reserved_dma_ranges = false,
-				.init_fw = false,
+				.pre_if_config = false,
+				.post_if_config = false,
 				.v2x_state_check = true,
 				.start_rng = NULL,
 				.enable_ele_trng = false,
@@ -247,6 +289,7 @@ static const struct of_device_id se_fw_match[] = {
 	{ .compatible = "fsl,imx8ulp-se-fw", .data = (void *)&imx8ulp_info},
 	{ .compatible = "fsl,imx93-se-fw", .data = (void *)&imx93_info},
 	{ .compatible = "fsl,imx95-se-fw", .data = (void *)&imx95_info},
+	{ .compatible = "fsl,imx8dxl-se-fw", .data = (void *)&imx8dxl_info},
 	{},
 };
 
@@ -1599,6 +1642,15 @@ static int se_fw_probe(struct platform_device *pdev)
 		goto exit;
 	}
 
+	if (info->pre_if_config) {
+		/* start initializing ele fw */
+		ret = info->pre_if_config(dev);
+		if (ret) {
+			dev_err(dev, "Failed to initialize scu config.\n");
+			goto exit;
+		}
+	}
+
 	/* Initialize the mutex. */
 	mutex_init(&priv->mu_cmd_lock);
 	mutex_init(&priv->mu_lock);
@@ -1652,9 +1704,9 @@ static int se_fw_probe(struct platform_device *pdev)
 		priv->flags |= RESERVED_DMA_POOL;
 	}
 
-	if (info->init_fw) {
+	if (info->post_if_config) {
 		/* start initializing ele fw */
-		ret = ele_init_fw(dev);
+		ret = info->post_if_config(dev);
 		if (ret) {
 			dev_err(dev, "Failed to initialize ele fw.\n");
 			goto exit;
