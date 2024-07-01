@@ -1831,7 +1831,7 @@ static int isi_cap_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int isi_cap_remove(struct platform_device *pdev)
+static void isi_cap_remove(struct platform_device *pdev)
 {
 	struct mxc_isi_cap_dev *isi_cap = platform_get_drvdata(pdev);
 	struct v4l2_subdev *sd = &isi_cap->sd;
@@ -1840,8 +1840,6 @@ static int isi_cap_remove(struct platform_device *pdev)
 	media_entity_cleanup(&sd->entity);
 	v4l2_set_subdevdata(sd, NULL);
 	pm_runtime_disable(&pdev->dev);
-
-	return 0;
 }
 
 static int mxc_isi_cap_pm_suspend(struct device *dev)
