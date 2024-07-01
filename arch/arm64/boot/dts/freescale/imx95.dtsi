@@ -4,6 +4,7 @@
  */
 
 #include <dt-bindings/clock/fsl,imx95-clock.h>
+#include <dt-bindings/dma/fsl-edma.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/interrupt-controller/arm-gic.h>
@@ -548,6 +549,152 @@
 			#size-cells = <1>;
 			ranges = <0x42000000 0x0 0x42000000 0x8000000>;
 
+			edma2: dma-controller@42000000 {
+				compatible = "fsl,imx95-edma5";
+				reg = <0x42000000 0x210000>;
+				#dma-cells = <3>;
+				dma-channels = <64>;
+				interrupts = <GIC_SPI 128 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 128 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 129 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 129 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 130 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 130 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 131 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 131 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 132 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 132 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 133 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 133 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 134 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 134 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 135 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 135 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 136 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 136 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 137 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 137 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 138 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 138 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 139 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 139 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 140 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 140 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 141 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 141 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 142 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 142 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 144 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 145 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 145 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 146 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 146 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 147 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 147 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 148 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 148 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 149 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 149 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 150 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 150 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 151 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 151 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 152 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 152 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 153 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 154 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 154 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 155 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 155 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 156 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 156 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 157 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 157 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 158 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 158 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 159 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 159 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&scmi_clk IMX95_CLK_BUSWAKEUP>;
+				clock-names = "dma";
+			};
+
+			edma3: dma-controller@42210000 {
+				compatible = "fsl,imx95-edma5";
+				reg = <0x42210000 0x210000>;
+				#dma-cells = <3>;
+				dma-channels = <64>;
+				interrupts = <GIC_SPI 256 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 256 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 257 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 257 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 258 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 258 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 259 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 259 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 260 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 260 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 261 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 261 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 262 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 262 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 263 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 263 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 264 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 264 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 265 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 265 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 266 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 266 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 267 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 267 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 268 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 268 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 269 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 269 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 270 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 270 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 271 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 271 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 272 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 272 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 273 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 273 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 274 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 274 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 275 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 275 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 276 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 276 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 277 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 277 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 278 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 278 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 279 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 279 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 280 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 280 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 281 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 281 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 282 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 282 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 283 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 283 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 284 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 284 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 285 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 285 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 286 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 286 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 287 IRQ_TYPE_LEVEL_HIGH>,
+					     <GIC_SPI 287 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&scmi_clk IMX95_CLK_BUSWAKEUP>;
+				clock-names = "dma";
+			};
+
 			mu7: mailbox@42430000 {
 				compatible = "fsl,imx95-mu", "fsl,imx8ulp-mu";
 				reg = <0x42430000 0x10000>;
@@ -643,6 +790,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C3>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 8 0 0>, <&edma2 9 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -653,6 +802,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C4>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 10 0 0>, <&edma2 11 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -665,6 +816,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI3>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 12 0 0>, <&edma2 13 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -677,6 +830,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI4>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 14 0 0>, <&edma2 15 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -687,6 +842,8 @@
 				interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART3>;
 				clock-names = "ipg";
+				dmas = <&edma2 18 0 FSL_EDMA_RX>, <&edma2 17 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -697,6 +854,8 @@
 				interrupts = <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART4>;
 				clock-names = "ipg";
+				dmas = <&edma2 20 0 FSL_EDMA_RX>, <&edma2 19 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -707,6 +866,8 @@
 				interrupts = <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART5>;
 				clock-names = "ipg";
+				dmas = <&edma2 22 0 FSL_EDMA_RX>, <&edma2 21 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -717,6 +878,8 @@
 				interrupts = <GIC_SPI 67 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART6>;
 				clock-names = "ipg";
+				dmas = <&edma2 24 0 FSL_EDMA_RX>, <&edma2 23 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -756,6 +919,8 @@
 				interrupts = <GIC_SPI 68 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART7>;
 				clock-names = "ipg";
+				dmas = <&edma2 26 0 FSL_EDMA_RX>, <&edma2 25 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -766,6 +931,8 @@
 				interrupts = <GIC_SPI 69 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART8>;
 				clock-names = "ipg";
+				dmas = <&edma2 28 0 FSL_EDMA_RX>, <&edma2 27 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -776,6 +943,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C5>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 71 0 0>, <&edma2 72 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -786,6 +955,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C6>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 73 0 0>, <&edma2 74 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -796,6 +967,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C7>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 75 0 0>, <&edma2 76 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -806,6 +979,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C8>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 77 0 0>, <&edma2 78 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -818,6 +993,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI5>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 79 0 0>, <&edma2 80 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -830,6 +1007,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI6>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 81 0 0>, <&edma2 82 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -842,6 +1021,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI7>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 83 0 0>, <&edma2 84 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -854,6 +1035,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI8>,
 					 <&scmi_clk IMX95_CLK_BUSWAKEUP>;
 				clock-names = "per", "ipg";
+				dmas = <&edma2 85 0 0>, <&edma2 86 0 FSL_EDMA_RX>;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -1011,24 +1194,8 @@
 			ranges = <0x44000000 0x0 0x44000000 0x800000>;
 
 			edma1: dma-controller@44000000 {
-				compatible = "fsl,imx93-edma";
-				reg = <0x44000000 0x10000>,
-				      <0x44010000 0x10000>, <0x44020000 0x10000>,
-				      <0x44030000 0x10000>, <0x44040000 0x10000>,
-				      <0x44050000 0x10000>, <0x44060000 0x10000>,
-				      <0x44070000 0x10000>, <0x44080000 0x10000>,
-				      <0x44090000 0x10000>, <0x440a0000 0x10000>,
-				      <0x440b0000 0x10000>, <0x440c0000 0x10000>,
-				      <0x440d0000 0x10000>, <0x440e0000 0x10000>,
-				      <0x440f0000 0x10000>, <0x44100000 0x10000>,
-				      <0x44110000 0x10000>, <0x44120000 0x10000>,
-				      <0x44130000 0x10000>, <0x44140000 0x10000>,
-				      <0x44150000 0x10000>, <0x44160000 0x10000>,
-				      <0x44170000 0x10000>, <0x44180000 0x10000>,
-				      <0x44190000 0x10000>, <0x441a0000 0x10000>,
-				      <0x441b0000 0x10000>, <0x441c0000 0x10000>,
-				      <0x441d0000 0x10000>, <0x441e0000 0x10000>,
-				      <0x441f0000 0x10000>;
+				compatible = "fsl,imx93-edma3";
+				reg = <0x44000000 0x200000>;
 				#dma-cells = <3>;
 				dma-channels = <31>;
 				interrupts = <GIC_SPI 96 IRQ_TYPE_LEVEL_HIGH>,
@@ -1061,27 +1228,9 @@
 					     <GIC_SPI 123 IRQ_TYPE_LEVEL_HIGH>,
 					     <GIC_SPI 124 IRQ_TYPE_LEVEL_HIGH>,
 					     <GIC_SPI 125 IRQ_TYPE_LEVEL_HIGH>,
-					     <GIC_SPI 126 IRQ_TYPE_LEVEL_HIGH>,
-					     <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>;
-				interrupt-names = "edma1-chan0-tx", "edma1-chan1-tx",
-						  "edma1-chan2-tx", "edma1-chan3-tx",
-						  "edma1-chan4-tx", "edma1-chan5-tx",
-						  "edma1-chan6-tx", "edma1-chan7-tx",
-						  "edma1-chan8-tx", "edma1-chan9-tx",
-						  "edma1-chan10-tx", "edma1-chan11-tx",
-						  "edma1-chan12-tx", "edma1-chan13-tx",
-						  "edma1-chan14-tx", "edma1-chan15-tx",
-						  "edma1-chan16-tx", "edma1-chan17-tx",
-						  "edma1-chan18-tx", "edma1-chan19-tx",
-						  "edma1-chan20-tx", "edma1-chan21-tx",
-						  "edma1-chan22-tx", "edma1-chan23-tx",
-						  "edma1-chan24-tx", "edma1-chan25-tx",
-						  "edma1-chan26-tx", "edma1-chan27-tx",
-						  "edma1-chan28-tx", "edma1-chan29-tx",
-						  "edma1-chan30-tx", "edma1-err";
+					     <GIC_SPI 126 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_BUSAON>;
-				clock-names = "edma";
-				status = "disabled";
+				clock-names = "dma";
 			};
 
 			mu1: mailbox@44220000 {
@@ -1177,6 +1326,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C1>,
 					 <&scmi_clk IMX95_CLK_BUSAON>;
 				clock-names = "per", "ipg";
+				dmas = <&edma1 12 0 0>, <&edma1 13 0 FSL_EDMA_RX> ;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -1187,6 +1338,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPI2C2>,
 					 <&scmi_clk IMX95_CLK_BUSAON>;
 				clock-names = "per", "ipg";
+				dmas = <&edma1 14 0 0>, <&edma1 15 0 FSL_EDMA_RX> ;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -1199,6 +1352,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI1>,
 					 <&scmi_clk IMX95_CLK_BUSAON>;
 				clock-names = "per", "ipg";
+				dmas = <&edma1 16 0 FSL_EDMA_RX>, <&edma1 17 0 0> ;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -1211,6 +1366,8 @@
 				clocks = <&scmi_clk IMX95_CLK_LPSPI2>,
 					 <&scmi_clk IMX95_CLK_BUSAON>;
 				clock-names = "per", "ipg";
+				dmas = <&edma1 18 0 FSL_EDMA_RX>, <&edma1 19 0 0> ;
+				dma-names = "tx", "rx";
 				status = "disabled";
 			};
 
@@ -1221,6 +1378,8 @@
 				interrupts = <GIC_SPI 19 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART1>;
 				clock-names = "ipg";
+				dmas = <&edma1 21 0 FSL_EDMA_RX>, <&edma1 20 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
@@ -1231,6 +1390,8 @@
 				interrupts = <GIC_SPI 20 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&scmi_clk IMX95_CLK_LPUART2>;
 				clock-names = "ipg";
+				dmas = <&edma1 23 0 FSL_EDMA_RX>, <&edma1 22 0 0>;
+				dma-names = "rx", "tx";
 				status = "disabled";
 			};
 
