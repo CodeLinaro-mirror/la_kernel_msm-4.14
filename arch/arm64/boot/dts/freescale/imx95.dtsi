@@ -2791,6 +2791,7 @@
 			interrupts = <GIC_SPI 299 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&scmi_clk IMX95_CLK_VPU>,
 				 <&vpu_blk_ctrl IMX95_CLK_VPUBLK_WAVE>;
+			clock-names = "vpu", "vpublk_wave";
 			power-domains = <&scmi_devpd IMX95_PD_VPU>;
 			cnm,ctrl = <&vpuctrl>;
 		};
@@ -2801,6 +2802,7 @@
 			interrupts = <GIC_SPI 300 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&scmi_clk IMX95_CLK_VPU>,
 				 <&vpu_blk_ctrl IMX95_CLK_VPUBLK_WAVE>;
+			clock-names = "vpu", "vpublk_wave";
 			power-domains = <&scmi_devpd IMX95_PD_VPU>;
 			cnm,ctrl = <&vpuctrl>;
 			status = "disabled";
@@ -2812,6 +2814,7 @@
 			interrupts = <GIC_SPI 301 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&scmi_clk IMX95_CLK_VPU>,
 				 <&vpu_blk_ctrl IMX95_CLK_VPUBLK_WAVE>;
+			clock-names = "vpu", "vpublk_wave";
 			power-domains = <&scmi_devpd IMX95_PD_VPU>;
 			cnm,ctrl = <&vpuctrl>;
 			status = "disabled";
@@ -2823,6 +2826,7 @@
 			interrupts = <GIC_SPI 302 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&scmi_clk IMX95_CLK_VPU>,
 				 <&vpu_blk_ctrl IMX95_CLK_VPUBLK_WAVE>;
+			clock-names = "vpu", "vpublk_wave";
 			power-domains = <&scmi_devpd IMX95_PD_VPU>;
 			cnm,ctrl = <&vpuctrl>;
 			status = "disabled";
