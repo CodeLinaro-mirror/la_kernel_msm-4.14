@@ -236,7 +236,7 @@ static unsigned int phylink_interface_signal_rate(phy_interface_t interface)
  *
  * Return: The maximum speed of @interface
  */
-static int phylink_interface_max_speed(phy_interface_t interface)
+int phylink_interface_max_speed(phy_interface_t interface)
 {
 	switch (interface) {
 	case PHY_INTERFACE_MODE_100BASEX:
@@ -308,6 +308,7 @@ static int phylink_interface_max_speed(phy_interface_t interface)
 	WARN_ON_ONCE(1);
 	return SPEED_UNKNOWN;
 }
+EXPORT_SYMBOL_GPL(phylink_interface_max_speed);
 
 static struct {
 	unsigned long mask;
