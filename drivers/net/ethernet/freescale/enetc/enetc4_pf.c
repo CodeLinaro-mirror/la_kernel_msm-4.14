@@ -1374,6 +1374,8 @@ static int enetc4_pf_power_up(struct pci_dev *pdev, struct device_node *node)
 	if (err)
 		goto err_init_address;
 
+	enetc_load_primary_mac_addr(&si->hw, priv->ndev);
+
 	enetc4_configure_port(pf);
 
 	err = enetc_configure_si(priv);
