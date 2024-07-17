@@ -78,7 +78,7 @@
 			enable-method = "psci";
 			#cooling-cells = <2>;
 			cpu-idle-states = <&cpu_pd_wait>;
-			power-domains = <&scmi_devpd IMX95_PERF_A55>;
+			power-domains = <&scmi_perf IMX95_PERF_A55>;
 			power-domain-names = "perf";
 			i-cache-size = <32768>;
 			i-cache-line-size = <64>;
@@ -96,7 +96,7 @@
 			enable-method = "psci";
 			#cooling-cells = <2>;
 			cpu-idle-states = <&cpu_pd_wait>;
-			power-domains = <&scmi_devpd IMX95_PERF_A55>;
+			power-domains = <&scmi_perf IMX95_PERF_A55>;
 			power-domain-names = "perf";
 			i-cache-size = <32768>;
 			i-cache-line-size = <64>;
@@ -114,7 +114,7 @@
 			enable-method = "psci";
 			#cooling-cells = <2>;
 			cpu-idle-states = <&cpu_pd_wait>;
-			power-domains = <&scmi_devpd IMX95_PERF_A55>;
+			power-domains = <&scmi_perf IMX95_PERF_A55>;
 			power-domain-names = "perf";
 			i-cache-size = <32768>;
 			i-cache-line-size = <64>;
@@ -132,7 +132,7 @@
 			enable-method = "psci";
 			#cooling-cells = <2>;
 			cpu-idle-states = <&cpu_pd_wait>;
-			power-domains = <&scmi_devpd IMX95_PERF_A55>;
+			power-domains = <&scmi_perf IMX95_PERF_A55>;
 			power-domain-names = "perf";
 			i-cache-size = <32768>;
 			i-cache-line-size = <64>;
@@ -147,7 +147,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0x400>;
-			power-domains = <&scmi_devpd IMX95_PERF_A55>;
+			power-domains = <&scmi_perf IMX95_PERF_A55>;
 			power-domain-names = "perf";
 			enable-method = "psci";
 			#cooling-cells = <2>;
@@ -165,7 +165,7 @@
 			device_type = "cpu";
 			compatible = "arm,cortex-a55";
 			reg = <0x500>;
-			power-domains = <&scmi_devpd IMX95_PERF_A55>;
+			power-domains = <&scmi_perf IMX95_PERF_A55>;
 			power-domain-names = "perf";
 			enable-method = "psci";
 			#cooling-cells = <2>;
