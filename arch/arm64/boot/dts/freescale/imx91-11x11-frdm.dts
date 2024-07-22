@@ -22,13 +22,24 @@
 		i2c0 = &lpi2c1;
 		i2c1 = &lpi2c2;
 		i2c2 = &lpi2c3;
+		i2c3 = &lpi2c4;
+		i2c4 = &lpi2c5;
+		i2c5 = &lpi2c6;
+		i2c6 = &lpi2c7;
+		i2c7 = &lpi2c8;
 		mmc0 = &usdhc1;
 		mmc1 = &usdhc2;
 		mmc2 = &usdhc3;
 		rtc0 = &bbnsm_rtc;
 		rtc1 = &pcf2131;
 		serial0 = &lpuart1;
+		serial1 = &lpuart2;
+		serial2 = &lpuart3;
+		serial3 = &lpuart4;
 		serial4 = &lpuart5;
+		serial5 = &lpuart6;
+		serial6 = &lpuart7;
+		serial7 = &lpuart8;
 	};
 
 	chosen {
@@ -150,6 +161,12 @@
 			size = <0 0x10000000>;
 			linux,cma-default;
 		};
+
+		ele_reserved: ele-reserved@a4120000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0xa4120000 0 0x100000>;
+			no-map;
+		};
 	};
 
 	soc@0 {
@@ -199,6 +216,10 @@
 &clk_ext1 {
 	bootph-all;
 	bootph-pre-ram;
+};
+
+&ele_fw2 {
+	memory-region = <&ele_reserved>;
 };
 
 &eqos {
@@ -449,6 +470,26 @@
 	};
 };
 
+&lpm {
+	soc-supply = <&buck1>;
+	status = "okay";
+};
+
+&lpspi3 {
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&pinctrl_lpspi3>;
+	pinctrl-1 = <&pinctrl_lpspi3>;
+	cs-gpios = <&gpio2 8 GPIO_ACTIVE_LOW>;
+	gpio = <&pcal6408 0 GPIO_ACTIVE_HIGH>;
+	status = "okay";
+
+	spidev0: spi@0 {
+		reg = <0>;
+		compatible = "lwn,bk4";
+		spi-max-frequency = <1000000>;
+	};
+};
+
 &lpuart1 {
 	pinctrl-0 = <&pinctrl_uart1>;
 	pinctrl-names = "default";
@@ -483,6 +524,10 @@
 &osc_24m {
 	bootph-all;
 	bootph-pre-ram;
+};
+
+&media_blk_ctrl {
+	status = "okay";
 };
 
 &sai1 {
@@ -565,6 +610,13 @@
 	vmmc-supply = <&reg_usdhc3_vmmc>;
 	wakeup-source;
 	status = "okay";
+
+	wifi_wake_host {
+		compatible = "nxp,wifi-wake-host";
+		interrupt-parent = <&gpio3>;
+		interrupts = <26 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-names = "host-wake";
+	};
 };
 
 &wdog3 {
