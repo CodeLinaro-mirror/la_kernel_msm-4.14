@@ -791,7 +791,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-pmic-pf0900-mt9m114.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-pmic-pf0900-ld.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-pmic-pf0900-rpmsg.dtb
 
-dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-frdm.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-frdm.dtb \
+			  imx93-11x11-frdm-aud-hat.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-14x14-evk.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-kontron-bl-osm-s.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-phyboard-nash.dtb
