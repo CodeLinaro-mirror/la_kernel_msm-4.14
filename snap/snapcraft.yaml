@@ -65,6 +65,10 @@ parts:
       - firmware
       - kernel
     plugin: initrd
+    initrd-firmware:
+      - firmware/imx/sdma/sdma-imx7d.bin
+      - firmware/regulatory.db
+      - firmware/regulatory.db.p7s
     prime:
       - -initrd.img*
 
