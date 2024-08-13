@@ -73,14 +73,37 @@ parts:
       - -initrd.img*
 
   firmware:
+    after:
+      - firmware-trim-tool
+      - kernel
     plugin: nil
     stage-packages:
       - linux-firmware
       - wireless-regdb
     organize:
       lib/firmware: firmware
+    override-stage: |
+      # do not re-run trim tool if already run
+      fw_marker="${CRAFT_PART_INSTALL}/.firmware-trimmed"
+      if [ ! -e "${fw_marker}" ]; then
+        # Trim firmware
+        "${CRAFT_STAGE}/trim-firmware" "${CRAFT_PART_INSTALL}" "${CRAFT_STAGE}"
+        touch "${fw_marker}"
+        craftctl default
+      fi
     prime:
       - firmware
+
+  firmware-trim-tool:
+    plugin: dump
+    source: https://git.launchpad.net/~ondrak/canonical-kernel-snaps
+    source-branch: main
+    source-depth: 1
+    source-type: git
+    stage:
+      - trim-firmware
+    prime:
+      - -*
 
 build-packages:
   - bison
