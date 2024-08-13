@@ -55,6 +55,19 @@ parts:
       - -vmlinuz*
       - -dtbs
 
+  # Provide the initrd for Ubuntu Core.
+  # The initrd includes important things such as snap-bootstrap which
+  # orchestrates the entire Ubuntu Core installation process. The documentation
+  # for this tool can be found here:
+  # https://github.com/snapcore/snapd/blob/master/cmd/snap-bootstrap/README.md
+  initrd:
+    after:
+      - firmware
+      - kernel
+    plugin: initrd
+    prime:
+      - -initrd.img*
+
 build-packages:
   - bison
   - ccache
