@@ -68,6 +68,18 @@ parts:
     prime:
       - -initrd.img*
 
+  firmware:
+    plugin: nil
+    stage-packages:
+      - linux-firmware-misc
+      - linux-firmware-qualcomm-wireless
+      - wireless-regdb
+    organize:
+      lib/firmware: firmware
+      usr/lib/firmware: firmware
+    prime:
+      - firmware
+
 build-packages:
   - bison
   - ccache
