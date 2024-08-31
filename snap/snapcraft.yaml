@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2021 Canonical Ltd
+name: imx-kernel
+type: kernel
+build-base: core26
+summary: The i.MX family Linux kernel
+description: |
+  This snap provides the kernel, modules, firmware, and initrd required to
+  create an kernel snap the NXP i.MX family.
+
+  The kernel and initrd are provided as a single universal kernel image file
+  which is then booted by the managed assets created and owned by snapd.
+  Generally, this snap would also provide the device tree files for the target
+  hardware. However, in this case, that device tree is provided by the u-boot
+  binary in our gadget snap. If we needed it here, we could likewise add that
+  file to our UKI.
+
+  ** Note that the license information for this snap is incomplete **
+  Do your due diligence to ensure compliance with the licenses of the contents of this snap.
+
+  This snapcraft.yaml is licensed under CC-BY-SA-4.0
+
+  You can find any and all licenses for the contents of this snap at the following locations:
+
+  kernel:             https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux/+git/resolute
+  linux-firmware:     https://git.launchpad.net/ubuntu/+source/linux-firmware/tree/?h=applied/ubuntu/resolute
+
+  Additional licenses can also be found within this snap in the licenses/ top-level directory.
+
+grade: stable
+confinement: strict
+
+license: "GPL-2.0 AND GPL-3.0 AND CC-BY-SA-4.0"
