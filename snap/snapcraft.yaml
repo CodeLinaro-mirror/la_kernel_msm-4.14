@@ -68,6 +68,16 @@ parts:
     prime:
       - -initrd.img*
 
+  firmware:
+    plugin: nil
+    stage-packages:
+      - linux-firmware
+      - wireless-regdb
+    organize:
+      lib/firmware: firmware
+    prime:
+      - firmware
+
 build-packages:
   - bison
   - ccache
