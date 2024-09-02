@@ -178,6 +178,12 @@ config NET_DSA_TAG_LAN9303
 	  Say Y or M if you want to enable support for tagging frames for the
 	  SMSC/Microchip LAN9303 family of switches.
 
+config NET_DSA_TAG_NETC
+	tristate "Tag driver for NXP NETC switches"
+	help
+	  Say Y or M if you want to enable support for the NXP Switch Tag (NST),
+	  as implemented by NXP NETC switches having version 4.3 or later.
+
 config NET_DSA_TAG_SJA1105
 	tristate "Tag driver for NXP SJA1105 switches"
 	select PACKING
