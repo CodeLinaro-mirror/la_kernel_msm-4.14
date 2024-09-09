@@ -707,6 +707,94 @@ static int netc_tgst_show(struct seq_file *s, void *data)
 }
 DEFINE_SHOW_ATTRIBUTE(netc_tgst);
 
+static int netc_dbg_cnt_show(struct seq_file *s, void *data)
+{
+	struct netc_port *port = s->private;
+	u64 val64;
+	u32 val;
+
+	seq_printf(s, "Show Switch Port %u Counters\n", port->index);
+	val = netc_port_rd(port, NETC_PRXDCR);
+	seq_printf(s, "PRXDCR: 0x%x\n", val);
+	val = netc_port_rd(port, NETC_PRXDCRRR);
+	seq_printf(s, "PRXDCRRR: 0x%x\n", val);
+	val = netc_port_rd(port, NETC_PRXDCRR0);
+	seq_printf(s, "PRXDCRR0: 0x%x\n", val);
+	netc_port_wr(port, NETC_PRXDCRR0, val);
+	val = netc_port_rd(port, NETC_PRXDCRR1);
+	seq_printf(s, "PRXDCRR1: 0x%x\n\n", val);
+	netc_port_wr(port, NETC_PRXDCRR1, val);
+
+	val = netc_port_rd(port, NETC_PTXDCR);
+	seq_printf(s, "PTXDCR: 0x%x\n", val);
+	val = netc_port_rd(port, NETC_PTXDCRRR);
+	seq_printf(s, "PTXDCRRR: 0x%x\n", val);
+	val = netc_port_rd(port, NETC_PTXDCRR0);
+	seq_printf(s, "PTXDCRR0: 0x%x\n", val);
+	netc_port_wr(port, NETC_PTXDCRR0, val);
+	val = netc_port_rd(port, NETC_PTXDCRR1);
+	seq_printf(s, "PTXDCRR1: 0x%x\n\n", val);
+	netc_port_wr(port, NETC_PTXDCRR1, val);
+
+	val = netc_port_rd(port, NETC_BPDCR);
+	seq_printf(s, "BPDCR: 0x%x\n", val);
+	val = netc_port_rd(port, NETC_BPDCRRR);
+	seq_printf(s, "BPDCRRR: 0x%x\n", val);
+	val = netc_port_rd(port, NETC_BPDCRR0);
+	seq_printf(s, "BPDCRR0: 0x%x\n", val);
+	netc_port_wr(port, NETC_BPDCRR0, val);
+	val = netc_port_rd(port, NETC_BPDCRR1);
+	seq_printf(s, "BPDCRR1: 0x%x\n\n", val);
+	netc_port_wr(port, NETC_BPDCRR1, val);
+
+	if (is_netc_pseudo_port(port)) {
+		val64 = netc_port_rd64(port, NETC_PPMROCR);
+		seq_printf(s, "PPMROCR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PPMRUFCR);
+		seq_printf(s, "PPMRUFCR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PPMRMFCR);
+		seq_printf(s, "PPMRMFCR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PPMRBFCR);
+		seq_printf(s, "PPMRBFCR: 0x%llx\n\n", val64);
+
+		val64 = netc_port_rd64(port, NETC_PPMTOCR);
+		seq_printf(s, "PPMTOCR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PPMTUFCR);
+		seq_printf(s, "PPMTUFCR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PPMTMFCR);
+		seq_printf(s, "PPMTMFCR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PPMTBFCR);
+		seq_printf(s, "PPMTBFCR: 0x%llx\n", val64);
+	} else {
+		val64 = netc_port_rd64(port, NETC_PM_RFRM(0));
+		seq_printf(s, "PM0_RFRM: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_RERR(0));
+		seq_printf(s, "PM0_RERR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_RUCA(0));
+		seq_printf(s, "PM0_RUCA: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_RMCA(0));
+		seq_printf(s, "PM0_RMCA: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_RBCA(0));
+		seq_printf(s, "PM0_RBCA: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_RDRP(0));
+		seq_printf(s, "PM0_RDRP: 0x%llx\n\n", val64);
+
+		val64 = netc_port_rd64(port, NETC_PM_TFRM(0));
+		seq_printf(s, "PM0_TFRM: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_TERR(0));
+		seq_printf(s, "PM0_TERR: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_TUCA(0));
+		seq_printf(s, "PM0_TUCA: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_TMCA(0));
+		seq_printf(s, "PM0_TMCA: 0x%llx\n", val64);
+		val64 = netc_port_rd64(port, NETC_PM_TBCA(0));
+		seq_printf(s, "PM0_TBCA: 0x%llx\n", val64);
+	}
+
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(netc_dbg_cnt);
+
 void netc_remove_debugfs(struct netc_switch *priv)
 {
 	struct dsa_port *dp;
@@ -763,6 +851,8 @@ void netc_create_debugfs(struct netc_switch *priv)
 				    &netc_fdbt_fops);
 		debugfs_create_file("tgst_dump", 0444, port_debugfs, port,
 				    &netc_tgst_fops);
+		debugfs_create_file("dbg_cnt", 0444, port_debugfs, port,
+				    &netc_dbg_cnt_fops);
 	}
 
 	return;
