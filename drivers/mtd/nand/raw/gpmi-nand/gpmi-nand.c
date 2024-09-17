@@ -14,6 +14,7 @@
 #include <linux/mtd/partitions.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
+#include <linux/busfreq-imx.h>
 #include <linux/pm_runtime.h>
 #include <linux/pinctrl/consumer.h>
 #include <linux/dma/mxs-dma.h>
@@ -2870,6 +2871,7 @@ static int gpmi_runtime_suspend(struct device *dev)
 {
 	struct gpmi_nand_data *this = dev_get_drvdata(dev);
 
+	release_bus_freq(BUS_FREQ_HIGH);
 	gpmi_disable_clk(this);
 
 	return 0;
@@ -2883,6 +2885,8 @@ static int gpmi_runtime_resume(struct device *dev)
 	ret = gpmi_enable_clk(this);
 	if (ret)
 		return ret;
+
+	request_bus_freq(BUS_FREQ_HIGH);
 
 	return 0;
 
