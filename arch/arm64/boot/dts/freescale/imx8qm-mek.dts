@@ -591,6 +591,7 @@
 				  <&clk IMX_SC_R_AUDIO_PLL_0 IMX_SC_PM_CLK_MST_BUS>,
 				  <&mclkout0_lpcg IMX_LPCG_CLK_0>;
 		assigned-clock-rates = <786432000>, <49152000>, <12288000>, <12288000>;
+		fsl,txs-rxm;
 	};
 };
 
@@ -751,6 +752,7 @@
 			  <&esai0_lpcg IMX_LPCG_CLK_4>;
 	assigned-clock-parents = <&aud_pll_div0_lpcg IMX_LPCG_CLK_0>;
 	assigned-clock-rates = <0>, <786432000>, <49152000>, <12288000>, <49152000>;
+	fsl,txm-rxs;
 	status = "okay";
 };
 
@@ -1311,6 +1313,7 @@
 	assigned-clock-parents = <&aud_pll_div1_lpcg IMX_LPCG_CLK_0>;
 	assigned-clock-rates = <0>, <786432000>, <98304000>, <12288000>, <98304000>;
 	fsl,sai-asynchronous;
+	fsl,txm-rxs;
 	status = "okay";
 };
 
@@ -1323,6 +1326,7 @@
 	assigned-clock-parents = <&aud_pll_div1_lpcg IMX_LPCG_CLK_0>;
 	assigned-clock-rates = <0>, <786432000>, <98304000>, <12288000>, <98304000>;
 	fsl,sai-asynchronous;
+	fsl,txm-rxs;
 	status = "okay";
 };
 
