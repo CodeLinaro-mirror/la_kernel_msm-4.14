@@ -361,6 +361,7 @@ static struct esdhc_soc_data usdhc_imx8mq_data = {
 			| ESDHC_FLAG_STATE_LOST_IN_LPMODE
 			| ESDHC_FLAG_BROKEN_AUTO_CMD23
 			| ESDHC_FLAG_BUSFREQ,
+	.quirks = SDHCI_QUIRK_NO_LED,
 };
 
 static struct esdhc_soc_data usdhc_s32v234_data = {
