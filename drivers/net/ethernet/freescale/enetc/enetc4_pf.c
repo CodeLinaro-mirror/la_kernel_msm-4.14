@@ -1443,6 +1443,14 @@ static void enetc4_pl_mac_link_up(struct phylink_config *config,
 	enetc4_mac_tx_enable(pf);
 	enetc4_mac_rx_enable(pf);
 	enetc4_enable_mac(pf, true);
+
+	if (phy)
+		priv->eee.eee_active = phy_init_eee(phy, true) >= 0;
+	else
+		priv->eee.eee_active = false;
+
+	enetc_eee_mode_set(si->ndev, priv->eee.eee_active);
+
 	enetc4_mm_link_state_update(pf, true);
 
 	enetc_pf_send_link_status_msg(pf, true);
@@ -1453,11 +1461,17 @@ static void enetc4_pl_mac_link_down(struct phylink_config *config,
 				    phy_interface_t interface)
 {
 	struct enetc_pf *pf = phylink_to_enetc_pf(config);
+	struct net_device *ndev = pf->si->ndev;
+	struct enetc_ndev_priv *priv;
 
 	enetc4_mac_rx_graceful_stop(pf);
 	enetc4_mac_tx_graceful_stop(pf);
 	enetc_pf_send_link_status_msg(pf, false);
 	enetc4_mm_link_state_update(pf, false);
+
+	priv = netdev_priv(ndev);
+	priv->eee.eee_active = false;
+	enetc_eee_mode_set(ndev, priv->eee.eee_active);
 	enetc4_enable_mac(pf, false);
 }
 
