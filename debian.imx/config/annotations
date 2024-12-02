@@ -1,0 +1,12 @@
+# Menu: HEADER
+# FORMAT: 4
+# ARCH: arm64 armhf
+# FLAVOUR: arm64-imx armhf-imx
+
+include "../../debian.master/config/annotations"
+
+
+# ---- Annotations without notes ----
+
+CONFIG_MARVELL_GTI_WDT                          policy<{'arm64': 'm'}>
+CONFIG_TEE_STMM_EFI                             policy<{'arm64': 'm', 'armhf': 'm'}>
