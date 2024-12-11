@@ -899,6 +899,12 @@ imx95-15x15-evk-ox05b1s-isp-adv7535-dtbs := imx95-15x15-evk-adv7535.dtb \
 					   imx95-19x19-evk-neoisp.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk-ox05b1s-isp-adv7535.dtb
 
+imx95-15x15-evk-dual-ox05b1s-isp-boe-wxga-lvds-two-panels-dtbs := imx95-15x15-evk-boe-wxga-lvds-two-panels.dtb \
+								   imx95-15x15-evk-ox05b1s.dtbo \
+								   imx95-15x15-evk-ox05b1s-combo.dtbo \
+								   imx95-19x19-evk-neoisp.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk-dual-ox05b1s-isp-boe-wxga-lvds-two-panels.dtb
+
 imx95-15x15-evk-os08a20-dtbs := imx95-15x15-evk.dtb imx95-15x15-evk-os08a20.dtbo
 dtb-${CONFIG_ARCH_MXC} += imx95-15x15-evk-os08a20.dtb
 
@@ -909,6 +915,13 @@ imx95-15x15-evk-os08a20-isp-adv7535-dtbs := imx95-15x15-evk-adv7535.dtb \
 					    imx95-15x15-evk-os08a20.dtbo \
 					    imx95-19x19-evk-neoisp.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk-os08a20-isp-adv7535.dtb
+
+imx95-15x15-evk-dual-os08a20-isp-boe-wxga-lvds-two-panels-dtbs := imx95-15x15-evk-boe-wxga-lvds-two-panels.dtb \
+								   imx95-15x15-evk-os08a20.dtbo \
+								   imx95-15x15-evk-os08a20-combo.dtbo \
+								   imx95-19x19-evk-neoisp.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk-dual-os08a20-isp-boe-wxga-lvds-two-panels.dtb
+
 DTC_FLAGS_imx95-15x15-evk-rpmsg := -@
 dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk-rpmsg.dtb
 
@@ -1027,6 +1040,12 @@ imx95-19x19-evk-dual-os08a20-isp-it6263-lvds0-dtbs := imx95-19x19-evk-neoisp.dtb
 						      imx95-19x19-evk-it6263-lvds0.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-dual-os08a20-isp-it6263-lvds0.dtb
 
+imx95-19x19-evk-dual-os08a20-isp-it6263-lvds-dual-dtbs := imx95-19x19-evk-neoisp.dtb \
+							  imx95-19x19-evk-os08a20.dtbo \
+							  imx95-19x19-evk-os08a20-combo.dtbo \
+							  imx95-19x19-evk-it6263-lvds-dual.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-dual-os08a20-isp-it6263-lvds-dual.dtb
+
 imx95-19x19-evk-ox03c10-isp-it6263-lvds0-dtbs := imx95-19x19-evk-neoisp.dtb imx95-19x19-evk-ox03c10.dtbo \
                         imx95-19x19-evk-it6263-lvds0.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-ox03c10-isp-it6263-lvds0.dtb
@@ -1034,6 +1053,11 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-ox03c10-isp-it6263-lvds0.dtb
 imx95-19x19-evk-ox05b1s-isp-it6263-lvds0-dtbs := imx95-19x19-evk-neoisp.dtb imx95-19x19-evk-ox05b1s.dtbo \
 						 imx95-19x19-evk-it6263-lvds0.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-ox05b1s-isp-it6263-lvds0.dtb
+
+imx95-19x19-evk-dual-ox05b1s-isp-it6263-lvds-dual-dtbs := imx95-19x19-evk-neoisp.dtb imx95-19x19-evk-ox05b1s.dtbo \
+							  imx95-19x19-evk-ox05b1s-combo.dtbo \
+							  imx95-19x19-evk-it6263-lvds-dual.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-dual-ox05b1s-isp-it6263-lvds-dual.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin.dtb
 DTC_FLAGS_imx95-19x19-verdin-rpmsg := -@
@@ -1083,6 +1107,12 @@ imx95-19x19-verdin-os08a20-isp-lt8912-dtbs := imx95-19x19-verdin.dtb \
 					      imx95-19x19-verdin-lt8912.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-os08a20-isp-lt8912.dtb
 
+imx95-19x19-verdin-dual-os08a20-isp-panel-cap-touch-10inch-lvds-dtbs := imx95-19x19-verdin-panel-cap-touch-10inch-lvds.dtb \
+					      imx95-19x19-verdin-os08a20.dtbo \
+					      imx95-19x19-verdin-os08a20-combo.dtbo \
+					      imx95-19x19-evk-neoisp.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-dual-os08a20-isp-panel-cap-touch-10inch-lvds.dtb
+
 imx95-19x19-verdin-ox05b1s-dtbs := imx95-19x19-verdin.dtb imx95-19x19-verdin-ox05b1s.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-ox05b1s.dtb
 
@@ -1094,6 +1124,12 @@ imx95-19x19-verdin-ox05b1s-isp-lt8912-dtbs := imx95-19x19-verdin.dtb \
 					      imx95-19x19-evk-neoisp.dtbo \
 					      imx95-19x19-verdin-lt8912.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-ox05b1s-isp-lt8912.dtb
+
+imx95-19x19-verdin-dual-ox05b1s-isp-panel-cap-touch-10inch-lvds-dtbs := imx95-19x19-verdin-panel-cap-touch-10inch-lvds.dtb \
+								    imx95-19x19-verdin-ox05b1s.dtbo \
+								    imx95-19x19-verdin-ox05b1s-combo.dtbo \
+								    imx95-19x19-evk-neoisp.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-dual-ox05b1s-isp-panel-cap-touch-10inch-lvds.dtb
 
 imx95-19x19-verdin-ox03c10-dtbs := imx95-19x19-verdin.dtb imx95-19x19-verdin-ox03c10.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-ox03c10.dtb
