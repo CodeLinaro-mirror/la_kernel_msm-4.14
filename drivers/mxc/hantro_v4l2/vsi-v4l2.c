@@ -1011,4 +1011,4 @@ module_platform_driver(v4l2_drm_platform_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Verisilicon");
 MODULE_DESCRIPTION("VSI v4l2 manager");
-
+MODULE_DEVICE_TABLE(of, v4l2_of_match);
