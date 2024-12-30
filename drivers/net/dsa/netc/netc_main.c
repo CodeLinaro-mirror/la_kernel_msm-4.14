@@ -133,7 +133,7 @@ static int netc_port_create_imdio_bus(struct netc_port *port)
 	struct phylink_pcs *pcs;
 	struct enetc_hw *hw;
 	struct mii_bus *bus;
-	int err;
+	int err, xpcs_ver;
 
 	port_iobase = port->iobase;
 	hw = enetc_hw_alloc(dev, port_iobase);
@@ -163,9 +163,18 @@ static int netc_port_create_imdio_bus(struct netc_port *port)
 		return dev_err_probe(dev, err,
 				     "Cannot register IMDIO bus\n");
 
-	/* TODO: xpcs_create_mdiodev_with_phy() should be refactored for i.MX94 */
-	pcs = xpcs_create_mdiodev_with_phy(bus, 0, 16, port->index,
-					   DW_XPCS_VER_MX94, port->phy_mode);
+	switch (priv->revision) {
+	case NETC_SWITCH_REV_4_3:
+		xpcs_ver = DW_XPCS_VER_MX94;
+		break;
+	default:
+		dev_err(dev, "unsupported xpcs version\n");
+		return -EOPNOTSUPP;
+	}
+
+	netc_xpcs_port_init(port->index);
+	pcs = xpcs_create_mdiodev_with_phy(bus, 0, 16, port->index, xpcs_ver,
+					   port->phy_mode);
 	if (IS_ERR(pcs))
 		return dev_err_probe(dev, PTR_ERR(pcs),
 				     "Cannot create xpcs mdiodev\n");
