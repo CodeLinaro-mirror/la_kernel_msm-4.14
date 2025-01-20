@@ -796,8 +796,11 @@ static int enetc_set_rxfh(struct net_device *ndev,
 	int err = 0;
 
 	if (rxfh->hfunc != ETH_RSS_HASH_NO_CHANGE &&
-	    rxfh->hfunc != ETH_RSS_HASH_TOP)
+	    rxfh->hfunc != ETH_RSS_HASH_TOP) {
+		netdev_err(ndev, "Only toeplitz hash function is supported\n");
+
 		return -EOPNOTSUPP;
+	}
 
 	/* set hash key, if PF */
 	if (rxfh->key) {
