@@ -27,6 +27,7 @@
 		i2c5 = &lpi2c6;
 		mmc0 = &usdhc1;
 		mmc1 = &usdhc2;
+		mmc2 = &usdhc3;
 		serial0 = &lpuart1;
 	};
 
@@ -339,6 +340,11 @@
 	memory@80000000 {
 		reg = <0x0 0x80000000 0x0 0x80000000>;
 		device_type = "memory";
+	};
+
+	usdhc3_pwrseq: usdhc3_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&pcal6416_i2c3_u46 4 GPIO_ACTIVE_LOW>;
 	};
 
 	xtal25m: clock-xtal25m {
@@ -1187,6 +1193,17 @@
 		>;
 	};
 
+	pinctrl_usdhc3: usdhc3grp {
+		fsl,pins = <
+			IMX94_PAD_GPIO_IO48__USDHC3_CLK		0x158e
+			IMX94_PAD_GPIO_IO49__USDHC3_CMD		0x4000138e
+			IMX94_PAD_GPIO_IO50__USDHC3_DATA0	0x138e
+			IMX94_PAD_GPIO_IO51__USDHC3_DATA1	0x138e
+			IMX94_PAD_GPIO_IO52__USDHC3_DATA2	0x138e
+			IMX94_PAD_GPIO_IO53__USDHC3_DATA3	0x138e
+		>;
+	};
+
 	pinctrl_xspi1: xspi1grp {
 		fsl,pins = <
 			IMX94_PAD_XSPI1_SCLK__XSPI1_A_SCLK	0x3fe
@@ -1315,6 +1332,23 @@
 	no-sdio;
 	cd-gpios = <&gpio4 20 GPIO_ACTIVE_LOW>;
 	vmmc-supply = <&reg_usdhc2_vmmc>;
+	status = "okay";
+};
+
+&usdhc3 {
+	/*
+	 * Only enable SDIO2.0 mode as the corresponding GPIO pads are 3.3V, the
+	 * max frequency is 50MHz.
+	 */
+	pinctrl-0 = <&pinctrl_usdhc3>;
+	pinctrl-1 = <&pinctrl_usdhc3>;
+	pinctrl-names = "default", "sleep";
+	bus-width = <4>;
+	vmmc-supply = <&reg_pcie0>;
+	mmc-pwrseq = <&usdhc3_pwrseq>;
+	keep-power-in-suspend;
+	non-removable;
+	wakeup-source;
 	status = "okay";
 };
 
