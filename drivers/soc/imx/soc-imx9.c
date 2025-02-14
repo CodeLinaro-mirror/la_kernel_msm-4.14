@@ -70,6 +70,7 @@ static int imx9_soc_probe(struct platform_device *pdev)
 }
 
 static __maybe_unused const struct of_device_id imx9_soc_match[] = {
+	{ .compatible = "fsl,imx91", },
 	{ .compatible = "fsl,imx93", },
 	{ .compatible = "fsl,imx94", },
 	{ .compatible = "fsl,imx95", },
