@@ -1126,14 +1126,14 @@ CONFIG_DRM_EXYNOS_MIXER                         policy<{'armhf': '-'}>
 CONFIG_DRM_EXYNOS_ROTATOR                       policy<{'armhf': '-'}>
 CONFIG_DRM_EXYNOS_SCALER                        policy<{'armhf': '-'}>
 CONFIG_DRM_EXYNOS_VIDI                          policy<{'armhf': '-'}>
-CONFIG_DRM_FSL_IMX_LVDS_BRIDGE                  policy<{'arm64': 'm', 'armhf': 'm'}>
+CONFIG_DRM_FSL_IMX_LVDS_BRIDGE                  policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_DRM_GEM_DMA_HELPER                       policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DRM_GPUVM                                policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_DRM_HDLCD                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DRM_HYPERV                               policy<{'arm64': '-'}>
 CONFIG_DRM_IMX                                  policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_DRM_IMX8MM_LCDIF                         policy<{'arm64': 'm'}>
-CONFIG_DRM_IMX8MP_LDB                           policy<{'arm64': 'm', 'armhf': '-'}>
+CONFIG_DRM_IMX8MP_LDB                           policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_DRM_IMX8QM_LDB                           policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_DRM_IMX8QXP_LDB                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_IMX8QXP_PIXEL_LINK                   policy<{'arm64': 'm', 'armhf': '-'}>
@@ -2836,7 +2836,7 @@ CONFIG_PHY_EXYNOS5_USBDRD                       policy<{'armhf': '-'}>
 CONFIG_PHY_EXYNOS_DP_VIDEO                      policy<{'armhf': '-'}>
 CONFIG_PHY_EXYNOS_MIPI_VIDEO                    policy<{'armhf': '-'}>
 CONFIG_PHY_EXYNOS_PCIE                          policy<{'armhf': '-'}>
-CONFIG_PHY_FSL_IMX8MP_LVDS                      policy<{'arm64': 'm', 'armhf': '-'}>
+CONFIG_PHY_FSL_IMX8MP_LVDS                      policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_PHY_FSL_IMX8Q_PCIE                       policy<{'arm64': 'm'}>
 CONFIG_PHY_FSL_IMX93_MIPI_DPHY                  policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_PHY_FSL_IMX9_DPHY_RX                     policy<{'arm64': 'm'}>
