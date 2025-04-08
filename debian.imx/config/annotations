@@ -1132,7 +1132,7 @@ CONFIG_DRM_GPUVM                                policy<{'arm64': 'm', 'armhf': '
 CONFIG_DRM_HDLCD                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DRM_HYPERV                               policy<{'arm64': '-'}>
 CONFIG_DRM_IMX                                  policy<{'arm64': 'y', 'armhf': 'm'}>
-CONFIG_DRM_IMX8MM_LCDIF                         policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX8MM_LCDIF                         policy<{'arm64': 'y'}>
 CONFIG_DRM_IMX8MP_LDB                           policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_DRM_IMX8QM_LDB                           policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_DRM_IMX8QXP_LDB                          policy<{'arm64': '-', 'armhf': '-'}>
@@ -1935,7 +1935,7 @@ CONFIG_IIO_P3T1085_I3C                          policy<{'arm64': 'm', 'armhf': '
 CONFIG_IIO_STM32_LPTIMER_TRIGGER                policy<{'arm64': '-'}>
 CONFIG_IIO_STM32_TIMER_TRIGGER                  policy<{'arm64': '-'}>
 CONFIG_IMX2_WDT                                 policy<{'arm64': 'y', 'armhf': 'y'}>
-CONFIG_IMX8MM_LCDIF_CORE                        policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_IMX8MM_LCDIF_CORE                        policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_IMX8MP_HDMI_PAVI                         policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMX8M_BUSFREQ                            policy<{'arm64': 'y'}>
 CONFIG_IMX8M_PM_DOMAINS                         policy<{'arm64': 'y', 'armhf': 'n'}>
