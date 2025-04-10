@@ -374,3 +374,4 @@ int stmmac_hwif_init(struct stmmac_priv *priv)
 			id, needs_gmac, needs_gmac4);
 	return -EINVAL;
 }
+EXPORT_SYMBOL(stmmac_hwif_init);

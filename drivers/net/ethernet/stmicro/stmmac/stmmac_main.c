@@ -525,6 +525,7 @@ bool stmmac_eee_init(struct stmmac_priv *priv)
 	netdev_dbg(priv->dev, "Energy-Efficient Ethernet initialized\n");
 	return true;
 }
+EXPORT_SYMBOL(stmmac_eee_init);
 
 /* stmmac_get_tx_hwtstamp - get HW TX timestamps
  * @priv: driver private structure

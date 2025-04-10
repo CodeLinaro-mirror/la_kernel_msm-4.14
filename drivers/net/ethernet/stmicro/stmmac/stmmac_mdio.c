@@ -675,6 +675,7 @@ bus_register_fail:
 	mdiobus_free(new_bus);
 	return err;
 }
+EXPORT_SYMBOL(stmmac_mdio_register);
 
 /**
  * stmmac_mdio_unregister
@@ -698,3 +699,4 @@ int stmmac_mdio_unregister(struct net_device *ndev)
 
 	return 0;
 }
+EXPORT_SYMBOL(stmmac_mdio_unregister);
