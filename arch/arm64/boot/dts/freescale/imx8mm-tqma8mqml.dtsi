@@ -70,14 +70,6 @@
 	};
 };
 
-&gpu_2d {
-	status = "okay";
-};
-
-&gpu_3d {
-	status = "okay";
-};
-
 &i2c1 {
 	clock-frequency = <100000>;
 	pinctrl-names = "default", "gpio";
