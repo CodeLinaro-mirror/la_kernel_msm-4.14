@@ -16,10 +16,10 @@ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1028a-qds.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1028a-rdb.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1028a-rdb-dpdk.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1043a-qds.dtb
-dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1043a-qds-sdk.dtb
+dtb-$(CONFIG_DISABLED) += fsl-ls1043a-qds-sdk.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1043a-rdb.dtb
-dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1043a-rdb-sdk.dtb
-dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1043a-rdb-usdpaa.dtb
+dtb-$(CONFIG_DISABLED) += fsl-ls1043a-rdb-sdk.dtb
+dtb-$(CONFIG_DISABLED) += fsl-ls1043a-rdb-usdpaa.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1043a-tqmls1043a-mbls10xxa.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1046a-frwy.dtb
 dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-ls1046a-frwy-sdk.dtb
@@ -199,16 +199,16 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mp-msc-sm2s-ep1.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-phyboard-pollux-rdk.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-skov-revb-hdmi.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-skov-revb-lt6.dtb
-dtb-$(CONFIG_ARCH_MXC) += imx8mp-skov-revb-mi1010ait-1cp1.dtb
+dtb-$(CONFIG_DISABLED) += imx8mp-skov-revb-mi1010ait-1cp1.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-ab2.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-navq.dtb imx8mp-navq-ov5640-ov5645.dtb imx8mp-navq-ov5647-ov5640.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-ddr4-evk.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-ndm.dtb
-dtb-$(CONFIG_ARCH_MXC) += imx8mp-verdin-nonwifi-mallow.dtb
-dtb-$(CONFIG_ARCH_MXC) += imx8mp-verdin-wifi-mallow.dtb
+dtb-$(CONFIG_DISABLED) += imx8mp-verdin-nonwifi-mallow.dtb
+dtb-$(CONFIG_DISABLED) += imx8mp-verdin-wifi-mallow.dtb
 
 imx8mp-tqma8mpql-mba8mpxl-lvds-g133han01-dtbs += imx8mp-tqma8mpql-mba8mpxl.dtb imx8mp-tqma8mpql-mba8mpxl-lvds-g133han01.dtbo
-dtb-$(CONFIG_ARCH_MXC) += imx8mp-tqma8mpql-mba8mpxl-lvds-g133han01.dtb
+dtb-$(CONFIG_DISABLED) += imx8mp-tqma8mpql-mba8mpxl-lvds-g133han01.dtb
 
 imx8mp-evk-revb4-dtbs := imx8mp-evk.dtb imx8mp-evk-revb4.dtbo
 imx8mp-evk-revb4-rm67191-dtbs := imx8mp-evk-rm67191.dtb imx8mp-evk-revb4.dtbo
@@ -687,7 +687,7 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-jdi-wuxga-lvds-panel.dtb
 
 imx8mp-venice-gw74xx-imx219-dtbs	:= imx8mp-venice-gw74xx.dtb imx8mp-venice-gw74xx-imx219.dtbo
 
-dtb-$(CONFIG_ARCH_MXC) += imx8mp-venice-gw74xx-imx219.dtb
+dtb-$(CONFIG_DISABLED) += imx8mp-venice-gw74xx-imx219.dtb
 
 imx95-19x19-evk-jtag-dtbs := imx95-19x19-evk.dtb imx95-19x19-evk-jtag.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-evk-jtag.dtb
