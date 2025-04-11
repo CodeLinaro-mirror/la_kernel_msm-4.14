@@ -77,10 +77,6 @@
 	cpu-supply = <&reg_vdd_arm>;
 };
 
-&gpu {
-	status = "okay";
-};
-
 &pgc_gpu {
 	power-supply = <&sw1a_reg>;
 };
