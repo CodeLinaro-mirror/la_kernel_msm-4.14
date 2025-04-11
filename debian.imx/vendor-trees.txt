@@ -1,0 +1,8 @@
+[nxp-kernel]
+    url = https://github.com/nxp-imx/linux-imx.git
+    branch = hf-6.6.y
+    commit = e0f9e2afd4cff3f02d71891244b4aa5899dfc786 (staging: fsl_qbman: don't dereference portal affine to CPU when it's redirected)
+[mwifiex]
+    url = https://github.com/nxp-imx/mwifiex.git
+    branch = lf-6.6.52_2.2.0
+    commit = 5ad19e194f49ed9447bee7864eb562618ccaf9b1 (mxm_wifiex: update to mxm6x18505.p4 release)
