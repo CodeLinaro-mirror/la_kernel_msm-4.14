@@ -461,7 +461,7 @@ CONFIG_ARM_TEGRA194_CPUFREQ                     policy<{'arm64': '-'}>
 CONFIG_ARM_TEGRA20_CPUFREQ                      policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ARM_TEGRA_CPUIDLE                        policy<{'armhf': '-'}>
 CONFIG_ARM_TEGRA_DEVFREQ                        policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ARM_TIMER_SP804                          policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_ARM_TIMER_SP804                          policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ARM_TI_CPUFREQ                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ARM_VEXPRESS_SPC_CPUFREQ                 policy<{'armhf': '-'}>
 CONFIG_ASPEED_ADC                               policy<{'armhf': '-'}>
