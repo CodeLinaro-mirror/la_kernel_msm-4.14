@@ -2363,6 +2363,7 @@ CONFIG_MFD_WM8998                               policy<{'arm64': 'n', 'armhf': '
 CONFIG_MHDP_HDMIRX                              policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_MHDP_HDMIRX_CEC                          policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_MICREL_PHY                               policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_MICROSOFT_MANA                           policy<{'arm64': '-'}>
 CONFIG_MII                                      policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_MILBEAUT_HDMAC                           policy<{'armhf': '-'}>
 CONFIG_MILBEAUT_TIMER                           policy<{'armhf': '-'}>
