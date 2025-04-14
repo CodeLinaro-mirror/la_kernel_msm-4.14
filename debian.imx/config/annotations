@@ -1103,10 +1103,8 @@ CONFIG_DRM_CDNS_HDMI                            policy<{'arm64': 'm', 'armhf': '
 CONFIG_DRM_CDNS_HDMI_CEC                        policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_CDNS_MHDP                            policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_CDNS_MHDP8546_J721E                  policy<{'arm64': '-'}>
-CONFIG_DRM_DW_HDMI                              policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_DW_HDMI_AHB_AUDIO                    policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_DRM_DW_HDMI_CEC                          policy<{'arm64': 'm', 'armhf': 'n'}>
-CONFIG_DRM_DW_HDMI_GP_AUDIO                     policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_DW_HDMI_I2S_AUDIO                    policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_DRM_ETNAVIV                              policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_DRM_ETNAVIV_THERMAL                      policy<{'arm64': '-', 'armhf': '-'}>
@@ -1203,7 +1201,7 @@ CONFIG_DRM_PANEL_WKS_101WX001                   policy<{'arm64': 'm', 'armhf': '
 CONFIG_DRM_PRIVACY_SCREEN                       policy<{'arm64': '-'}>
 CONFIG_DRM_RCAR_CMM                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_RCAR_DU                              policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_DRM_RCAR_DW_HDMI                         policy<{'arm64': '-'}>
+CONFIG_DRM_RCAR_DW_HDMI                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_RCAR_LVDS                            policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_RCAR_MIPI_DSI                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_RCAR_USE_CMM                         policy<{'arm64': '-', 'armhf': '-'}>
@@ -1223,7 +1221,7 @@ CONFIG_DRM_SUN4I_BACKEND                        policy<{'arm64': '-'}>
 CONFIG_DRM_SUN4I_HDMI                           policy<{'arm64': '-'}>
 CONFIG_DRM_SUN4I_HDMI_CEC                       policy<{'arm64': '-'}>
 CONFIG_DRM_SUN6I_DSI                            policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_DRM_SUN8I_DW_HDMI                        policy<{'arm64': '-'}>
+CONFIG_DRM_SUN8I_DW_HDMI                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_SUN8I_MIXER                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DRM_SUN8I_TCON_TOP                       policy<{'arm64': '-'}>
 CONFIG_DRM_TEGRA                                policy<{'arm64': '-', 'armhf': '-'}>
