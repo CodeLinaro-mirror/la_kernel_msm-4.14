@@ -487,6 +487,7 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-ndm.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-sof-wm8962.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-rpmsg.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-rm692c9.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx8mp-frdm-boe-wuxga-lvds0-panel.dtb imx8mp-frdm-boe-wuxga-lvds1-panel.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-frdm-os08a20.dtb imx8mp-frdm-os08a20-dual.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx8mq-evk.dtb
