@@ -53,3 +53,11 @@
 	clock-lanes = <0>;
 	data-lanes = <1 2>;
 };
+
+/ {
+	reserved-memory {
+		linux,cma {
+			alloc-ranges = <0x20000000 0x18000000>;
+		};
+	};
+};
