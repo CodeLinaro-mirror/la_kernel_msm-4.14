@@ -209,4 +209,6 @@ extern const struct smp_operations imx_smp_ops;
 extern const struct smp_operations ls1021a_smp_ops;
 
 extern bool uart_from_osc;
+
+extern unsigned long iram_tlb_base_addr;
 #endif
