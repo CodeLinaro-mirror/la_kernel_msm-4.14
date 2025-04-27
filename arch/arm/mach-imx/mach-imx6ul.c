@@ -35,6 +35,9 @@ static void __init imx6ul_init_late(void)
 
 	if (IS_ENABLED(CONFIG_ARM_IMX6Q_CPUFREQ))
 		platform_device_register_simple("imx6q-cpufreq", -1, NULL, 0);
+
+	__arm_iomem_set_ro((void __iomem *)iram_tlb_base_addr, 0x4000);
+
 }
 
 static void __init imx6ul_map_io(void)
