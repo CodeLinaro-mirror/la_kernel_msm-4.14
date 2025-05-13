@@ -804,8 +804,11 @@ static int enetc_set_rxfh(struct net_device *ndev,
 
 	/* set hash key, if PF */
 	if (rxfh->key) {
-		if (!enetc_si_is_pf(si))
+		if (!enetc_si_is_pf(si)) {
+			netdev_err(ndev, "VF does not support setting key\n");
+
 			return -EOPNOTSUPP;
+		}
 
 		enetc_set_rss_key(si, rxfh->key);
 	}
