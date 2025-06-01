@@ -48,30 +48,8 @@
 		vin-supply = <&poe12v_supply>;
 	};
 
-	radio5v_supply: radio5v-supply {
-		compatible = "reg-userspace-consumer";
-		regulator-name = "Radio Board 5V Main Power";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-		gpio = <&gpio1 13 GPIO_ACTIVE_HIGH>;
-		startup-delay-us = <70000>;
-		enable-active-high;
-		vin-supply = <&poe12v_supply>;
-	};
-
-	radio3v3_supply: radio3v3-supply {
-		compatible = "reg-userspace-consumer";
-		regulator-name = "Radio Board 3.3V Main Power";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio1 14 GPIO_ACTIVE_HIGH>;
-		startup-delay-us = <70000>;
-		enable-active-high;
-		vin-supply = <&poe12v_supply>;
-	};
-
 	exp3v3_supply: exp3v3-supply {
-		compatible = "reg-userspace-consumer";
+		compatible = "regulator-fixed";
 		regulator-name = "m-PCIe M.2 Expansion 3.3V Power";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
@@ -381,7 +359,6 @@
 /* Radio board USB */
 &usbphynop1 {
 	wakeup-source;
-	vbus-supply = <&radio5v_supply>;
 };
 
 &usbotg1 {
@@ -396,7 +373,6 @@
 /* Hub USB to m-PCIe, M.2, and USB-UART */
 &usbphynop2 {
 	wakeup-source;
-	vbus-supply = <&exp3v3_supply>;
 };
 
 &usbotg2 {
