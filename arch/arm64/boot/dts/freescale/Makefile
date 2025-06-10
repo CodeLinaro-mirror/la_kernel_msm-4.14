@@ -1283,6 +1283,8 @@ dtb-$(CONFIG_ARCH_MXC) += imx952-evk-i3c.dtb
 imx952-evk-crrm-dtbs := imx952-evk.dtb imx952-evk-crrm.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-crrm.dtb
 
+dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-frdm.dtb
+
 imx8mm-kontron-dl-dtbs			:= imx8mm-kontron-bl.dtb imx8mm-kontron-dl.dtbo
 imx8mm-kontron-bl-lte-dtbs		:= imx8mm-kontron-bl.dtb imx8mm-kontron-bl-lte.dtbo
 
