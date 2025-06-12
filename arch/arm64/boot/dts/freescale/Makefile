@@ -802,7 +802,8 @@ dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-frdm-ov5640.dtb
 imx93-11x11-frdm-tianma-wvga-panel-dtbs := imx93-11x11-frdm.dtb imx93-11x11-frdm-tianma-wvga-panel.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-frdm-tianma-wvga-panel.dtb
 
-dtb-$(CONFIG_ARCH_MXC) += imx91-11x11-frdm-mt9m114.dtb
+dtb-$(CONFIG_ARCH_MXC) += imx91-11x11-frdm-mt9m114.dtb \
+			  imx91-11x11-frdm-aud-hat.dtb
 
 imx91-11x11-frdm-tianma-wvga-panel-dtbs := imx91-11x11-frdm.dtb imx91-11x11-frdm-tianma-wvga-panel.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx91-11x11-frdm-tianma-wvga-panel.dtb
