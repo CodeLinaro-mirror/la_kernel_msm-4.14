@@ -939,6 +939,14 @@ static void netc_destroy_all_lists(struct netc_switch *priv)
 	mutex_destroy(&priv->vft_lock);
 }
 
+static void netc_free_ports_taprio(struct netc_switch *priv)
+{
+	int i;
+
+	for (i = 0; i < priv->num_ports; i++)
+		netc_port_free_taprio(priv->ports[i]);
+}
+
 static void netc_teardown(struct dsa_switch *ds)
 {
 	struct netc_switch *priv = ds->priv;
@@ -947,6 +955,7 @@ static void netc_teardown(struct dsa_switch *ds)
 	netc_destroy_all_lists(priv);
 	netc_deinit_ntmp_user(priv);
 	netc_free_mdio_bus(priv);
+	netc_free_ports_taprio(priv);
 }
 
 static bool netc_switch_is_emdio_consumer(struct device_node *ports)
