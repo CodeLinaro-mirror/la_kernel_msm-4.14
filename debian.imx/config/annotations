@@ -2554,7 +2554,7 @@ CONFIG_MXC_CAMERA_OV5640_V2                     policy<{'arm64': 'm', 'armhf': '
 CONFIG_MXC_CAMERA_OV5642                        policy<{'arm64': '-', 'armhf': 'n'}>
 CONFIG_MXC_CAMERA_OV5647_MIPI                   policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_MXC_EMVSIM                               policy<{'arm64': '-'}>
-CONFIG_MXC_GPU_VIV                              policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_MXC_GPU_VIV                              policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_MXC_HANTRO                               policy<{'arm64': 'm'}>
 CONFIG_MXC_HANTRO_845                           policy<{'arm64': 'm'}>
 CONFIG_MXC_HANTRO_845_H1                        policy<{'arm64': 'm'}>
