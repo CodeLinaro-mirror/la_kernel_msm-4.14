@@ -57,7 +57,7 @@
 	i2c-parent = <&i2c_rpbus_5>;
 };
 
-&i2c_rpbus_5 {
+pcam_i2c: &i2c_rpbus_5 {
 	#address-cells = <1>;
 	#size-cells = <0>;
 	status = "okay";
