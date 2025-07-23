@@ -1,3 +1,10 @@
+linux-imx (7.0.0-1039.40-mini) noble; urgency=medium
+
+  * Create Experimental Core mini build
+  * Enable DM_VERITY backed secure boot
+
+ -- Ondrej Kubik <ondrej.kubik@canonical.com>  Fri, 02 Oct 2026 13:53:18 +01000
+
 linux-imx (7.0.0-1039.39) resolute; urgency=medium
 
   * resolute/linux: 7.0.0-39.39
