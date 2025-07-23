@@ -1212,6 +1212,7 @@ CONFIG_DRM_PANEL_ONTAT_KD50G21_40NT_A1          policy<{'arm64': '-', 'armhf': '
 CONFIG_DRM_PANEL_RAYDIUM_RM692C9                policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_DRM_PANEL_ROCKTECK_HIMAX8394F            policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_PANEL_TIANMA_TM050RDH03              policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_DRM_PANEL_WAVESHARE_DSI                  policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_DRM_PANEL_WKS_101WX001                   policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_PRIVACY_SCREEN                       policy<{'arm64': '-'}>
 CONFIG_DRM_RCAR_CMM                             policy<{'arm64': '-', 'armhf': '-'}>
@@ -2434,6 +2435,7 @@ CONFIG_MMC_UNIPHIER                             policy<{'armhf': '-'}>
 CONFIG_MMU_GATHER_RCU_TABLE_FREE                policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_MMU_GATHER_TABLE_FREE                    policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_MODULE_SIG_FORCE                         policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_MOTORCOMM_PHY                            policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_MSC313E_WATCHDOG                         policy<{'armhf': '-'}>
 CONFIG_MSCC_FELIX_SWITCH_TSN                    policy<{'arm64': '-'}>
 CONFIG_MSM_GCC_8660                             policy<{'arm64': '-', 'armhf': '-'}>
@@ -4443,6 +4445,7 @@ CONFIG_TOUCHSCREEN_CT36X_WLD                    policy<{'arm64': '-', 'armhf': '
 CONFIG_TOUCHSCREEN_ELAN_TS                      policy<{'arm64': 'n', 'armhf': 'm'}>
 CONFIG_TOUCHSCREEN_FTS                          policy<{'arm64': 'n', 'armhf': 'y'}>
 CONFIG_TOUCHSCREEN_FTS_DIRECTORY                policy<{'armhf': '-'}>
+CONFIG_TOUCHSCREEN_GOODIX                       policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_TOUCHSCREEN_IPROC                        policy<{'arm64': '-'}>
 CONFIG_TOUCHSCREEN_PCAP                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_TOUCHSCREEN_RASPBERRYPI_FW               policy<{'arm64': '-'}>
