@@ -1086,6 +1086,7 @@ CONFIG_DEV_DAX                                  policy<{'arm64': 'm', 'armhf': '
 CONFIG_DEV_DAX_CXL                              policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_DEV_DAX_HMEM                             policy<{'arm64': '-'}>
 CONFIG_DEV_DAX_HMEM_DEVICES                     policy<{'arm64': '-'}>
+CONFIG_DM_CRYPT                                 policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DMABUF_HEAPS_DSP                         policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_DMA_ACPI                                 policy<{'arm64': '-'}>
 CONFIG_DMA_BCM2835                              policy<{'arm64': '-'}>
