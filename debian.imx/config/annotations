@@ -544,6 +544,7 @@ CONFIG_ATH9K_WOW                                policy<{'arm64': '-', 'armhf': '
 CONFIG_ATH_COMMON                               policy<{'arm64': '-', 'armhf': 'm'}>
 CONFIG_ATH_DEBUG                                policy<{'arm64': '-', 'armhf': 'n'}>
 CONFIG_ATMEL                                    policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_AUTOFS_FS                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_AX88796                                  policy<{'armhf': '-'}>
 CONFIG_AX88796_93CX6                            policy<{'armhf': '-'}>
 CONFIG_AXI_DMAC                                 policy<{'arm64': '-', 'armhf': '-'}>
