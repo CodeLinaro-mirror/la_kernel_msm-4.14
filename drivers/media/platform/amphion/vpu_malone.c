@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2026 NXP
  */
 
 #include <linux/bitfield.h>
@@ -1369,9 +1369,9 @@ static int vpu_malone_insert_scode_vc1_l_seq(struct malone_scode_t *scode)
 	int size = 0;
 	u8 rcv_seqhdr[MALONE_VC1_RCV_SEQ_HEADER_LEN];
 
+	scode->need_data = 0;
 	if (scode->inst->total_input_count)
 		return 0;
-	scode->need_data = 0;
 
 	ret = vpu_malone_insert_scode_seq(scode, MALONE_CODEC_ID_VC1_SIMPLE, sizeof(rcv_seqhdr));
 	if (ret < 0)
