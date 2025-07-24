@@ -2436,6 +2436,7 @@ CONFIG_MMC_UNIPHIER                             policy<{'armhf': '-'}>
 CONFIG_MMU_GATHER_RCU_TABLE_FREE                policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_MMU_GATHER_TABLE_FREE                    policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_MODULE_SIG_FORCE                         policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_MODULE_SIG_KEY_TYPE_RSA                  policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_MOTORCOMM_PHY                            policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_MSC313E_WATCHDOG                         policy<{'armhf': '-'}>
 CONFIG_MSCC_FELIX_SWITCH_TSN                    policy<{'arm64': '-'}>
@@ -4349,6 +4350,7 @@ CONFIG_SYS_SUPPORTS_EM_STI                      policy<{'armhf': '-'}>
 CONFIG_SYS_SUPPORTS_SH_CMT                      policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SYS_SUPPORTS_SH_MTU2                     policy<{'armhf': '-'}>
 CONFIG_SYS_SUPPORTS_SH_TMU                      policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_SYSTEM_TRUSTED_KEYRING                   policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_TASKS_RCU                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_TCG_ATMEL                                policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_TCG_CRB                                  policy<{'arm64': '-'}>
