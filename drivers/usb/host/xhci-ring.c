@@ -3969,6 +3969,7 @@ int xhci_submit_single_step_set_feature(struct usb_hcd *hcd,
 		start_cycle = ep_ring->cycle_state;
 		/* Save the DMA address of the last TRB in the TD */
 		td->end_trb = ep_ring->enqueue;
+		td->end_seg = ep_ring->enq_seg;
 		field = TRB_IOC | TRB_IDT | TRB_TYPE(TRB_SETUP) | start_cycle;
 		/* xHCI 1.0/1.1 6.4.1.2.1: Transfer Type field */
 		if ((xhci->hci_version >= 0x100) ||
@@ -4017,6 +4018,7 @@ int xhci_submit_single_step_set_feature(struct usb_hcd *hcd,
 	}
 
 	td->end_trb = ep_ring->enqueue;
+	td->end_seg = ep_ring->enq_seg;
 	field = TRB_IOC | TRB_TYPE(TRB_STATUS) | ep_ring->cycle_state;
 	queue_trb(xhci, ep_ring, false,
 			0,
