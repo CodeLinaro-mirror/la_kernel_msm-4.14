@@ -721,6 +721,7 @@ struct sbpt_entry_data {
 };
 
 #if IS_ENABLED(CONFIG_NXP_NETC_LIB)
+void ntmp_enable_cbdr(struct netc_cbdr *cbdr);
 int ntmp_init_cbdr(struct netc_cbdr *cbdr, struct device *dev,
 		   const struct netc_cbdr_regs *regs);
 void ntmp_free_cbdr(struct netc_cbdr *cbdr);
@@ -811,6 +812,10 @@ static inline u32 ntmp_lookup_free_eid(unsigned long *bitmap, u32 size)
 }
 
 static inline void ntmp_clear_eid_bitmap(unsigned long *bitmap, u32 entry_id)
+{
+}
+
+static inline void ntmp_enable_cbdr(struct netc_cbdr *cbdr)
 {
 }
 
