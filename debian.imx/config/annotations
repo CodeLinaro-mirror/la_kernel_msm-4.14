@@ -1950,6 +1950,8 @@ CONFIG_IIO_P3T1085_I2C                          policy<{'arm64': 'm', 'armhf': '
 CONFIG_IIO_P3T1085_I3C                          policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_IIO_STM32_LPTIMER_TRIGGER                policy<{'arm64': '-'}>
 CONFIG_IIO_STM32_TIMER_TRIGGER                  policy<{'arm64': '-'}>
+CONFIG_IKCONFIG                                 policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_IKCONFIG_PROC                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMX2_WDT                                 policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMX8MM_LCDIF_CORE                        policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_IMX8MP_HDMI_PAVI                         policy<{'arm64': 'y', 'armhf': 'y'}>
