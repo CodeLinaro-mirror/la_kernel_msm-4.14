@@ -51,6 +51,10 @@ parts:
     override-build: |
       craftctl default
       craftctl set version=$(git --git-dir=${CRAFT_PROJECT_DIR}/.git describe --tags | cut -c 12-42 | sed 's/-snap$//')
+    override-stage: |
+      # keep only listed modules
+      "${CRAFT_PROJECT_DIR}/prune-kernel-modules.sh" "${CRAFT_PART_INSTALL}" "${CRAFT_PROJECT_DIR}/imx-keep.modules"
+      craftctl default
     prime:
       - -vmlinuz*
       - -dtbs
