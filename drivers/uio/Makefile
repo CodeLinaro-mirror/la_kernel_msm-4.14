@@ -12,4 +12,5 @@ obj-$(CONFIG_UIO_FSL_ELBC_GPCM)	+= uio_fsl_elbc_gpcm.o
 obj-$(CONFIG_UIO_HV_GENERIC)	+= uio_hv_generic.o
 obj-$(CONFIG_UIO_DFL)	+= uio_dfl.o
 obj-$(CONFIG_UIO_PCI_GENERIC_SVA)  += uio_pci_generic_sva.o
+obj-${CONFIG_UIO_V2X_FCE} += uio_v2x_fce.o
 obj-$(CONFIG_UIO_IVSHMEM)	+= uio_ivshmem.o
