@@ -149,6 +149,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx8dxl-ddr3l-evk-rpmsg.dtb \
 			  imx8dxl-evk-rpmsg.dtb \
 			  imx8dxl-orangebox-sd.dtb imx8dxl-orangebox.dtb
 
+imx8dxl-evk-pcie-ep-rpmsg-dtbs += imx8dxl-evk-rpmsg.dtb imx-pcie0-ep.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx8dxl-evk-pcie-ep-rpmsg.dtb
+
 dtb-$(CONFIG_ARCH_MXC) += imx8mm-emcon-avari.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mm-emtop-baseboard.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mm-evkb.dtb
@@ -545,6 +548,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx8qxp-mek.dtb
 
 imx8qxp-mek-pcie-ep-dtbs += imx8qxp-mek.dtb imx-pcie0-ep.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx8qxp-mek-pcie-ep.dtb
+
+imx8qxp-mek-pcie-ep-rpmsg-dtbs += imx8qxp-mek-rpmsg.dtb imx-pcie0-ep.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx8qxp-mek-pcie-ep-rpmsg.dtb
 
 imx8qxp-mek-ov5640-csi-dtbs := imx8qxp-mek.dtb imx8qxp-mek-ov5640-csi.dtbo
 dtb-${CONFIG_ARCH_MXC} += imx8qxp-mek-ov5640-csi.dtb
