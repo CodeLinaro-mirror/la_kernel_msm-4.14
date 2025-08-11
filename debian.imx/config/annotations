@@ -1481,7 +1481,7 @@ CONFIG_EMAC_ROCKCHIP                            policy<{'arm64': '-', 'armhf': '
 CONFIG_EM_TIMER_STI                             policy<{'armhf': '-'}>
 CONFIG_ENETC_TSN                                policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_EPIC100                                  policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ETHOSU                                   policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ETHOSU                                   policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_EXTCON_QCOM_SPMI_MISC                    policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_EXTCON_RTK_TYPE_C                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_EXYNOS5422_DMC                           policy<{'armhf': '-'}>
