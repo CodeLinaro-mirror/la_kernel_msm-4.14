@@ -186,10 +186,10 @@
 		status="okay";
 		compatible = "nrc80211";
 		reg = <0>;
-		interrupt-parent = <&gpio2>;			// Not currently used by driver
-		interrupts = <8 IRQ_TYPE_LEVEL_LOW>;		// Not currently used by driver
-		spi-max-frequency = <30000000>;
-		reset-gpios = <&gpio1 1 GPIO_ACTIVE_LOW>;	// Not currently used by driver
+		interrupt-parent = <&gpio2>;
+		interrupts = <8 IRQ_TYPE_LEVEL_HIGH>;
+		spi-max-frequency = <20000000>;
+		reset-gpios = <&gpio1 1 GPIO_ACTIVE_LOW>;
 		keep-power-in-suspend;
 	};
 };
