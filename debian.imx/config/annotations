@@ -59,6 +59,9 @@ CONFIG_MTD_NAND_OMAP2                           note<'TODO: update note'>
 CONFIG_MTD_NAND_OMAP_BCH                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_MTD_NAND_OMAP_BCH                        note<'TODO: update note'>
 
+CONFIG_NOP_USB_XCEIV                            policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_NOP_USB_XCEIV                            note<'fix a calltrace on i.MX platforms using chipidea usb driver'>
+
 CONFIG_NOUVEAU_LEGACY_CTX_SUPPORT               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_NOUVEAU_LEGACY_CTX_SUPPORT               note<'Selects CONFIG_DRM_LEGACY which is not wanted'>
 
