@@ -2032,7 +2032,6 @@ static void enetc4_pf_power_down(struct enetc_si *si)
 		enetc4_pf_imdio_regulator_disable(pf);
 
 	pci_free_irq_vectors(pdev);
-	enetc4_teardown_cbdr(si);
 	pci_disable_device(pdev);
 }
 
@@ -2056,10 +2055,7 @@ static int enetc4_pf_power_up(struct pci_dev *pdev, struct device_node *node)
 	}
 
 	pci_set_master(pdev);
-
-	err = enetc4_setup_cbdr(si);
-	if (err)
-		return err;
+	enetc4_enable_cbdr(si);
 
 	err = enetc_setup_mac_addresses(node, pf);
 	if (err)
