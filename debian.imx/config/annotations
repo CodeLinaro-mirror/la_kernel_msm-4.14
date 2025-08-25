@@ -965,6 +965,7 @@ CONFIG_CRC_ITU_T                                policy<{'arm64': 'y', 'armhf': '
 CONFIG_CROS_EC_UART                             policy<{'arm64': '-'}>
 CONFIG_CROS_KBD_LED_BACKLIGHT                   policy<{'arm64': 'n', 'armhf': 'm'}>
 CONFIG_CROS_TYPEC_SWITCH                        policy<{'arm64': '-'}>
+CONFIG_CRYPTO                                   policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_AES_ARM                           policy<{'armhf': 'y'}>
 CONFIG_CRYPTO_AES_ARM64                         policy<{'arm64': 'y'}>
 CONFIG_CRYPTO_AES_ARM64_BS                      policy<{'arm64': 'y'}>
@@ -1062,6 +1063,7 @@ CONFIG_CRYPTO_ECDH                              policy<{'arm64': 'y', 'armhf': '
 CONFIG_CRYPTO_ENGINE                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_ESSIV                             policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_LIB_DES                           policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_CRYPTO_RNG                               policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_SHA256_ARM                        policy<{'armhf': 'y'}>
 CONFIG_CRYPTO_SHA256_ARM64                      policy<{'arm64': 'y'}>
 CONFIG_CRYPTO_SHA2_ARM64_CE                     policy<{'arm64': 'y'}>
