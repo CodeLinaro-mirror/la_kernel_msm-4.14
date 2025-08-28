@@ -1408,6 +1408,10 @@ dtb-$(CONFIG_ARCH_MXC) += imx952-evk-it6263-lvds0-ox05b1s-csi0-4lanes.dtb
 imx8mm-kontron-dl-dtbs			:= imx8mm-kontron-bl.dtb imx8mm-kontron-dl.dtbo
 imx8mm-kontron-bl-lte-dtbs		:= imx8mm-kontron-bl.dtb imx8mm-kontron-bl-lte.dtbo
 
+imx952-evk-kd123c02-dtbs := imx952-evk.dtb imx952-evk-kd123c02.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-kd123c02.dtb
+
+
 dtb-$(CONFIG_ARCH_MXC) += imx8mm-kontron-dl.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mm-kontron-bl-lte.dtb
 
