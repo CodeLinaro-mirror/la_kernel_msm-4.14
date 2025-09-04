@@ -6,7 +6,7 @@ obj-m +=$(TARGET).o
 $(TARGET)-objs += basler-camera-driver-vvcam/basler-camera-driver-vvcam.o
 
 ccflags-y += -I$(PWD)/../../../common/
-ccflags-y += -O2 -Werror -Wmissing-declarations -Wmissing-prototypes
+ccflags-y += -O2 -Werror -Wmissing-declarations -Wmissing-prototypes -Werror=frame-larger-than=2048
 ccflags-y += -DISP8000NANO_V1802
 
 ARCH_TYPE ?= arm64

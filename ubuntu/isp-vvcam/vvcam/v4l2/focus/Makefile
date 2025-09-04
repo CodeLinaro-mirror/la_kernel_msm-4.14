@@ -1,3 +1,5 @@
+obj-y += vcm_dw9790/
+
 all:
 	@cd vcm_dw9790;  make || exit $$?;
 

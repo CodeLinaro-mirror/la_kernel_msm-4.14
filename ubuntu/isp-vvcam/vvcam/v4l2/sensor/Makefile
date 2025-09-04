@@ -1,3 +1,4 @@
+obj-y += ov2775/ os08a20/ ar1335/ camera-proxy-driver/
 all:
 	@cd ov2775;  make || exit $$?;
 	@cd os08a20; make || exit $$?;

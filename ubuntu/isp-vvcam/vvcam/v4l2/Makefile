@@ -2,6 +2,8 @@ ifeq ($(KERNEL_SRC),)
 export KERNEL_SRC := $(shell dirname $(shell pwd))/../nxp_kernel/build_v8
 endif
 
+obj-y += dwe/ isp/ video/ sensor/ focus/
+
 all:
 	@cd dwe;      make || exit $$?;
 	@cd isp;      make || exit $$?;
