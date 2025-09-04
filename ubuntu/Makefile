@@ -17,6 +17,7 @@ obj-$(CONFIG_UBUNTU_HOST)      += ubuntu-host/
 ##
 ##
 obj-y	+= mwifiex/
+obj-$(CONFIG_ARM64) += isp-vvcam/vvcam/v4l2/
 ##
 ##
 ##
