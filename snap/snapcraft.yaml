@@ -66,10 +66,13 @@ parts:
   # https://github.com/snapcore/snapd/blob/master/cmd/snap-bootstrap/README.md
   initrd:
     after:
+      - custom-systemd-bootchart
       - firmware
       - kernel
       - test-signing-keys
     plugin: initrd
+    initrd-addons:
+      - usr/lib/systemd/systemd-bootchart
     initrd-firmware:
       - firmware/imx/sdma/sdma-imx7d.bin
       - firmware/regulatory.db
@@ -168,6 +171,13 @@ parts:
         -r ${CRAFT_PART_INSTALL}/kernel.img \
         -k ${CRAFT_STAGE}/signing-key
       rm ${CRAFT_STAGE}/kernel_${CRAFT_ARCH_BUILD_FOR}.its
+
+  custom-systemd-bootchart:
+    plugin: nil
+    override-build: |
+      install -D -m 755 ${CRAFT_PROJECT_DIR}/systemd-bootchart ${CRAFT_PART_INSTALL}/usr/lib/systemd/systemd-bootchart
+    prime:
+      - -*
 
 build-packages:
   - bison
