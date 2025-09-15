@@ -122,6 +122,11 @@ enum netc_port_hsr_type {
 	NETC_HSR_UPPER,
 };
 
+struct netc_port_hsr_data {
+	enum netc_port_hsr_type type;
+	u32 isgt_eid;
+};
+
 struct netc_port {
 	int index;
 	void __iomem *iobase;
@@ -142,6 +147,7 @@ struct netc_port {
 	u16 vlan_aware:1;
 	u16 tx_pause:1;
 	u16 enabled:1;
+	u16 hsr_enabled:1;
 
 	enum netc_port_offloads offloads;
 
@@ -159,7 +165,7 @@ struct netc_port {
 	u32 ptp_ipft_eid[NETC_PTP_MAX];
 	struct netc_port_db db;
 	struct tc_taprio_qopt_offload *taprio;
-	enum netc_port_hsr_type hsr_type;
+	struct netc_port_hsr_data hsr_data;
 };
 
 enum netc_port_mac {
@@ -329,6 +335,8 @@ bool netc_port_rxtstamp(struct dsa_switch *ds, int port,
 void netc_port_txtstamp(struct dsa_switch *ds, int port_id,
 			struct sk_buff *skb);
 int netc_port_set_ptp_filter(struct netc_port *port, int ptp_filter);
+
+int netc_port_set_hsr(struct netc_port *port, enum netc_port_hsr_type type);
 
 /* Power Management */
 int netc_suspend(struct dsa_switch *ds);
