@@ -70,6 +70,7 @@ parts:
       - firmware
       - kernel
       - test-signing-keys
+      - ubuntu-core-initramfs
     plugin: initrd
     initrd-addons:
       - usr/lib/systemd/systemd-bootchart
@@ -178,6 +179,38 @@ parts:
       install -D -m 755 ${CRAFT_PROJECT_DIR}/systemd-bootchart ${CRAFT_PART_INSTALL}/usr/lib/systemd/systemd-bootchart
     prime:
       - -*
+
+  ubuntu-core-initramfs:
+    plugin: nil
+    source: https://github.com/canonical/snapd.git
+    source-branch: master
+    override-build: |
+      rm -rf core-initrd
+      git checkout core-initrd
+      cd core-initrd
+      sed -i \
+          -e 's/dpkg-buildpackage \(.*\)/dpkg-buildpackage \1 -us -uc/g' \
+          -e 's/dch -v "$next_ver" \(.*\)/dch -b -v "$next_ver" "Update to snapd version $SNAPD_VERSION"/g' \
+          build-source-pkgs.sh
+      export DEB_BUILD_OPTIONS=nocheck
+      export DEBEMAIL="ubuntu@ubuntu.com"
+      export DEBFULLNAME="Ubuntu"
+      unset GOROOT; unset GOPATH
+      TEST_BUILD=1 ./build-source-pkgs.sh
+      tar -xf ubuntu-core-initramfs_*26.04.tar.xz
+      cd 26.04
+      apt build-dep . -y
+      export DEB_BUILD_OPTIONS=nocheck
+      dpkg-buildpackage -us -uc
+      cp ../ubuntu-core-initramfs_*26.04_arm64.deb ${CRAFT_PART_INSTALL}/ubuntu-core-initramfs.deb
+    build-packages:
+      - devscripts
+      - dpkg-dev
+      - pkgconf
+    prime:
+      - -*
+    build-snaps:
+      - go
 
 build-packages:
   - bison
