@@ -8,6 +8,7 @@
 #include <linux/phy/phy.h>
 #include <linux/platform_device.h>
 #include <linux/workqueue.h>
+#include <linux/fsl/guts.h>
 
 #include "phy-fsl-lynx-core.h"
 
@@ -625,6 +626,7 @@ static void lynx_10g_lane_read_configuration(struct lynx_lane *lane)
 	}
 
 	lynx_10g_backup_pccr_val(lane);
+	fsl_guts_lane_init(priv->info->index, lane->id, lane->mode);
 }
 
 static int ls1028a_get_pccr(enum lynx_lane_mode lane_mode, int lane,
@@ -1455,9 +1457,22 @@ out:
 	return err;
 }
 
+static bool lynx_10g_switch_needs_rcw_override(enum lynx_lane_mode crr,
+					       enum lynx_lane_mode new)
+{
+	if ((crr == LANE_MODE_1000BASEX_SGMII ||
+	     crr == LANE_MODE_2500BASEX) &&
+	    (new == LANE_MODE_1000BASEX_SGMII ||
+	     new == LANE_MODE_2500BASEX))
+		return false;
+
+	return true;
+}
+
 static int lynx_10g_set_mode(struct phy *phy, enum phy_mode mode, int submode)
 {
 	struct lynx_lane *lane = phy_get_drvdata(phy);
+	struct lynx_priv *priv = lane->priv;
 	bool powered_up = lane->powered_up;
 	enum lynx_lane_mode lane_mode;
 	int err;
@@ -1481,6 +1496,12 @@ static int lynx_10g_set_mode(struct phy *phy, enum phy_mode mode, int submode)
 	if (powered_up)
 		lynx_10g_lane_halt(phy);
 
+	if (lynx_10g_switch_needs_rcw_override(lane->mode, lane_mode)) {
+		err = fsl_guts_lane_set_mode(priv->info->index, lane->id, lane_mode);
+		if (err)
+			goto out;
+	}
+
 	err = lynx_10g_lane_disable_pcvt(lane, lane->mode);
 	if (err)
 		goto out;
@@ -1503,6 +1524,7 @@ static int lynx_10g_validate(struct phy *phy, enum phy_mode mode, int submode,
 {
 	enum lynx_lane_mode lane_mode = phy_interface_to_lane_mode(submode);
 	struct lynx_lane *lane = phy_get_drvdata(phy);
+	struct lynx_priv *priv = lane->priv;
 
 	if (mode != PHY_MODE_ETHERNET)
 		return -EOPNOTSUPP;
@@ -1510,17 +1532,8 @@ static int lynx_10g_validate(struct phy *phy, enum phy_mode mode, int submode,
 	if (!lynx_lane_supports_mode(lane, lane_mode))
 		return -EOPNOTSUPP;
 
-	/* The only protocol change currently supported is between
-	 * 1000Base-X/SGMII and 2500Base-X. The others require an RCW overwrite
-	 * procedure as documented here:
-	 * https://lore.kernel.org/linux-phy/20230810102631.bvozjer3t67r67iy@skbuf/
-	 * which is SoC-specific, and not yet implemented in drivers/soc/fsl/guts.c.
-	 */
-	if ((lane_mode != LANE_MODE_1000BASEX_SGMII &&
-	     lane_mode != LANE_MODE_2500BASEX) ||
-	    (lane->mode != LANE_MODE_1000BASEX_SGMII &&
-	     lane->mode != LANE_MODE_2500BASEX))
-		return -EOPNOTSUPP;
+	if (lynx_10g_switch_needs_rcw_override(lane->mode, lane_mode))
+		return fsl_guts_lane_validate(priv->info->index, lane->id, lane_mode);
 
 	return 0;
 }
