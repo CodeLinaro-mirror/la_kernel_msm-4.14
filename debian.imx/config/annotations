@@ -642,9 +642,9 @@ CONFIG_CLK_IMX8MN                               policy<{'arm64': 'y', 'armhf': '
 CONFIG_CLK_IMX8MP                               policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_IMX8MQ                               policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_IMX8ULP                              policy<{'arm64': 'y', 'armhf': 'n'}>
-CONFIG_CLK_IMX91                                policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_CLK_IMX91                                policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_IMX93                                policy<{'arm64': 'y', 'armhf': 'n'}>
-CONFIG_CLK_IMX95_BLK_CTL                        policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_CLK_IMX95_BLK_CTL                        policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_INTEL_SOCFPGA                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_CLK_INTEL_SOCFPGA32                      policy<{'armhf': '-'}>
 CONFIG_CLK_INTEL_SOCFPGA64                      policy<{'arm64': '-'}>
@@ -1972,7 +1972,7 @@ CONFIG_IMX8_MIPI_CSI2_YAV                       policy<{'arm64': 'm', 'armhf': '
 CONFIG_IMX8_PARALLEL_CSI                        policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_IMX8_PC                                  policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMX8_PRG                                 policy<{'arm64': 'y', 'armhf': 'y'}>
-CONFIG_IMX91_THERMAL                            policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_IMX91_THERMAL                            policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_IMX9_BLK_CTRL                            policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_IMX_DPU_BLIT                             policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMX_DPU_CORE                             policy<{'arm64': 'y', 'armhf': 'y'}>
