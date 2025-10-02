@@ -2,6 +2,10 @@
     url = https://github.com/nxp-imx/linux-imx.git
     branch = hf-6.6.y
     commit = e0f9e2afd4cff3f02d71891244b4aa5899dfc786 (staging: fsl_qbman: don't dereference portal affine to CPU when it's redirected)
+[isp-vvcam]
+    url = https://github.com/nxp-imx/isp-vvcam.git
+    branch = lp-6.6.y_2.2.0
+    commit = b9d31115a5fbf6e8628bf20e5931ed5e09a6ce75 (CL982766 M865SW-1297: vvcam: Modify license for vvfocus headfile)
 [mwifiex]
     url = https://github.com/nxp-imx/mwifiex.git
     branch = lf-6.6.52_2.2.0
