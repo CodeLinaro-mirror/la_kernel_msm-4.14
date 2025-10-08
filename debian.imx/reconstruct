@@ -41,6 +41,7 @@ chmod +x 'include/linux/hx280enc.h'
 chmod +x 'include/uapi/linux/hx280enc.h'
 chmod +x 'scripts/get_maintainer_nxp.sh'
 chmod +x 'tools/testing/selftests/net/ipv6_route_update_soft_lockup.sh'
+chmod +x 'ubuntu/isp-vvcam/build-all-vvcam.sh'
 chmod +x 'ubuntu/mwifiex/mlan/mlan_tlv_ids.h'
 # Remove any files deleted from the orig.
 rm -f 'arch/arm/kernel/pj4-cp0.c'
