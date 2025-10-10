@@ -230,6 +230,7 @@ static unsigned int fsl_edma_get_tcd_attr(enum dma_slave_buswidth src_addr_width
 
 void fsl_edma_free_desc(struct virt_dma_desc *vdesc)
 {
+	struct virt_dma_chan *vc = to_virt_chan(vdesc->tx.chan);
 	struct fsl_edma_desc *fsl_desc;
 	int i;
 
@@ -237,6 +238,8 @@ void fsl_edma_free_desc(struct virt_dma_desc *vdesc)
 	for (i = 0; i < fsl_desc->n_tcds; i++)
 		dma_pool_free(fsl_desc->echan->tcd_pool, fsl_desc->tcd[i].vtcd,
 			      fsl_desc->tcd[i].ptcd);
+	if (vc->cyclic == vdesc)
+		vc->cyclic = NULL;
 	kfree(fsl_desc);
 }
 
