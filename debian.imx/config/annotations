@@ -4615,6 +4615,7 @@ CONFIG_VIDEO_HANTRO_SUNXI                       policy<{'arm64': '-'}>
 CONFIG_VIDEO_HDPVR                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEO_HEXIUM_GEMINI                      policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEO_HEXIUM_ORION                       policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_VIDEO_IMX7_CSI                           policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_VIDEO_IMX8_ISI                           policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_VIDEO_IMX8_ISI_M2M                       policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_VIDEO_IMX_CAPTURE                        policy<{'arm64': 'm', 'armhf': 'm'}>
