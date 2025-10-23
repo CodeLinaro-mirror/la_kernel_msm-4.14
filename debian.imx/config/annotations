@@ -4649,7 +4649,6 @@ CONFIG_VIDEO_NPCM_VCD_ECE                       policy<{'arm64': '-', 'armhf': '
 CONFIG_VIDEO_NXP_NEOISP                         policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_VIDEO_OV02C10                            policy<{'arm64': '-'}>
 CONFIG_VIDEO_OV2740                             policy<{'arm64': '-'}>
-CONFIG_VIDEO_OV5640                             policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_VIDEO_OV9734                             policy<{'arm64': '-'}>
 CONFIG_VIDEO_OX03C10_DRV                        policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_VIDEO_OX03C10_LIB                        policy<{'arm64': 'm', 'armhf': 'n'}>
