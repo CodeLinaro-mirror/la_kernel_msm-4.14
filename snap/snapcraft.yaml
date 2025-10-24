@@ -198,6 +198,15 @@ parts:
         -k ${CRAFT_STAGE}/signing-key
       rm ${CRAFT_STAGE}/kernel_${CRAFT_ARCH_BUILD_FOR}.its
 
+  # dummy snapd-info, even if we do not actually have snapd-bootstrap here
+  snapd-info:
+    plugin: nil
+    override-build: |
+      { echo "VERSION=2.75.2"
+        echo "SNAPD_APPARMOR_REEXEC=1"
+        echo "SNAPD_ASSERTS_FORMATS='{\"account-key\":1,\"snap-declaration\":6,\"system-user\":2}'"
+      } > "${CRAFT_PART_INSTALL}/snapd-info"
+
 build-snaps:
   - rustup
 
