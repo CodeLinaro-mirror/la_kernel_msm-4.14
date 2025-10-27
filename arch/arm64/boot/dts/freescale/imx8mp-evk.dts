@@ -8,6 +8,7 @@
 #include <dt-bindings/phy/phy-imx8-pcie.h>
 #include <dt-bindings/usb/pd.h>
 #include "imx8mp.dtsi"
+#include "imx8mp-nxp-display.dtsi"
 
 / {
 	model = "NXP i.MX8MPlus EVK board";
@@ -15,16 +16,6 @@
 
 	chosen {
 		stdout-path = &uart2;
-	};
-
-	backlight_lvds: backlight-lvds {
-		compatible = "pwm-backlight";
-		pwms = <&pwm2 0 100000 0>;
-		brightness-levels = <0 100>;
-		num-interpolated-steps = <100>;
-		default-brightness-level = <100>;
-		power-supply = <&reg_per_12v>;
-		status = "disabled";
 	};
 
 	hdmi-connector {
@@ -143,15 +134,6 @@
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio2 6 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-	};
-
-	reg_per_12v: regulator-per-12v {
-		compatible = "regulator-fixed";
-		regulator-name = "PER_12V";
-		regulator-min-microvolt = <12000000>;
-		regulator-max-microvolt = <12000000>;
-		gpio = <&pca6416 1 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 	};
 
@@ -1283,12 +1265,6 @@
 		fsl,pins = <
 			MX8MP_IOMUXC_SPDIF_RX__I2C5_SDA         0x400001c2
 			MX8MP_IOMUXC_SPDIF_TX__I2C5_SCL         0x400001c2
-		>;
-	};
-
-	pinctrl_lvds_en: lvdsengrp {
-		fsl,pins = <
-			MX8MP_IOMUXC_GPIO1_IO10__GPIO1_IO10	0x1c0
 		>;
 	};
 
