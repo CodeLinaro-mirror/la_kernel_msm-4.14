@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2026 NXP
+ */
+
+#include "imx94-pinfunc.h"
+
+/dts-v1/;
+/plugin/;
+
+&lpi2c4 {
+        pinctrl-0 = <&pinctrl_gnss>;
+        status = "okay";
+};
+
+&lpuart4 {
+	/* GNSS UART1 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart4>;
+	status = "okay";
+};
+
+&lpuart7 {
+	/* GNSS UART2 */
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart7>;
+	status = "okay";
+};
+
+&scmi_iomuxc {
+	pinctrl_gnss: gnssgrp {
+		fsl,pins = <
+			IMX94_PAD_ETH0_TXD1__GPIO5_IO1		0x57e // gnss_tx_ready
+			IMX94_PAD_ETH0_TX_EN__GPIO5_IO2		0x57e // gnss_ext_int
+			IMX94_PAD_ETH0_TXD3__GPIO5_IO8		0x57e // gnss_wheeltick
+			IMX94_PAD_ETH0_TXD2__GPIO5_IO7		0x57e // gnss_wake_up
+			IMX94_PAD_ETH0_TX_CLK__GPIO5_IO3	0x5fe // gnss_rtk_stat
+			IMX94_PAD_ETH0_CRS__GPIO5_IO14		0x57e // gnss_dir
+			IMX94_PAD_ETH1_RXD1__GPIO5_IO21		0x57e // cfg_mux_gnss_pps_sel
+		>;
+	};
+
+	pinctrl_uart4: uart4grp {
+		fsl,pins = <
+			IMX94_PAD_GPIO_IO40__LPUART4_TX		0x31e
+			IMX94_PAD_GPIO_IO41__LPUART4_RX		0x31e
+		>;
+	};
+
+	pinctrl_uart7: uart7grp {
+		fsl,pins = <
+			IMX94_PAD_GPIO_IO32__LPUART7_TX		0x31e
+			IMX94_PAD_GPIO_IO33__LPUART7_RX		0x31e
+		>;
+	};
+};
