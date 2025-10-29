@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2025 NXP
+ */
+
+#include <dt-bindings/phy/phy-imx8-pcie.h>
+#include "imx943-orangebox.dts"
+
+/ {
+	mdm_wake: mdm-wake {
+		compatible = "gpio-keys";
+		mdm_wowwan {
+			label = "Modem Wakeup";
+			gpios = <&gpio5 26 GPIO_ACTIVE_HIGH>;
+			linux,code = <KEY_WAKEUP>;
+			wakeup-source;
+			debounce-interval = <0>;
+			interrupt-parent = <&gpio5>;
+			interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
+		};
+	};
+};
+
+&ptn5150 {
+	status = "disabled";
+	/delete-node/ connector;
+};
+
+&usb3_dwc3 {
+	/delete-property/ extcon;
+	dr_mode = "host";
+	pinctrl-names = "default";
+	pinctrl-0 = <&mdm_wowwan>;
+};
+
+&usb3_phy {
+	orientation-switch;
+	status = "okay";
+	/delete-node/ port;
+};
+
+&pcal6524 {
+	usb3-mdm-sel-usb-hog {
+		status = "disabled";
+	};
+
+	usb3-mdm-sel-mdm-hog {
+		gpio-hog;
+		gpios = <9 GPIO_ACTIVE_HIGH>;
+		output-low;
+	};
+
+	mdm_reset_b {
+		gpio-hog;
+		gpios = <1 GPIO_ACTIVE_HIGH>;
+		output-high;
+	};
+
+	mdm_power_off{
+		gpio-hog;
+		gpios = <7 GPIO_ACTIVE_HIGH>;
+		output-high;
+	};
+
+	mdm_w_disable{
+		gpio-hog;
+		gpios = <8 GPIO_ACTIVE_HIGH>;
+		output-high;
+	};
+
+	mdm_perst{
+		gpio-hog;
+		gpios = <23 GPIO_ACTIVE_HIGH>;
+		output-high;
+	};
+};
+
+&netc_switch {
+	status = "disabled";
+};
+
+&scmi_iomuxc {
+	mdm_wowwan: wwan {
+		fsl,pins = <IMX94_PAD_ETH1_RXD3__GPIO5_IO26		0x31e>;
+	};
+};
