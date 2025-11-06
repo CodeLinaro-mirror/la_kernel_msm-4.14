@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright 2026 NXP
+ */
+
+#include <dt-bindings/gpio/gpio.h>
+#include "imx94-pinfunc.h"
+
+/dts-v1/;
+/plugin/;
+
+&{/} {
+	usdhc3_pwrseq: usdhc3_pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&pcal6524 0 GPIO_ACTIVE_LOW>,  /* IMX_V2X_RST_B_3V3 */
+			      <&pcal6524 17 GPIO_ACTIVE_LOW>; /* RST_SXF1800_B_3V3 */
+	};
+};
+
+&enetc2 {
+	status = "disabled";
+};
+
+&pcie0 {
+	status = "disabled";
+};
+
+&gpio5 {
+	v2x_pmic_stanby_3v3 {
+		gpio-hog;
+		gpios = <17 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "V2X PMIC STANBY";
+	};
+};
+
+&pcal6524 {
+	gpio-line-names =
+		"IMX_V2X_RST_B_3V3",
+		"MDM_RESET_B_3V3",
+		"M2_KE_PWREN",
+		"WIFI_PCIE1_RST_B",
+		"WIFI_SDIO_RST_B",
+		"WIFI+BT_W_DIS1_B",
+		"WIFI+BT_W_DIS2_B",
+		"MDM_FULL_CARD_PWR_OFF#",
+		"MDM_W_DISABLE1#",
+		"CFG_MUX_USB1_SEL",
+		"WL_WAKE_IN",
+		"BT_WAKE_IN",
+		"GPIO_GNSS_RST_B",
+		"SDCARD_ON_OFF",
+		"PWR_EN_SFX1800",
+		"Q-RADIO_PRSNT",
+		"PF9455_INT_B",
+		"ETH0_RST_B",
+		"ETH1_RST_B",
+		"ETH2_RST_B",
+		"ETH3_RST_B",
+		"USB_MUX_SEL",
+		"MDM_PERST_B";
+
+	pwr_en_sxf1800 {
+		gpio-hog;
+		gpios = <14 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "SXF1800 Power enable";
+	};
+};
+
+&usdhc3 {
+	/*
+	 * Only enable SDIO2.0 mode as the corresponding GPIO pads are 3.3V, the
+	 * max frequency is 50MHz.
+	 */
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&pinctrl_usdhc3>,<&pinctrl_v2x>;
+	pinctrl-1 = <&pinctrl_usdhc3>,<&pinctrl_v2x>;
+	bus-width = <4>;
+	max-frequency = <100000000>;
+	mmc-pwrseq = <&usdhc3_pwrseq>;
+	cd-gpios = <&gpio5 18 GPIO_ACTIVE_LOW>;
+	status = "okay";
+
+};
+
+&scmi_iomuxc {
+	/*
+	 * Since usdhc3 has issue with single GPIO_IO48 pad for usdhc3 clk, need to
+	 * add ETH4_TX_CLK pad for usdhc3 clock internal reference, otherwise usdhc3
+	 * can't trigger transfer complete interrupt.
+	 * Disable enetc2 due to pin conflict.
+	 */
+	pinctrl_usdhc3: usdhc3grp {
+		fsl,pins = <
+			IMX94_PAD_GPIO_IO48__USDHC3_CLK		0x158e
+			IMX94_PAD_ETH4_TX_CLK__USDHC3_CLK	0x158e
+			IMX94_PAD_GPIO_IO49__USDHC3_CMD		0x138e
+			IMX94_PAD_GPIO_IO50__USDHC3_DATA0	0x138e
+			IMX94_PAD_GPIO_IO51__USDHC3_DATA1	0x138e
+			IMX94_PAD_GPIO_IO52__USDHC3_DATA2	0x138e
+			IMX94_PAD_GPIO_IO53__USDHC3_DATA3	0x138e
+		>;
+	};
+
+	pinctrl_v2x: v2xgrp {
+		fsl,pins = <
+			IMX94_PAD_ETH1_TX_EN__GPIO5_IO18	0x31e /* V2X_CARD_PRSNT_B_3V3*/
+			IMX94_PAD_ETH1_TXD1__GPIO5_IO17		0x31e /* V2X_PMIC_STANBY_3V3 */
+			IMX94_PAD_ETH1_TXD0__GPIO5_IO16		0x31e /* SXF1800_GPIO0_3V3   */
+			IMX94_PAD_ETH1_TXD3__GPIO5_IO24		0x31e /* SXF1800_GPIO1_3V3   */
+		>;
+	};
+};

@@ -942,6 +942,8 @@ dtb-$(CONFIG_ARCH_MXC) += imx943-orangebox-netc-m33.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx943-orangebox-5G-modem.dtb
 imx943-orangebox-gnss-dtbs := imx943-orangebox.dtb imx943-orangebox-gnss.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx943-orangebox-gnss.dtb
+imx943-orangebox-sdv2x-dtbs := imx943-orangebox.dtb imx943-orangebox-sdv2x.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx943-orangebox-sdv2x.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx95-15x15-evk-flexspi-m2.dtb
