@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2026 NXP
  */
 
 /dts-v1/;
@@ -133,6 +133,17 @@
 			reg = <0 0x88020000 0 0x100000>;
 			no-map;
 		};
+		/* Userspace netc rings memory */
+		enetc_usmem_reserved: usmem@a1100000 {
+			reg = <0 0xa1100000 0 0x1000000>;
+			no-map;
+		};
+	};
+
+	enetc_usmem: enetc_usmem@a1100000 {
+		compatible = "nxp,us-devmem";
+		memory-region = <&enetc_usmem_reserved>;
+		reg = <0 0xa1100000 0 0x1000000>;
 	};
 
 	flexcan1_phy: can-phy0 {
