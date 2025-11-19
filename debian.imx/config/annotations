@@ -3460,6 +3460,7 @@ CONFIG_REGULATOR_VQMMC_IPQ4019                  policy<{'arm64': '-', 'armhf': '
 CONFIG_REGULATOR_WM831X                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_REGULATOR_WM8350                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_REGULATOR_WM8400                         policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_RELR                                     policy<{'arm64': 'y'}>
 CONFIG_RENESAS_DMA                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_RENESAS_ETHER_SWITCH                     policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_RENESAS_GEN4_PTP                         policy<{'arm64': '-', 'armhf': '-'}>
