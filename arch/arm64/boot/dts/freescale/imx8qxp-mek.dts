@@ -1163,7 +1163,7 @@
 			};
 		};
 
-		cooling-maps {
+		pmic_cooling_maps: cooling-maps {
 			map0 {
 				trip = <&pmic_alert0>;
 				cooling-device =
