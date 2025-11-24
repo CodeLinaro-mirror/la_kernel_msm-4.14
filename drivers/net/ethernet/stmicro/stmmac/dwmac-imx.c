@@ -48,7 +48,9 @@ struct imx_priv_data;
 struct imx_dwmac_ops {
 	u32 addr_width;
 	u32 flags;
-	bool mac_rgmii_txclk_auto_adj;
+	u32 mac_rgmii_txclk_auto_adj:1;
+	u32 has_mem_clk:1;
+	u32 using_gpr:1;
 
 	int (*fix_soc_reset)(struct stmmac_priv *priv);
 	int (*set_intf_mode)(struct imx_priv_data *dwmac, u8 phy_intf_sel);
@@ -276,6 +278,7 @@ static int imx_dwmac_mx93_reset(struct stmmac_priv *priv)
 static int
 imx_dwmac_parse_dt(struct imx_priv_data *dwmac, struct device *dev)
 {
+	const struct imx_dwmac_ops *ops = dwmac->ops;
 	struct device_node *np = dev->of_node;
 	int err = 0;
 
@@ -289,9 +292,7 @@ imx_dwmac_parse_dt(struct imx_priv_data *dwmac, struct device *dev)
 
 	dwmac->clk_mem = NULL;
 
-	if (of_machine_is_compatible("fsl,imx8dxl") ||
-	    of_machine_is_compatible("fsl,imx91") ||
-	    of_machine_is_compatible("fsl,imx93")) {
+	if (ops->has_mem_clk) {
 		dwmac->clk_mem = devm_clk_get(dev, "mem");
 		if (IS_ERR(dwmac->clk_mem)) {
 			dev_err(dev, "failed to get mem clock\n");
@@ -299,9 +300,7 @@ imx_dwmac_parse_dt(struct imx_priv_data *dwmac, struct device *dev)
 		}
 	}
 
-	if (of_machine_is_compatible("fsl,imx8mp") ||
-	    of_machine_is_compatible("fsl,imx91") ||
-	    of_machine_is_compatible("fsl,imx93")) {
+	if (ops->using_gpr) {
 		/* Binding doc describes the property:
 		 * is required by i.MX8MP, i.MX91, i.MX93.
 		 * is optional for i.MX8DXL.
@@ -393,6 +392,8 @@ static int imx_dwmac_probe(struct platform_device *pdev)
 static struct imx_dwmac_ops imx8mp_dwmac_data = {
 	.addr_width = 34,
 	.mac_rgmii_txclk_auto_adj = false,
+	.has_mem_clk = false,
+	.using_gpr = true,
 	.set_intf_mode = imx8mp_set_intf_mode,
 	.flags = STMMAC_FLAG_HWTSTAMP_CORRECT_LATENCY |
 		 STMMAC_FLAG_KEEP_PREAMBLE_BEFORE_SFD,
@@ -401,12 +402,16 @@ static struct imx_dwmac_ops imx8mp_dwmac_data = {
 static struct imx_dwmac_ops imx8dxl_dwmac_data = {
 	.addr_width = 32,
 	.mac_rgmii_txclk_auto_adj = true,
+	.has_mem_clk = true,
+	.using_gpr = false,
 	.set_intf_mode = imx8dxl_set_intf_mode,
 };
 
 static struct imx_dwmac_ops imx93_dwmac_data = {
 	.addr_width = 32,
 	.mac_rgmii_txclk_auto_adj = true,
+	.has_mem_clk = true,
+	.using_gpr = true,
 	.set_intf_mode = imx93_set_intf_mode,
 	.fix_soc_reset = imx_dwmac_mx93_reset,
 	.fix_mac_speed = imx93_dwmac_fix_speed,
