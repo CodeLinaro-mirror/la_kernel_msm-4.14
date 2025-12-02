@@ -27,7 +27,7 @@ struct lynx_info {
 	bool (*lane_supports_mode)(int lane, enum lynx_lane_mode mode);
 	void (*pll_read_configuration)(struct lynx_priv *priv);
 	void (*lane_read_configuration)(struct lynx_lane *lane);
-	void (*cdr_lock_check)(struct lynx_lane *lane);
+	bool (*cdr_lock_check)(struct lynx_lane *lane);
 	int first_lane;
 	int num_lanes;
 	bool has_hardcoded_usxgmii;

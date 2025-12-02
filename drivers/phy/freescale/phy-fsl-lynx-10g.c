@@ -390,12 +390,12 @@ static const struct lynx_10g_proto_conf lynx_10g_proto_conf[LANE_MODE_MAX] = {
 	},
 };
 
-static void lynx_10g_cdr_lock_check(struct lynx_lane *lane)
+static bool lynx_10g_cdr_lock_check(struct lynx_lane *lane)
 {
 	u32 tcsr3 = lynx_lane_read(lane, LNaTCSR3);
 
 	if (tcsr3 & LNaTCSR3_CDR_LCK)
-		return;
+		return true;
 
 	dev_dbg(&lane->phy->dev,
 		"Lane %c CDR unlocked, resetting receiver...\n",
@@ -406,6 +406,9 @@ static void lynx_10g_cdr_lock_check(struct lynx_lane *lane)
 	lynx_lane_rmw(lane, LNaGCR0, LNaGCR0_RRST_OFF, LNaGCR0_RRST);
 
 	usleep_range(1, 2);
+	tcsr3 = lynx_lane_read(lane, LNaTCSR3);
+
+	return !!(tcsr3 & LNaTCSR3_CDR_LCK);
 }
 
 static const char *lynx_10g_refclk_str(int refclk)

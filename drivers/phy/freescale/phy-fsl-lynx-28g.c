@@ -788,14 +788,19 @@ static bool lynx_28g_compat_lane_supports_mode(int lane,
 	}
 }
 
-static void lynx_28g_cdr_lock_check(struct lynx_lane *lane)
+static bool lynx_28g_cdr_lock_check(struct lynx_28g_lane *lane)
 {
-	u32 rrstctl;
+	u32 rrstctl = lynx_28g_lane_read(lane, LNaRRSTCTL);
 	int err;
 
-	rrstctl = lynx_28g_lane_read(lane, LNaRRSTCTL);
-	if (!!(rrstctl & LNaRRSTCTL_CDR_LOCK))
-		return;
+	if (rrstctl & LNaRRSTCTL_CDR_LOCK)
+		return true;
+
+	/* Omit resetting the receiver unless the lane is up. Otherwise,
+	 * if powered down, it won't complete the operation.
+	 */
+	if (!lane->init || !lane->powered_up)
+		return false;
 
 	dev_dbg(&lane->phy->dev,
 		"Lane %c CDR unlocked, resetting receiver...\n",
@@ -813,7 +818,10 @@ static void lynx_28g_cdr_lock_check(struct lynx_lane *lane)
 		dev_warn_once(&lane->phy->dev,
 			      "Lane %c receiver reset failed: %pe\n",
 			      'A' + lane->id, ERR_PTR(err));
+		return false;
 	}
+
+	return !!(rrstctl & LNaRRSTCTL_CDR_LOCK);
 }
 
 static void lynx_28g_lane_remap_pll(struct lynx_28g_lane *lane,
