@@ -223,7 +223,7 @@ img_subsys: bus@58000000 {
 	};
 
 	parallel_cpi: cpi@58261000 {
-		compatible = "fsl,imx8qxp-pcif";
+		compatible = "fsl,imx8-parallel-csi";
 		reg = <0x58261000 0x1000>;
 		clocks = <&pi0_pxl_lpcg IMX_LPCG_CLK_0>,
 			 <&pi0_ipg_lpcg IMX_LPCG_CLK_4>;
