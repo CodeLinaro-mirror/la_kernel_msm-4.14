@@ -5830,7 +5830,9 @@ _PowerEnum(gceCHIPPOWERSTATE State)
                      gcvPOWER_SUSPEND == 2 && gcvPOWER_OFF == 3 && gcvPOWER_ON_AUTO == 4,
                      "array subscript does not match");
 
-    if (State & gcvPOWER_FLAG_BROADCAST)
+    if (State == gcvPOWER_INVALID)
+	return "unknown";
+    else if (State & gcvPOWER_FLAG_BROADCAST)
         return broadcastStates[State & ~gcvPOWER_FLAG_BROADCAST];
     else if (State & gcvPOWER_FLAG_TIMEOUT)
         return timeoutStates[State & ~gcvPOWER_FLAG_TIMEOUT];
