@@ -245,7 +245,7 @@ CONFIG_APPLE_SART                               policy<{'arm64': '-'}>
 CONFIG_APPLE_WATCHDOG                           policy<{'arm64': '-'}>
 CONFIG_APQ_GCC_8084                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_APQ_MMCC_8084                            policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_AR5523                                   policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_AR5523                                   policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ARCH_ACTIONS                             policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ARCH_APPLE                               policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_ARCH_ARTPEC                              policy<{'armhf': 'n'}>
@@ -492,37 +492,37 @@ CONFIG_AST2600_I3C_MASTER                       policy<{'armhf': '-'}>
 CONFIG_AT76C50X_USB                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_AT803X_PHY                               policy<{'arm64': 'm', 'armhf': 'y'}>
 CONFIG_ATA_ACPI                                 policy<{'arm64': '-'}>
-CONFIG_ATH10K                                   policy<{'arm64': '-', 'armhf': 'm'}>
+CONFIG_ATH10K                                   policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_ATH10K_AHB                               policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH10K_CE                                policy<{'arm64': '-', 'armhf': 'y'}>
-CONFIG_ATH10K_DEBUG                             policy<{'arm64': '-', 'armhf': 'n'}>
-CONFIG_ATH10K_DEBUGFS                           policy<{'arm64': '-', 'armhf': 'n'}>
-CONFIG_ATH10K_PCI                               policy<{'arm64': '-', 'armhf': 'n'}>
-CONFIG_ATH10K_SDIO                              policy<{'arm64': '-', 'armhf': 'm'}>
+CONFIG_ATH10K_CE                                policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_ATH10K_DEBUG                             policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ATH10K_DEBUGFS                           policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ATH10K_PCI                               policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ATH10K_SDIO                              policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_ATH10K_SNOC                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH10K_SPECTRAL                          policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH10K_TRACING                           policy<{'arm64': '-', 'armhf': 'n'}>
-CONFIG_ATH10K_USB                               policy<{'arm64': '-', 'armhf': 'n'}>
-CONFIG_ATH11K                                   policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH10K_TRACING                           policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ATH10K_USB                               policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ATH11K                                   policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATH11K_AHB                               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH11K_DEBUG                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH11K_DEBUGFS                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH11K_PCI                               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH11K_SPECTRAL                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH11K_TRACING                           policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH12K                                   policy<{'arm64': '-', 'armhf': 'm'}>
-CONFIG_ATH12K_DEBUG                             policy<{'arm64': '-', 'armhf': 'n'}>
-CONFIG_ATH12K_TRACING                           policy<{'arm64': '-', 'armhf': 'y'}>
-CONFIG_ATH5K                                    policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH12K                                   policy<{'arm64': 'n', 'armhf': 'm'}>
+CONFIG_ATH12K_DEBUG                             policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ATH12K_TRACING                           policy<{'arm64': 'n', 'armhf': 'y'}>
+CONFIG_ATH5K                                    policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATH5K_DEBUG                              policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH5K_PCI                                policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH5K_PCI                                policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATH5K_TRACER                             policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH6KL                                   policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH6KL                                   policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATH6KL_DEBUG                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH6KL_SDIO                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH6KL_TRACING                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH6KL_USB                               policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH9K                                    policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH9K                                    policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATH9K_AHB                                policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_BTCOEX_SUPPORT                     policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_CHANNEL_CONTEXT                    policy<{'arm64': '-', 'armhf': '-'}>
@@ -531,7 +531,7 @@ CONFIG_ATH9K_COMMON_DEBUG                       policy<{'arm64': '-', 'armhf': '
 CONFIG_ATH9K_COMMON_SPECTRAL                    policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_DEBUGFS                            policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_DYNACK                             policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH9K_HTC                                policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH9K_HTC                                policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATH9K_HTC_DEBUGFS                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_HW                                 policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_HWRNG                              policy<{'arm64': '-', 'armhf': '-'}>
@@ -541,8 +541,8 @@ CONFIG_ATH9K_PCOEM                              policy<{'arm64': '-', 'armhf': '
 CONFIG_ATH9K_RFKILL                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_STATION_STATISTICS                 policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ATH9K_WOW                                policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_ATH_COMMON                               policy<{'arm64': '-', 'armhf': 'm'}>
-CONFIG_ATH_DEBUG                                policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_ATH_COMMON                               policy<{'arm64': 'm', 'armhf': 'm'}>
+CONFIG_ATH_DEBUG                                policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ATMEL                                    policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_AUTOFS_FS                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_AX88796                                  policy<{'armhf': '-'}>
@@ -593,7 +593,7 @@ CONFIG_CAN_BXCAN                                policy<{'arm64': '-'}>
 CONFIG_CAN_RCAR                                 policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_CAN_RCAR_CANFD                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_CARDBUS                                  policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_CARL9170                                 policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_CARL9170                                 policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_CARL9170_DEBUGFS                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_CARL9170_HWRNG                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_CARL9170_LEDS                            policy<{'arm64': '-', 'armhf': '-'}>
@@ -4775,11 +4775,11 @@ CONFIG_VMSPLIT_3G_OPT                           policy<{'armhf': 'n'}>
 CONFIG_VORTEX                                   policy<{'arm64': '-'}>
 CONFIG_VXGE                                     policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VXGE_DEBUG_TRACE_ALL                     policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_WCN36XX                                  policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_WCN36XX                                  policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WCN36XX_DEBUGFS                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_WDAT_WDT                                 policy<{'arm64': '-'}>
 CONFIG_WEXT_SPY                                 policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_WIL6210                                  policy<{'arm64': '-', 'armhf': 'n'}>
+CONFIG_WIL6210                                  policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WIL6210_DEBUGFS                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_WIL6210_ISR_COR                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_WIL6210_TRACING                          policy<{'arm64': '-', 'armhf': '-'}>
@@ -4795,8 +4795,9 @@ CONFIG_WL1251_SDIO                              policy<{'arm64': '-', 'armhf': '
 CONFIG_WL1251_SPI                               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_WL12XX                                   policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_WL18XX                                   policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_WLAN                                     policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_WLAN_VENDOR_ADMTEK                       policy<{'arm64': 'n', 'armhf': 'n'}>
-CONFIG_WLAN_VENDOR_ATH                          policy<{'arm64': 'n', 'armhf': 'y'}>
+CONFIG_WLAN_VENDOR_ATH                          policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_WLAN_VENDOR_ATMEL                        policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WLAN_VENDOR_CISCO                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_WLAN_VENDOR_INTEL                        policy<{'arm64': 'n', 'armhf': 'n'}>
