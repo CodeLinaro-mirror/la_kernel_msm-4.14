@@ -4,6 +4,8 @@ endif
 
 obj-y += dwe/ isp/ video/ sensor/ focus/
 
+.NOTPARALLEL: dwe/ isp/ video/
+
 all:
 	@cd dwe;      make || exit $$?;
 	@cd isp;      make || exit $$?;
