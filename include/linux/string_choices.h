@@ -53,6 +53,12 @@ static inline const char *str_input_output(bool v)
 }
 #define str_output_input(v)	str_input_output(!(v))
 
+static inline const char *str_locked_unlocked(bool v)
+{
+	return v ? "locked" : "unlocked";
+}
+#define str_unlocked_locked(v)	str_locked_unlocked(!(v))
+
 static inline const char *str_on_off(bool v)
 {
 	return v ? "on" : "off";
