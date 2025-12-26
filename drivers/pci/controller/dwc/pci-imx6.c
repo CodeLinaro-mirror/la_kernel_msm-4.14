@@ -1301,6 +1301,12 @@ static int imx_pcie_host_init(struct dw_pcie_rp *pp)
 		pp->bridge->disable_device = imx_pcie_disable_device;
 	}
 
+	ret = imx_pcie_clk_enable(imx_pcie);
+	if (ret) {
+		dev_err(dev, "unable to enable pcie clocks: %d\n", ret);
+		goto err_reg_disable;
+	}
+
 	if (imx_pcie->drvdata->init_pre_reset)
 		imx_pcie->drvdata->init_pre_reset(imx_pcie);
 
@@ -1310,12 +1316,6 @@ static int imx_pcie_host_init(struct dw_pcie_rp *pp)
 		imx_pcie->drvdata->init_phy(imx_pcie);
 
 	imx_pcie_configure_type(imx_pcie);
-
-	ret = imx_pcie_clk_enable(imx_pcie);
-	if (ret) {
-		dev_err(dev, "unable to enable pcie clocks: %d\n", ret);
-		goto err_reg_disable;
-	}
 
 	if (imx_pcie->phy) {
 		ret = phy_init(imx_pcie->phy);
