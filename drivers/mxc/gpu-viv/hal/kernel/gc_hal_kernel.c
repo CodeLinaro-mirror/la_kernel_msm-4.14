@@ -3946,6 +3946,8 @@ gckKERNEL_AttachProcessEx(IN gckKERNEL Kernel, IN gctBOOL Attach, IN gctUINT32 P
                 /* Last client detached, switch to SUSPEND power state. */
                 gcmkONERROR(gckOS_Broadcast(Kernel->os, Kernel->hardware,
                                             gcvBROADCAST_LAST_PROCESS));
+
+                gckOS_Delay(Kernel->os, 2);
             }
         }
 
