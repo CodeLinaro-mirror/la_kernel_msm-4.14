@@ -1,0 +1,90 @@
+# .clang-format for Linux kernel code
+# Based on the Linux kernel coding style (Documentation/process/coding-style.rst)
+
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 8
+UseTab: Always
+TabWidth: 8
+ContinuationIndentWidth: 8
+
+# Column limit
+ColumnLimit: 80
+
+# Braces
+BreakBeforeBraces: Linux
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: true
+AlignTrailingComments: false
+
+# Breaking
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# Line breaking
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: false
+
+# Pointer alignment
+PointerAlignment: Right
+
+# Include sorting
+SortIncludes: false
+
+# Function parameters
+BinPackParameters: true
+BinPackArguments: true
+
+# Case statements
+IndentCaseLabels: false
+
+# Preprocessor
+IndentPPDirectives: None
+
+# Comments
+ReflowComments: false
+
+# Penalties (lower = preferred)
+PenaltyBreakAssignment: 10
+PenaltyBreakBeforeFirstCallParameter: 30
+PenaltyBreakComment: 10
+PenaltyBreakFirstLessLess: 0
+PenaltyBreakString: 10
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 60
+
+# Other
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1

@@ -1,0 +1,28 @@
+/dts-v1/;
+/plugin/;
+/ {
+	compatible = "brcm,bcm2835", "brcm,bcm2708", "brcm,bcm2709", "brcm,bcm2837", "brcm,bcm2711", "brcm,bcm2712"; /* RPI3, 4, 5 */
+
+	fragment@0 {
+		target = <&spidev0>; /* or &spi0 */
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+	fragment@1 {
+		target = <&spi0>;
+		__overlay__ {
+			status = "okay";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			nrc-mcp@0 {				/* Bus Number */
+				compatible ="nrc-mcp";
+				reg = <0>;  				/* CS Number */
+				interrupt-parent = <&gpio>;
+				interrupts = <5 8>;  			/* GPIO Number */ /* 4:IRQ_TYPE_LEVEL_HIGH, 8:IRQ_TYPE_LEVEL_LOW, defined in include/linux/irq.h */
+				irq-gpio = <&gpio 5 8>;  			/* Define GPIO */
+				spi-max-frequency = <20000000>;		/* Max Freq */
+			};
+		};
+	};
+};

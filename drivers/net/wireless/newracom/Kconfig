@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+config WLAN_VENDOR_NEWRACOM
+	bool "Newracom devices"
+	default y
+	help
+	  Select Y to get options for Newracom 802.11ah devices. This enables
+	  support for the NRC family of HaLow chipsets.
+
+if WLAN_VENDOR_NEWRACOM
+
+source "drivers/net/wireless/newracom/nrc/Kconfig"
+
+endif # WLAN_VENDOR_NEWRACOM

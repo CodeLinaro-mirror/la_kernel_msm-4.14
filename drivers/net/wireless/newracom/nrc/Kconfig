@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Newracom NRC7394 Modular Driver Configuration
+#
+
+config NRC7394
+	tristate "Newracom NRC7394 802.11ah HaLow driver (modular)"
+	depends on MAC80211 && SPI && FW_LOADER
+	help
+	  Enable support for Newracom NRC7394 Wi-Fi HaLow (802.11ah)
+	  chipset using a modular three-layer architecture:
+	  - Backend Layer: SPI hardware interface (nrc_spi.ko)
+	  - HAL Layer: Hardware abstraction and core functions (nrc_core.ko)
+	  - Frontend Layer: MAC80211 interface (nrc_wlan.ko)
+
+	  The driver is implemented using mac80211 and communicates
+	  with the device over the C-SPI host interface.
+
+	  To compile this driver as modules, choose M here.
+
+if NRC7394
+
+config NRC7394_DEBUG
+	bool "Enable debug support"
+	depends on NRC7394
+	default n
+	help
+	  Enable debug messages and additional runtime checks.
+	  This increases module size and may impact performance.
+
+	  Enable this for development and debugging.
+	  If unsure, say N.
+
+config NRC7394_MCP
+	tristate "NRC7394 MCP Frontend (nrc_mcp.ko)"
+	depends on NRC7394
+	default y
+	help
+	  Optional MCP frontend layer.
+	  This provides specialized management interface for ESL.
+
+	  Only enable if you need MCP functionality.
+	  If unsure, say Y.
+
+endif # NRC7394
