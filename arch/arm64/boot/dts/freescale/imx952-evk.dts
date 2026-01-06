@@ -133,6 +133,11 @@
 
 };
 
+&adc1 {
+	vref-supply = <&reg_vref_1v8>;
+	status = "okay";
+};
+
 /* pin conflict with PDM */
 &flexcan1 {
 	pinctrl-names = "default";
