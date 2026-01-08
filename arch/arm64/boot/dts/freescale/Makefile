@@ -1210,6 +1210,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-evk.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk.dtb
 
+imx952-evk-pcie-keym-dtbs := imx952-evk.dtb imx952-evk-pcie-keym.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-pcie-keym.dtb
+
 imx8mm-kontron-dl-dtbs			:= imx8mm-kontron-bl.dtb imx8mm-kontron-dl.dtbo
 imx8mm-kontron-bl-lte-dtbs		:= imx8mm-kontron-bl.dtb imx8mm-kontron-bl-lte.dtbo
 
