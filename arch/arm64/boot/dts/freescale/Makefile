@@ -506,6 +506,16 @@ dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-pmic-pf0900-ld.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-pmic-pf0900-rpmsg.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-evk-pmic-pf0900-rpmsg-lpv.dtb
 
+dtb-$(CONFIG_ARCH_MXC) += imx93-11x11-frdm.dtb \
+			  imx93-11x11-frdm-mt9m114.dtb \
+			  imx93-11x11-frdm-dsi.dtb \
+			  imx93-11x11-frdm-tianma-wvga-panel.dtb \
+			  imx93-11x11-frdm-aud-hat.dtb \
+			  imx93-11x11-frdm-ov5640.dtb \
+			  imx93-11x11-frdm-ld.dtb \
+			  imx93-11x11-frdm-8mic.dtb \
+			  imx93-11x11-frdm-lpuart.dtb
+
 dtb-$(CONFIG_ARCH_MXC) += imx93-9x9-qsb.dtb \
 			  imx93-9x9-qsb-can1.dtb \
 			  imx93-9x9-qsb-flexspi-m2.dtb \
