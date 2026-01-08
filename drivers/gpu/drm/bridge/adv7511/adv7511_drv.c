@@ -1357,6 +1357,9 @@ static int adv7511_probe(struct i2c_client *i2c)
 	if (ret)
 		goto err_unregister_cec;
 
+	if (i2c->irq)
+		init_waitqueue_head(&adv7511->wq);
+
 	adv7511->bridge.funcs = &adv7511_bridge_funcs;
 	adv7511->bridge.ops = DRM_BRIDGE_OP_DETECT | DRM_BRIDGE_OP_EDID;
 	if (adv7511->i2c_main->irq)
@@ -1370,8 +1373,6 @@ static int adv7511_probe(struct i2c_client *i2c)
 	adv7511_audio_init(dev, adv7511);
 
 	if (i2c->irq) {
-		init_waitqueue_head(&adv7511->wq);
-
 		ret = devm_request_threaded_irq(dev, i2c->irq, NULL,
 						adv7511_irq_handler,
 						IRQF_ONESHOT, dev_name(dev),
