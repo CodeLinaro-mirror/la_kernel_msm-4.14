@@ -1247,6 +1247,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-evk.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk.dtb
 
+imx952-evk-mqs-dtbs := imx952-evk.dtb imx952-evk-mqs.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-mqs.dtb
+
 imx952-evk-adv7535-dtbs := imx952-evk.dtb imx952-evk-adv7535.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-adv7535.dtb
 
