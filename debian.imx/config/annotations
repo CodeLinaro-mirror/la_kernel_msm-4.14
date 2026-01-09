@@ -1055,7 +1055,7 @@ CONFIG_CRYPTO_SHA2_ARM64_CE                     policy<{'arm64': 'y'}>
 CONFIG_CRYPTO_SHA2_ARM_CE                       policy<{'armhf': 'y'}>
 CONFIG_CRYPTO_SHA3_ARM64                        policy<{'arm64': 'n'}>
 CONFIG_CRYPTO_SIMD                              policy<{'arm64': '-', 'armhf': 'y'}>
-CONFIG_CRYPTO_TLS                               policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_CRYPTO_TLS                               policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_CXD2880_SPI_DRV                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_CXL_ACPI                                 policy<{'arm64': '-'}>
 CONFIG_CXL_PMEM                                 policy<{'arm64': 'm', 'armhf': '-'}>
@@ -4420,6 +4420,7 @@ CONFIG_TI_SYSC                                  policy<{'arm64': '-', 'armhf': '
 CONFIG_TI_SYSCON_CLK                            policy<{'arm64': '-'}>
 CONFIG_TI_THERMAL                               policy<{'armhf': '-'}>
 CONFIG_TLAN                                     policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_TLS                                      policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_TMD_HERMES                               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_TOUCHSCREEN_CHIPONE_ICN8505              policy<{'arm64': '-'}>
 CONFIG_TOUCHSCREEN_CT36X_WLD                    policy<{'arm64': '-', 'armhf': '-'}>
