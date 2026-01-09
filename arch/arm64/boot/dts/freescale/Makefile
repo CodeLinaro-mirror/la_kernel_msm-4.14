@@ -279,6 +279,17 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-sof-wm8962.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-rpmsg.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mp-evk-revb4-rpmsg-lpv.dtb
 
+dtb-$(CONFIG_ARCH_MXC) += imx8mp-frdm.dtb \
+			  imx8mp-frdm-8mic.dtb \
+			  imx8mp-frdm-boe-wxga-lvds0-panel.dtb \
+			  imx8mp-frdm-boe-wxga-lvds1-panel.dtb \
+			  imx8mp-frdm-dual-ap1302.dtb \
+			  imx8mp-frdm-dual-os08a20.dtb \
+			  imx8mp-frdm-iw612-otbr.dtb \
+			  imx8mp-frdm-os08a20.dtb \
+			  imx8mp-frdm-rpmsg.dtb \
+			  imx8mp-frdm-waveshare.dtb
+
 dtb-$(CONFIG_ARCH_MXC) += imx8mq-evk.dtb imx8mq-evk-rpmsg.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8mq-evk.dtb imx8mq-evk-rpmsg.dtb imx8mq-evk-pcie1-m2.dtb imx8mq-evk-usd-wifi.dtb \
 			  imx8mq-evk-usdhc2-m2.dtb
