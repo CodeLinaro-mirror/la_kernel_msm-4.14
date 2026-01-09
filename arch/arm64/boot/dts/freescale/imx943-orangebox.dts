@@ -595,6 +595,7 @@
 	};
 
 	ethphy4: ethernet-phy@1 {
+		compatible = "ethernet-phy-ieee802.3-c45";
 		reg = <0x1>;
 		tx-internal-delay-ps = <1800>;
 		rx-internal-delay-ps = <1666>;
