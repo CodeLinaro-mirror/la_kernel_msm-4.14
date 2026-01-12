@@ -26,13 +26,15 @@
 int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 		    struct cfg80211_wowlan *wowlan,
 		    enum NRC_PS_REASON reason);
-#if defined(ENABLE_DYNAMIC_PS)
+
+/* Dynamic PS functions - runtime controlled via hdev->ps.supports_dynamic_ps */
 void nrc_ps_dyn_init(struct nrc *nw);
 void nrc_ps_dyn_deinit(struct nrc *nw);
 void nrc_ps_dyn_start(struct nrc *nw);
 void nrc_ps_dyn_start_custom_timeout(struct nrc *nw, int custom_timeout);
 void nrc_ps_dyn_stop(struct nrc *nw);
-#endif
+void nrc_ps_dyn_start_twt(struct nrc *nw);
+
 int nrc_ps_set_idle_mode(struct nrc *nw, char *msg);
 int nrc_ps_set_idle_mode_delay(struct nrc *nw, char *msg, int delay_ms);
 void nrc_ps_set_idle_mode_work_handler(struct work_struct *work);

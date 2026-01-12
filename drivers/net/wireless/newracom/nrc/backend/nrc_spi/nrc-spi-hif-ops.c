@@ -402,6 +402,18 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 	 */
 	SLOT_SYNC_LOCK();
 
+	/* Re-validate slot availability inside lock to prevent race condition.
+	 * Multiple threads may pass wait_for_xmit() check simultaneously,
+	 * but only one can actually use the slots.
+	 */
+	if (c_spi_num_slots(hdev, TX_SLOT) < nr_slot) {
+		SLOT_SYNC_UNLOCK();
+		WARN_SPI("TX slot exhausted: need=%d avail=%d head=%d tail=%d",
+			 nr_slot, c_spi_num_slots(hdev, TX_SLOT),
+			 hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail);
+		return HIF_TX_FAILED;
+	}
+
 	DBG_SLOT("TX TAIL: %d -> %d (HEAD=%d, avail=%d/%d)",
 		 hdev->slot[TX_SLOT].tail, hdev->slot[TX_SLOT].tail + nr_slot,
 		 hdev->slot[TX_SLOT].head,
@@ -411,6 +423,15 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 
 	ret = c_spi_write(priv->spi, skb->data,
 			  (nr_slot * hdev->slot[TX_SLOT].size));
+
+	if (ret != nr_slot * hdev->slot[TX_SLOT].size) {
+		/* SPI write failed - rollback tail to allow requeue */
+		hdev->slot[TX_SLOT].tail -= nr_slot;
+		SLOT_SYNC_UNLOCK();
+		ERR_SPI("SPI write failed - expected %u bytes, wrote %d",
+			nr_slot * hdev->slot[TX_SLOT].size, ret);
+		return HIF_TX_FAILED;
+	}
 
 	SLOT_SYNC_UNLOCK();
 
@@ -422,13 +443,7 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 		   skb_queue_len(&hdev->queue[0]));
 	trace_nrc_hif_tx_slot(priv, TX_SLOT, "after tx");
 
-	if (ret == nr_slot * hdev->slot[TX_SLOT].size) {
-		return HIF_TX_COMPLETE;
-	} else {
-		ERR_SPI("failed - expected %u bytes, wrote %d",
-			nr_slot * hdev->slot[TX_SLOT].size, ret);
-		return ret;
-	}
+	return HIF_TX_COMPLETE;
 }
 
 static int spi_hif_wait_for_xmit(struct nrc_hif_device *hdev,

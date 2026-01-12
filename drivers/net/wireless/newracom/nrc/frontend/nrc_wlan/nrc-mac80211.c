@@ -1948,11 +1948,8 @@ skip_channel_config:
 			nw->hdev->ps.enabled ? "On" : "Off",
 			nw->hdev->ps.timeout, NRC_DRV_STATE_STR(hdev));
 
-		if (hdev->ps.enabled) { /* busy time, increase ps time temporarily */
-#if defined(ENABLE_DYNAMIC_PS)
+		if (hdev->ps.enabled) /* busy time, increase ps time temporarily */
 			nrc_ps_dyn_start_custom_timeout(nw, 2000);
-#endif
-		}
 
 		if (NRC_DRV_IS_ASLEEP(hdev) || nw->hdev->ps.modem_enabled) {
 			/**
@@ -1977,9 +1974,7 @@ skip_channel_config:
 		if (ieee80211_hw_check(hw, SUPPORTS_DYNAMIC_PS)) {
 			if (hw->conf.dynamic_ps_timeout > 0) {
 				if (nw->hdev->ps.enabled) {
-#if defined(ENABLE_DYNAMIC_PS)
 					nrc_ps_dyn_start(nw);
-#endif
 					goto ps_skip;
 				} else {
 					if (nw->params->power_save >=
@@ -2162,6 +2157,23 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 							  nw->beacon_timeout));
 			}
 			spin_unlock_bh(&nw->vif_lock);
+
+			/*
+			 * NonTIM mode: Auto-enable PS on association
+			 * Kernel 6.0+ may not properly trigger IEEE80211_CONF_CHANGE_PS
+			 * via iwconfig, so we manually enable PS here.
+			 */
+			if (nw->hdev->ps.supports_dynamic_ps &&
+			    nw->params->power_save >= NRC_PS_DEEPSLEEP_NONTIM &&
+			    !nw->hdev->ps.enabled) {
+				nw->hdev->ps.enabled = true;
+				if (hw->conf.dynamic_ps_timeout == 0)
+					hw->conf.dynamic_ps_timeout = 3000;
+				nw->hdev->ps.timeout = hw->conf.dynamic_ps_timeout;
+				DBG_MAC("[BSS_CHANGED_ASSOC] NonTIM auto PS enabled, timeout=%d ms",
+					nw->hdev->ps.timeout);
+				nrc_ps_dyn_start(nw);
+			}
 		} else {
 			spin_lock_bh(&nw->vif_lock);
 			if (!nw->params->disable_cqm) {
@@ -2886,9 +2898,7 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 	i_sta = to_i_sta(sta);
 	DBG_AMPDU("%s: peer MAC(%pM) TID(%d)", __func__, sta->addr, tid);
 
-#if defined(ENABLE_DYNAMIC_PS)
 	nrc_ps_dyn_start_custom_timeout(nw, 2000); /* addBA timeout is 1sec */
-#endif
 
 	switch (action) {
 	case IEEE80211_AMPDU_TX_START:
@@ -3072,9 +3082,7 @@ void nrc_mac_scan_completed_work_handler(struct work_struct *work)
 			}
 		}
 
-#if defined(ENABLE_DYNAMIC_PS)
 		nrc_ps_dyn_start(nw);
-#endif
 	}
 
 	kfree(w);
@@ -3199,9 +3207,7 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			}
 		}
 
-#if defined(ENABLE_DYNAMIC_PS)
 		nrc_ps_dyn_stop(nw);
-#endif
 	}
 
 	scan_to += 120 * req->n_channels;
@@ -3519,9 +3525,7 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	//nrc_wim_install_key need to wait to receive fw result
 	//rcu_read_lock();
 
-#if defined(ENABLE_DYNAMIC_PS)
 	nrc_ps_dyn_start_custom_timeout(nw, 2000);
-#endif
 
 	mutex_lock(&nw->state_mtx);
 
@@ -5697,21 +5701,35 @@ int nrc_register_hw(struct nrc *nw, struct nrc_hif_device *hdev)
 
 	if (nw->params->power_save >= NRC_PS_MODEMSLEEP) {
 		ieee80211_hw_set(hw, SUPPORTS_PS);
-#if defined(ENABLE_DYNAMIC_PS)
-		/* Do NOT use HW Dynamic PS if nullfunc_enable is enabled */
-		if (!nw->params->nullfunc_enable) {
-			ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
-			nrc_ps_dyn_init(nw);
-		}
-#endif /* ENABLE_DYNAMIC_PS */
 
-		/* README - yj.kim 06/05/2020
-		 * Target FW handles qos_null frame for power save mode
+		/*
+		 * Driver-managed dynamic PS (supports_dynamic_ps) is enabled when:
+		 * - Kernel < 6.0: mac80211 SUPPORTS_DYNAMIC_PS works properly
+		 * - NonTIM mode: Always use driver timer (mac80211 PS doesn't work well)
 		 */
-		if (nw->params->nullfunc_enable) {
+#if NRC_TARGET_KERNEL_VERSION < KERNEL_VERSION(6, 0, 0)
+		if (!nw->params->nullfunc_enable) {
+			nw->hdev->ps.supports_dynamic_ps = true;
+			ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
+		}
+#endif
+		/* NonTIM mode: Always enable driver-managed dynamic PS */
+		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_NONTIM) {
+			nw->hdev->ps.supports_dynamic_ps = true;
+			ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
+		}
+
+		/* Initialize dynamic PS timer (checks supports_dynamic_ps internally) */
+		nrc_ps_dyn_init(nw);
+
+		/*
+		 * PS_NULLFUNC_STACK: mac80211 handles nullfunc frames
+		 * Only set when nullfunc_enable=1 AND not NonTIM mode
+		 */
+		if (nw->params->nullfunc_enable &&
+		    nw->params->power_save < NRC_PS_DEEPSLEEP_NONTIM) {
 			ieee80211_hw_set(hw, PS_NULLFUNC_STACK);
 		}
-		/* ieee80211_hw_set(hw, HOST_BROADCAST_PS_BUFFERING); */
 	}
 
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
@@ -5941,11 +5959,7 @@ void nrc_unregister_hw(struct nrc *nw)
 	SET_IEEE80211_DEV(nw->hw, NULL);
 	nrc_hal_ops_tx_cleanup_queues();
 
-#if defined(ENABLE_DYNAMIC_PS)
-	if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS)) {
-		nrc_ps_dyn_deinit(nw);
-	}
-#endif
+	nrc_ps_dyn_deinit(nw);
 }
 
 /* nrc_mac_is_s1g function moved to common/nrc.h as static inline */
@@ -6053,6 +6067,6 @@ void nrc_idle_mode_set_state(struct nrc *nw, bool enable)
  * Explicit STA handler array
  */
 const struct nrc_sta_handler nrc_sta_handlers[] = {
-{ .sta_state = sta_h_bss_max_idle_period },
+	{.sta_state = sta_h_bss_max_idle_period},
 };
 const int nrc_sta_handlers_count = ARRAY_SIZE(nrc_sta_handlers);

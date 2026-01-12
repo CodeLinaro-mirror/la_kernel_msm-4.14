@@ -190,7 +190,6 @@ void nrc_hif_wlan_work(struct work_struct *work)
 		nrc_ps_request_wake(hdev, NRC_PS_REASON_HAL_TX_TIMEOUT);
 	}
 
-#if defined(ENABLE_DYNAMIC_PS)
 	if (NRC_PARAM_POWER_SAVE(hdev) &&
 	    (NRC_FRAME_QUEUE_LEN(hdev) > MAX_PS_DELAY_PKT_CNT ||
 	     NRC_MCP_FRAME_QUEUE_LEN(hdev) > MAX_PS_DELAY_PKT_CNT)) {
@@ -211,7 +210,6 @@ void nrc_hif_wlan_work(struct work_struct *work)
 			nrc_hal_trigger_event(&event);
 		}
 	}
-#endif /* ENABLE_DYNAMIC_PS */
 
 	for (i = ARRAY_SIZE(hdev->queue) - 1; i >= 0; i--) {
 		for (;;) {
@@ -310,22 +308,35 @@ void nrc_hif_wlan_work(struct work_struct *work)
 			}
 
 			/* Wait for xmit availability and transmit */
-			if (nrc_hif_ops_wait_for_xmit(skb) < 0) {
-				ERR_HIF("HIF: xmit wait failed");
-				nrc_hif_free_skb(hdev, skb);
-				/* Continue processing other queues instead of returning */
+			ret = nrc_hif_ops_wait_for_xmit(skb);
+			if (ret < 0) {
+				if (ret == -1) {
+					/* Timeout: requeue for retry later */
+					ERR_HIF("HIF: xmit wait timeout, requeue skb");
+					skb_queue_head(&hdev->queue[i], skb);
+				} else {
+					/* Signal interrupt (e.g., -ERESTARTSYS): free skb */
+					ERR_HIF("HIF: xmit wait interrupted (%d), free skb",
+						ret);
+					nrc_hif_free_skb(hdev, skb);
+				}
 				break;
 			}
 
 			nrc_hif_update_loopback_debug_time(hdev, skb);
 			ret = nrc_hif_ops_xmit(skb);
 
-			WARN_ON(ret < 0);
+			if (ret < 0) {
+				/* TX slot exhausted: requeue for retry */
+				ERR_HIF("HIF: xmit failed (%d), requeue skb",
+					ret);
+				skb_queue_head(&hdev->queue[i], skb);
+				break;
+			}
 
 			/*
 			 * Free SKB after transmission
-			 * Note: nrc_hif_ops_xmit() always returns 0 (HIF_TX_COMPLETE).
-			 * Therefore, SKB is always freed here after transmission.
+			 * Note: nrc_hif_ops_xmit() returns 0 (HIF_TX_COMPLETE) on success.
 			 */
 			nrc_hif_free_skb(hdev, skb);
 		}
@@ -370,6 +381,14 @@ void nrc_hif_mcp_work(struct work_struct *work)
 	/* Process MCP queues: WIM first (queue[1]), then frame (queue[0]) */
 	for (i = ARRAY_SIZE(hdev->mcp_queue) - 1; i >= 0; i--) {
 		for (;;) {
+			/* Give priority to WIM */
+			if (!NRC_PS_IS_SLEEPING(hdev)) {
+				if (i == 0 &&
+				    !skb_queue_empty(&hdev->mcp_queue[1])) {
+					break;
+				}
+			}
+
 			skb = skb_dequeue(&hdev->mcp_queue[i]);
 			if (!skb)
 				break;
@@ -392,15 +411,29 @@ void nrc_hif_mcp_work(struct work_struct *work)
 			}
 
 			/* MCP always uses xmit operation */
-			if (nrc_hif_ops_wait_for_xmit(skb) < 0) {
-				ERR_HIF("MCP HIF: xmit wait failed");
-				nrc_hif_free_skb(hdev, skb);
+			ret = nrc_hif_ops_wait_for_xmit(skb);
+			if (ret < 0) {
+				if (ret == -1) {
+					/* Timeout: requeue for retry later */
+					ERR_HIF("MCP HIF: xmit wait timeout, requeue skb");
+					skb_queue_head(&hdev->mcp_queue[i],
+						       skb);
+				} else {
+					/* Signal interrupt (e.g., -ERESTARTSYS): free skb */
+					ERR_HIF("MCP HIF: xmit wait interrupted (%d), free skb",
+						ret);
+					nrc_hif_free_skb(hdev, skb);
+				}
 				break;
 			}
 
 			ret = nrc_hif_ops_xmit(skb);
 			if (ret < 0) {
-				DBG_HIF("MCP HIF: xmit failed %d", ret);
+				/* TX slot exhausted: requeue for retry */
+				ERR_HIF("MCP HIF: xmit failed (%d), requeue skb",
+					ret);
+				skb_queue_head(&hdev->mcp_queue[i], skb);
+				break;
 			}
 
 			/*

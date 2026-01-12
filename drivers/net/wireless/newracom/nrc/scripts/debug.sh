@@ -28,6 +28,8 @@ DEBUGFS_MCP="/sys/kernel/debug/nrc_mcp/debug_mask"
 # Debugfs paths - Debug Levels
 DEBUGFS_SPI_LEVEL="/sys/kernel/debug/nrc_spi/debug_level"
 DEBUGFS_CORE_LEVEL="/sys/kernel/debug/nrc_core/debug_level"
+DEBUGFS_WLAN_LEVEL="/sys/kernel/debug/ieee80211/nrc80211/debug_level"
+DEBUGFS_MCP_LEVEL="/sys/kernel/debug/nrc_mcp/debug_level"
 
 # Debugfs paths - Core Module
 DEBUGFS_SKB_DEBUG="/sys/kernel/debug/nrc_core/skb_debug"
@@ -305,6 +307,42 @@ cmd_level_status() {
     fi
     echo
 
+    # WLAN Module Level
+    print_msg "$BLUE" "WLAN Module ($DEBUGFS_WLAN_LEVEL):"
+    if [ -f "$DEBUGFS_WLAN_LEVEL" ]; then
+        local level=$(cat "$DEBUGFS_WLAN_LEVEL" 2>/dev/null)
+        local level_name=""
+        case "$level" in
+            0) level_name="ERR  - Errors only" ;;
+            1) level_name="WARN - Warnings and errors" ;;
+            2) level_name="INFO - Info, warnings, and errors" ;;
+            3) level_name="DBG  - All debug messages" ;;
+            *) level_name="Unknown" ;;
+        esac
+        printf "  Level: %s (%s)\n" "$level" "$level_name"
+    else
+        print_msg "$YELLOW" "  Not available (WLAN module not loaded?)"
+    fi
+    echo
+
+    # MCP Module Level
+    print_msg "$BLUE" "MCP Module ($DEBUGFS_MCP_LEVEL):"
+    if [ -f "$DEBUGFS_MCP_LEVEL" ]; then
+        local level=$(cat "$DEBUGFS_MCP_LEVEL" 2>/dev/null)
+        local level_name=""
+        case "$level" in
+            0) level_name="ERR  - Errors only" ;;
+            1) level_name="WARN - Warnings and errors" ;;
+            2) level_name="INFO - Info, warnings, and errors" ;;
+            3) level_name="DBG  - All debug messages" ;;
+            *) level_name="Unknown" ;;
+        esac
+        printf "  Level: %s (%s)\n" "$level" "$level_name"
+    else
+        print_msg "$YELLOW" "  Not available (MCP module not loaded?)"
+    fi
+    echo
+
     print_msg "$CYAN" "Available Levels:"
     printf "  %s - Errors only (ERR_* messages)\n" "0 (ERR)"
     printf "  %s - Warnings and above (WARn + ERR_*)\n" "1 (WARN)"
@@ -372,6 +410,30 @@ cmd_level_set() {
         fi
     else
         print_msg "$YELLOW" "Core: Debug level not available"
+    fi
+
+    # Set WLAN module debug level
+    if [ -f "$DEBUGFS_WLAN_LEVEL" ]; then
+        echo "$level_value" > "$DEBUGFS_WLAN_LEVEL" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            print_msg "$GREEN" "WLAN: Debug level set to $level_name ($level_value)"
+        else
+            print_msg "$RED" "WLAN: Failed to set debug level"
+        fi
+    else
+        print_msg "$YELLOW" "WLAN: Debug level not available"
+    fi
+
+    # Set MCP module debug level
+    if [ -f "$DEBUGFS_MCP_LEVEL" ]; then
+        echo "$level_value" > "$DEBUGFS_MCP_LEVEL" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            print_msg "$GREEN" "MCP: Debug level set to $level_name ($level_value)"
+        else
+            print_msg "$RED" "MCP: Failed to set debug level"
+        fi
+    else
+        print_msg "$YELLOW" "MCP: Debug level not available"
     fi
 
     echo

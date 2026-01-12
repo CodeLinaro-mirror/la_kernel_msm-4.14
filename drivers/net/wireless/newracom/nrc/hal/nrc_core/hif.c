@@ -167,6 +167,7 @@ struct nrc_hif_device *nrc_hif_alloc(struct device *dev, void *priv,
 	hdev->ps.enabled = false;
 	hdev->ps.modem_enabled = false;
 	hdev->ps.timeout = 0;
+	hdev->ps.last_sleep_timeout_ms = 0;
 
 	return hdev;
 }

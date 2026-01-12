@@ -21,9 +21,7 @@ enum nrc_hal_event_type {
 	NRC_HAL_EVT_KICK_TXQ, /* Kick TX queue processing */
 	NRC_HAL_EVT_CLEANUP_TXQ_ALL, /* Cleanup all TX queues */
 	NRC_HAL_EVT_FREE_SKB, /* Free SKB(HIF_TYPE_FRAME) */
-#if defined(ENABLE_DYNAMIC_PS)
 	NRC_HAL_EVT_PS_DYN_START_CUSTOM_TIMEOUT, /* Start dynamic PS with custom timeout */
-#endif
 	NRC_HAL_EVT_WAKE_DONE, /* Wakeup sequence complete (HAL → Frontend) */
 	NRC_HAL_EVT_PS_ENTER_FAILED, /* PS enter failed, recovery done (HAL → Frontend) */
 	NRC_HAL_EVT_TARGET_NOTI_WDT_EXPIRED, /* WDT expired - target rebooting */

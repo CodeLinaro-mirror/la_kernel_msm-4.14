@@ -25,6 +25,7 @@
 /* Local module headers */
 #include "nrc-mac80211.h"
 #include "nrc-ps.h"
+#include "nrc-twt-sched.h"
 
 #define ATOMIC_LOCK_UNLOCKED (0)
 #define ATOMIC_LOCK_LOCKED (1)
@@ -101,9 +102,7 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 		ERR_WLAN("Sleep request failed: %d", ret);
 
 		/* Recovery: restart dynamic PS and beacon monitor */
-#if defined(ENABLE_DYNAMIC_PS)
 		nrc_ps_dyn_start_custom_timeout(nw, nw->beacon_timeout + 2000);
-#endif
 		if (!nw->params->disable_cqm && nw->associated_vif) {
 			mod_timer(&nw->bcn_mon_timer,
 				  jiffies +
@@ -123,7 +122,6 @@ done:
 
 int g_custom_timeout;
 
-#if defined(ENABLE_DYNAMIC_PS)
 /* Work handler for dynamic PS - called in process context */
 static void nrc_ps_dynamic_work(struct work_struct *work)
 {
@@ -189,6 +187,9 @@ static void nrc_ps_timeout_timer(struct timer_list *t)
 
 void nrc_ps_dyn_init(struct nrc *nw)
 {
+	if (!nw->hdev->ps.supports_dynamic_ps)
+		return;
+
 	g_custom_timeout = 0;
 
 	/* Initialize work queue for dynamic PS */
@@ -204,6 +205,9 @@ void nrc_ps_dyn_init(struct nrc *nw)
 
 void nrc_ps_dyn_deinit(struct nrc *nw)
 {
+	if (!nw->hdev->ps.supports_dynamic_ps)
+		return;
+
 	g_custom_timeout = 0;
 
 	/* Cancel timer and pending work */
@@ -215,26 +219,23 @@ void nrc_ps_dyn_start_custom_timeout(struct nrc *nw, int custom_timeout)
 {
 	int timeout;
 
-	//DBG_PS("Dynamic PS start");
+	if (!nw->hdev->ps.supports_dynamic_ps || !NRC_DRV_IS_READY(nw->hdev) ||
+	    (nw->twt_sched && nw->params->twt_force_sleep) ||
+	    nw->hw->conf.dynamic_ps_timeout <= 0)
+		return;
 
-	if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS) &&
-	    NRC_DRV_IS_READY(nw->hdev) &&
-	    !(nw->twt_sched && nw->params->twt_force_sleep) &&
-	    nw->hw->conf.dynamic_ps_timeout > 0) {
-		g_custom_timeout = custom_timeout;
+	g_custom_timeout = custom_timeout;
 
-		if (custom_timeout > nw->params->extra_ps_timeout +
-					     nw->hw->conf.dynamic_ps_timeout) {
-			DBG_ST("custom timeout is set to %dms", custom_timeout);
-			timeout = custom_timeout;
-		} else {
-			timeout = nw->params->extra_ps_timeout +
-				  nw->hw->conf.dynamic_ps_timeout;
-		}
-
-		mod_timer(&nw->dynamic_ps_timer,
-			  jiffies + msecs_to_jiffies(timeout));
+	if (custom_timeout >
+	    nw->params->extra_ps_timeout + nw->hw->conf.dynamic_ps_timeout) {
+		DBG_ST("custom timeout is set to %dms", custom_timeout);
+		timeout = custom_timeout;
+	} else {
+		timeout = nw->params->extra_ps_timeout +
+			  nw->hw->conf.dynamic_ps_timeout;
 	}
+
+	mod_timer(&nw->dynamic_ps_timer, jiffies + msecs_to_jiffies(timeout));
 }
 
 void nrc_ps_dyn_start(struct nrc *nw)
@@ -242,28 +243,41 @@ void nrc_ps_dyn_start(struct nrc *nw)
 	if (g_custom_timeout)
 		return; /* don't rearm until custom_timeout end. */
 
-	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE) {
+	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE)
 		return;
-	}
 
 	nrc_ps_dyn_start_custom_timeout(nw, 0);
 }
 
 void nrc_ps_dyn_stop(struct nrc *nw)
 {
-	//DBG_PS("Dynamic PS stop");
 	g_custom_timeout = 0;
 
-	if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS)) {
-		if (NRC_DRV_IS_READY(nw->hdev) &&
-		    nw->hw->conf.dynamic_ps_timeout > 0) {
-			DBG_PS("%s Dynamic PS timer off %ul", __func__,
-			       nw->hw->conf.dynamic_ps_timeout);
-			try_to_del_timer_sync(&nw->dynamic_ps_timer);
-		}
+	if (!nw->hdev->ps.supports_dynamic_ps)
+		return;
+
+	if (NRC_DRV_IS_READY(nw->hdev) && nw->hw->conf.dynamic_ps_timeout > 0) {
+		DBG_PS("%s Dynamic PS timer off %ul", __func__,
+		       nw->hw->conf.dynamic_ps_timeout);
+		try_to_del_timer_sync(&nw->dynamic_ps_timer);
 	}
 }
-#endif /* ENABLE_DYNAMIC_PS */
+
+void nrc_ps_dyn_start_twt(struct nrc *nw)
+{
+	int twt_timeout_ms;
+
+	if (!nw->hdev->ps.supports_dynamic_ps || !NRC_DRV_IS_READY(nw->hdev) ||
+	    !nw->twt_sched || !nw->params->twt_force_sleep)
+		return;
+
+	/* Set timeout based on TWT service period */
+	twt_timeout_ms = (int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
+	nw->hw->conf.dynamic_ps_timeout = twt_timeout_ms;
+
+	mod_timer(&nw->dynamic_ps_timer,
+		  jiffies + msecs_to_jiffies(twt_timeout_ms));
+}
 
 int nrc_ps_set_idle_mode(struct nrc *nw, char *msg)
 {

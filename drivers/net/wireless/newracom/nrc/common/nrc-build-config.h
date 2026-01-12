@@ -57,21 +57,12 @@
 #define NRC_TARGET_KERNEL_VERSION LINUX_VERSION_CODE
 
 /*
- * Dynamic Power Save support
- * Enable dynamic PS for power management optimization
- */
-#ifndef ENABLE_DYNAMIC_PS
-#define ENABLE_DYNAMIC_PS
-#endif
-
-/*
- * On kernel version 6.0 or higher, the dynamic ps became impossible.
+ * Kernel 6.0+ API changes
  * refer https://lore.kernel.org/all/20220713114425.fa593e78de9a.I67a99fcbfcac0cefb4dcbb85e8b7d719b16d8a7c@changeid/
  */
 #if KERNEL_VERSION(6, 0, 0) <= NRC_TARGET_KERNEL_VERSION
 #define CONFIG_USE_VIF_CFG
 #define CONFIG_USE_LINK_ID
-#undef ENABLE_DYNAMIC_PS
 #endif
 
 /*

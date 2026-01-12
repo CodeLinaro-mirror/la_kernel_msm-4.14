@@ -63,7 +63,8 @@ enum NRC_PS_REASON {
 	NRC_PS_REASON_DRV_DYNAMIC_PS, /* Driver: Dynamic PS timer */
 
 	/* HAL/Backend layer triggers */
-	NRC_PS_REASON_HAL_CALLBACK = 30, /* HAL: Generic callback (deprecated) */
+	NRC_PS_REASON_HAL_CALLBACK =
+		30, /* HAL: Generic callback (deprecated) */
 	NRC_PS_REASON_HAL_PS_DYNAMIC, /* HAL: Dynamic PS work */
 	NRC_PS_REASON_HAL_TX_TIMEOUT, /* HAL: TX timeout recovery */
 	NRC_PS_REASON_HAL_TX_WAKEUP, /* HAL: TX data in deepsleep */
@@ -94,12 +95,12 @@ struct nrc_ps_mode_data {
  * All state transitions are handled through nrc_ps_handle_event().
  */
 enum NRC_PS_EVENT {
-	NRC_PS_EVT_SLEEP_REQ,      /* Request to enter sleep mode */
-	NRC_PS_EVT_WAKE_REQ,       /* Request to wake up (TX/RX) */
-	NRC_PS_EVT_FW_READY,       /* FW signaled ready after wake */
-	NRC_PS_EVT_SLEEP_DONE,     /* FW entered sleep successfully */
-	NRC_PS_EVT_SLEEP_FAIL,     /* FW failed to enter sleep */
-	NRC_PS_EVT_TIMEOUT,        /* Timeout occurred */
+	NRC_PS_EVT_SLEEP_REQ, /* Request to enter sleep mode */
+	NRC_PS_EVT_WAKE_REQ, /* Request to wake up (TX/RX) */
+	NRC_PS_EVT_FW_READY, /* FW signaled ready after wake */
+	NRC_PS_EVT_SLEEP_DONE, /* FW entered sleep successfully */
+	NRC_PS_EVT_SLEEP_FAIL, /* FW failed to enter sleep */
+	NRC_PS_EVT_TIMEOUT, /* Timeout occurred */
 	NRC_PS_EVT_MAX
 };
 
@@ -108,8 +109,8 @@ enum NRC_PS_EVENT {
  */
 struct nrc_ps_event_data {
 	enum NRC_PS_EVENT event;
-	enum NRC_PS_MODE mode;     /* Target mode for SLEEP_REQ */
-	int timeout_ms;            /* Timeout for operations */
+	enum NRC_PS_MODE mode; /* Target mode for SLEEP_REQ */
+	int timeout_ms; /* Timeout for operations */
 	enum NRC_PS_REASON reason; /* Reason for state change */
 };
 
@@ -117,12 +118,12 @@ struct nrc_ps_event_data {
 #define NRC_PS_HISTORY_SIZE 16
 
 struct nrc_ps_timing_event {
-	ktime_t timestamp;           /* Event timestamp */
-	enum NRC_PS_STATE state;     /* State after event */
-	enum NRC_PS_MODE mode;       /* Mode after event */
-	enum NRC_PS_REASON reason;   /* Reason for event */
-	u64 timeout_ms;              /* Timeout value (for sleep) */
-	bool is_sleep;               /* true=sleep, false=wake */
+	ktime_t timestamp; /* Event timestamp */
+	enum NRC_PS_STATE state; /* State after event */
+	enum NRC_PS_MODE mode; /* Mode after event */
+	enum NRC_PS_REASON reason; /* Reason for event */
+	u64 timeout_ms; /* Timeout value (for sleep) */
+	bool is_sleep; /* true=sleep, false=wake */
 };
 
 typedef struct {
@@ -133,6 +134,14 @@ typedef struct {
 	bool enabled; // hw->conf.flags & IEEE80211_CONF_PS
 	bool modem_enabled;
 	int timeout; // hw->conf.dynamic_ps_timeout
+	/*
+	 * Driver-managed dynamic PS flag (mirrors ieee80211 SUPPORTS_DYNAMIC_PS)
+	 * Set when:
+	 * - Kernel < 6.0 AND nullfunc_enable=0, OR
+	 * - NonTIM mode (NRC_PS_DEEPSLEEP_NONTIM)
+	 * When set, driver uses its own timer for PS management instead of mac80211.
+	 */
+	bool supports_dynamic_ps;
 	/* SLEEPING state timeout detection */
 	unsigned long sleeping_start_jiffies;
 	/* State machine pending wake flag for atomic context */
@@ -142,21 +151,20 @@ typedef struct {
 
 	/* PS Timing tracking for debugfs */
 	struct nrc_ps_timing_event history[NRC_PS_HISTORY_SIZE];
-	int history_idx;             /* Next write index (circular) */
-	int history_count;           /* Total events recorded */
-	ktime_t last_sleep_time;     /* Last sleep request time */
-	ktime_t last_wake_time;      /* Last wake complete time */
-	u64 last_sleep_timeout_ms;   /* Last sleep timeout value */
+	int history_idx; /* Next write index (circular) */
+	int history_count; /* Total events recorded */
+	ktime_t last_sleep_time; /* Last sleep request time */
+	ktime_t last_wake_time; /* Last wake complete time */
+	u64 last_sleep_timeout_ms; /* Last sleep timeout value */
 	enum NRC_PS_REASON last_sleep_reason;
 	enum NRC_PS_REASON last_wake_reason;
 } nrc_ps_t;
 
 static inline const char *nrc_ps_event_str(enum NRC_PS_EVENT event)
 {
-	static const char *const str[] = {
-		"SLEEP_REQ", "WAKE_REQ", "FW_READY",
-		"SLEEP_DONE", "SLEEP_FAIL", "TIMEOUT"
-	};
+	static const char *const str[] = {"SLEEP_REQ",	"WAKE_REQ",
+					  "FW_READY",	"SLEEP_DONE",
+					  "SLEEP_FAIL", "TIMEOUT"};
 	if (event >= NRC_PS_EVT_MAX)
 		return "UNKNOWN";
 	return str[event];
@@ -208,22 +216,21 @@ static inline int nrc_ps_lock_interruptible(nrc_ps_t *ps)
 	return 0;
 }
 
-#define NRC_PS_LOCK_GUARD(ps, code)                            \
-	do {                                                   \
-		if (ps) {                                      \
-			unsigned long __flags;                 \
-			spin_lock_irqsave(&(ps)->lock, __flags);  \
-			code;                                  \
+#define NRC_PS_LOCK_GUARD(ps, code)                                   \
+	do {                                                          \
+		if (ps) {                                             \
+			unsigned long __flags;                        \
+			spin_lock_irqsave(&(ps)->lock, __flags);      \
+			code;                                         \
 			spin_unlock_irqrestore(&(ps)->lock, __flags); \
-		}                                              \
+		}                                                     \
 	} while (0)
 
 /* String conversion functions */
 static inline const char *nrc_ps_mode_str(enum NRC_PS_MODE mode)
 {
-	static const char *const str[] = {
-		"NONE", "MODEMSLEEP", "DEEPSLEEP_TIM", "DEEPSLEEP_NONTIM"
-	};
+	static const char *const str[] = {"NONE", "MODEMSLEEP", "DEEPSLEEP_TIM",
+					  "DEEPSLEEP_NONTIM"};
 	if (mode >= NRC_PS_MAX)
 		return "UNKNOWN";
 	return str[mode];
@@ -231,7 +238,8 @@ static inline const char *nrc_ps_mode_str(enum NRC_PS_MODE mode)
 
 static inline const char *nrc_ps_state_str(enum NRC_PS_STATE state)
 {
-	static const char *const str[] = { "WAKE", "SLEEPING", "SLEEP", "WAKING" };
+	static const char *const str[] = {"WAKE", "SLEEPING", "SLEEP",
+					  "WAKING"};
 	if (state >= NRC_PS_STATE_MAX)
 		return "UNKNOWN";
 	return str[state];
@@ -240,37 +248,64 @@ static inline const char *nrc_ps_state_str(enum NRC_PS_STATE state)
 static inline const char *nrc_ps_reason_str(enum NRC_PS_REASON reason)
 {
 	switch (reason) {
-	case NRC_PS_REASON_MAC_CONFIG_PS_ENABLED: return "MAC_CONFIG_PS_ENABLED";
-	case NRC_PS_REASON_MAC_CONFIG_PS_DISABLED: return "MAC_CONFIG_PS_DISABLED";
-	case NRC_PS_REASON_MAC_IDLE_ENTER: return "MAC_IDLE_ENTER";
-	case NRC_PS_REASON_MAC_IDLE_EXIT: return "MAC_IDLE_EXIT";
-	case NRC_PS_REASON_TARGET_FW_READY: return "TARGET_FW_READY";
-	case NRC_PS_REASON_TARGET_FAILED_ENTER_PS: return "TARGET_FAILED_ENTER_PS";
-	case NRC_PS_REASON_DRV_TX_WAKEUP: return "DRV_TX_WAKEUP";
-	case NRC_PS_REASON_DRV_RX_WAKEUP: return "DRV_RX_WAKEUP";
-	case NRC_PS_REASON_DRV_BSS_CONFIG: return "DRV_BSS_CONFIG";
-	case NRC_PS_REASON_DRV_STA_ADD: return "DRV_STA_ADD";
-	case NRC_PS_REASON_DRV_STA_REMOVE: return "DRV_STA_REMOVE";
-	case NRC_PS_REASON_DRV_SCAN_START: return "DRV_SCAN_START";
-	case NRC_PS_REASON_DRV_SCAN_ABORT: return "DRV_SCAN_ABORT";
-	case NRC_PS_REASON_DRV_ROC_START: return "DRV_ROC_START";
-	case NRC_PS_REASON_DRV_ROC_CANCEL: return "DRV_ROC_CANCEL";
-	case NRC_PS_REASON_DRV_APF_CONFIG: return "DRV_APF_CONFIG";
-	case NRC_PS_REASON_DRV_POST_INIT: return "DRV_POST_INIT";
-	case NRC_PS_REASON_DRV_DYNAMIC_PS: return "DRV_DYNAMIC_PS";
-	case NRC_PS_REASON_HAL_CALLBACK: return "HAL_CALLBACK";
-	case NRC_PS_REASON_HAL_PS_DYNAMIC: return "HAL_PS_DYNAMIC";
-	case NRC_PS_REASON_HAL_TX_TIMEOUT: return "HAL_TX_TIMEOUT";
-	case NRC_PS_REASON_HAL_TX_WAKEUP: return "HAL_TX_WAKEUP";
-	case NRC_PS_REASON_HAL_SHUTDOWN: return "HAL_SHUTDOWN";
-	case NRC_PS_REASON_USER_NETLINK_CMD: return "USER_NETLINK_CMD";
-	case NRC_PS_REASON_USER_DEBUG_WAKE: return "USER_DEBUG_WAKE";
-	case NRC_PS_REASON_USER_DEBUG_SLEEP: return "USER_DEBUG_SLEEP";
-	case NRC_PS_REASON_SYS_SUSPEND: return "SYS_SUSPEND";
-	default: return "UNKNOWN";
+	case NRC_PS_REASON_MAC_CONFIG_PS_ENABLED:
+		return "MAC_CONFIG_PS_ENABLED";
+	case NRC_PS_REASON_MAC_CONFIG_PS_DISABLED:
+		return "MAC_CONFIG_PS_DISABLED";
+	case NRC_PS_REASON_MAC_IDLE_ENTER:
+		return "MAC_IDLE_ENTER";
+	case NRC_PS_REASON_MAC_IDLE_EXIT:
+		return "MAC_IDLE_EXIT";
+	case NRC_PS_REASON_TARGET_FW_READY:
+		return "TARGET_FW_READY";
+	case NRC_PS_REASON_TARGET_FAILED_ENTER_PS:
+		return "TARGET_FAILED_ENTER_PS";
+	case NRC_PS_REASON_DRV_TX_WAKEUP:
+		return "DRV_TX_WAKEUP";
+	case NRC_PS_REASON_DRV_RX_WAKEUP:
+		return "DRV_RX_WAKEUP";
+	case NRC_PS_REASON_DRV_BSS_CONFIG:
+		return "DRV_BSS_CONFIG";
+	case NRC_PS_REASON_DRV_STA_ADD:
+		return "DRV_STA_ADD";
+	case NRC_PS_REASON_DRV_STA_REMOVE:
+		return "DRV_STA_REMOVE";
+	case NRC_PS_REASON_DRV_SCAN_START:
+		return "DRV_SCAN_START";
+	case NRC_PS_REASON_DRV_SCAN_ABORT:
+		return "DRV_SCAN_ABORT";
+	case NRC_PS_REASON_DRV_ROC_START:
+		return "DRV_ROC_START";
+	case NRC_PS_REASON_DRV_ROC_CANCEL:
+		return "DRV_ROC_CANCEL";
+	case NRC_PS_REASON_DRV_APF_CONFIG:
+		return "DRV_APF_CONFIG";
+	case NRC_PS_REASON_DRV_POST_INIT:
+		return "DRV_POST_INIT";
+	case NRC_PS_REASON_DRV_DYNAMIC_PS:
+		return "DRV_DYNAMIC_PS";
+	case NRC_PS_REASON_HAL_CALLBACK:
+		return "HAL_CALLBACK";
+	case NRC_PS_REASON_HAL_PS_DYNAMIC:
+		return "HAL_PS_DYNAMIC";
+	case NRC_PS_REASON_HAL_TX_TIMEOUT:
+		return "HAL_TX_TIMEOUT";
+	case NRC_PS_REASON_HAL_TX_WAKEUP:
+		return "HAL_TX_WAKEUP";
+	case NRC_PS_REASON_HAL_SHUTDOWN:
+		return "HAL_SHUTDOWN";
+	case NRC_PS_REASON_USER_NETLINK_CMD:
+		return "USER_NETLINK_CMD";
+	case NRC_PS_REASON_USER_DEBUG_WAKE:
+		return "USER_DEBUG_WAKE";
+	case NRC_PS_REASON_USER_DEBUG_SLEEP:
+		return "USER_DEBUG_SLEEP";
+	case NRC_PS_REASON_SYS_SUSPEND:
+		return "SYS_SUSPEND";
+	default:
+		return "UNKNOWN";
 	}
 }
-
 
 /**
  * nrc_ps_get_state - Get current power save state (thread-safe)

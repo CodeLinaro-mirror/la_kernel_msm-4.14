@@ -5,11 +5,8 @@ Three-layer modular architecture for Newracom NRC WiFi chipsets with SPI interfa
 ## Quick Start
 
 ```bash
-# Build (Docker - recommended)
-./docker/build-docker.sh
-
-# Deploy to target
-./deploy-modules.sh pi@192.168.0.4
+# Build
+make
 
 # Load modules
 sudo insmod nrc_spi.ko
@@ -53,7 +50,6 @@ nrc_modular/
 ├── README.md                   # This file
 ├── Kconfig                     # Kernel configuration options
 ├── Makefile                    # Main build system
-├── deploy-modules.sh           # Module deployment script
 │
 ├── docs/                       # Documentation
 │   ├── user-debug.md                      # User: Debug interface guide
@@ -159,6 +155,8 @@ nrc_modular/
 │       └── nrc-rpi.dts         # Device tree for Raspberry Pi
 │
 └── scripts/                    # Utility scripts
+    ├── deploy-modules.sh       # Module deployment script (SSH/ADB)
+    ├── remote-build.sh         # Remote target build script (rsync+SSH)
     ├── debug.sh                # Debug control script
     ├── start_modular.py        # Module loader
     ├── stop_modular.py         # Module unloader
@@ -195,34 +193,6 @@ nrc_modular/
 
 ## Building
 
-### Docker Build (Recommended)
-
-Unified Docker image with multiple kernel versions:
-
-```bash
-# Default build (Raspberry Pi 6.12.47 kernel)
-./docker/build-docker.sh
-
-# Build for specific kernel version
-./docker/build-docker.sh all rpi-5.10.17           # Raspberry Pi kernel 5.10.17
-./docker/build-docker.sh all rpi-6.12.47           # Raspberry Pi kernel 6.12.47 (default)
-
-# Build specific modules
-./docker/build-docker.sh backend         # nrc_spi.ko only
-./docker/build-docker.sh hal             # nrc_core.ko only
-./docker/build-docker.sh frontend        # nrc_wlan.ko only
-./docker/build-docker.sh mcp             # nrc_mcp.ko only
-
-# Clean builds
-./docker/build-docker.sh clean
-./docker/build-docker.sh clean rpi-5.10.17
-./docker/build-docker.sh frontend clean rpi-5.10.17
-```
-
-**Supported Kernel Versions**:
-- `rpi-5.10.17` - Raspberry Pi kernel 5.10.17 (stable_20210303-1)
-- `rpi-6.12.47` - Raspberry Pi kernel 6.12.47 (stable_20250916) **[Default]**
-
 ### Native Build
 
 ```bash
@@ -247,8 +217,23 @@ make clean
 ### Automated Deployment
 
 ```bash
-# Deploy to target device
-./deploy-modules.sh pi@192.168.0.4
+# Deploy to target device via SSH
+./scripts/deploy-modules.sh pi@192.168.0.4
+
+# Deploy to Android device via ADB
+./scripts/deploy-modules.sh adb
+
+# Show deployment help
+./scripts/deploy-modules.sh help
+```
+
+### Remote Build
+
+Build directly on target device (useful when Docker cross-compile is unavailable):
+
+```bash
+# Build on remote target via SSH (syncs source, builds, fetches .ko files)
+./scripts/remote-build.sh 192.168.0.4 pi raspberry
 ```
 
 ### Manual Installation

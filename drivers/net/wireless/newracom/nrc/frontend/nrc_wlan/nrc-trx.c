@@ -368,9 +368,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 		if (NRC_PS_IS_AWAKE(tx.nw->hdev)) {
 			/* without check, ps_timer is expired before wake-up if ps_time is too short (100ms~300ms) */
 			/* after done wake-up, nrc_ps_dyn_start is called */
-#if defined(ENABLE_DYNAMIC_PS)
 			nrc_ps_dyn_start(tx.nw);
-#endif
 		}
 	} //if (tx.nw->vif[vif_id]->type == NL80211_IFTYPE_STATION)
 
@@ -1324,9 +1322,7 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 			DBG_MAC("RX EAPOL(%d), ADDR1: %pM, ADDR2: %pM",
 				eapol_msg, mh->addr1, mh->addr2);
 			/* key exchange and install key */
-#if defined(ENABLE_DYNAMIC_PS)
 			nrc_ps_dyn_start_custom_timeout(nw, 1000);
-#endif
 		}
 
 		/* Track FRAME SKB before passing to mac80211 (ownership transfer) */
@@ -1334,13 +1330,10 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 		NRC_SKB_TRACK_FREE(nw->hdev, NULL, HIF_TYPE_FRAME, true, true);
 		ieee80211_rx_irqsafe(nw->hw, rx.skb);
 
-		if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS)) {
-#if defined(ENABLE_DYNAMIC_PS)
-			if (ieee80211_is_data(fc))
-				nrc_ps_dyn_start(nw);
-#endif
-		} else if (ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
-		} else {
+		if (ieee80211_is_data(fc))
+			nrc_ps_dyn_start(nw);
+
+		if (!ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
 			if (nw->invoke_beacon_loss) {
 				nw->invoke_beacon_loss = false;
 				nrc_send_beacon_loss(nw);

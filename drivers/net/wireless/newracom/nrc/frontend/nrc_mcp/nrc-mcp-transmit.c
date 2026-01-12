@@ -77,7 +77,7 @@ int nrc_mcp_process_wim_request_wait(int request_id, int resp_id, int cmd,
 		channel_id_to_str(request_id), wim_skb->len);
 
 	/* Send WIM request via MCP TX path and wait for response */
-	if (nrc_hal_ops_wim_request(wim_skb, 0, WIM_RESP_TIMEOUT, true,
+	if (nrc_hal_ops_wim_request(wim_skb, 0, WIM_RESP_TIMEOUT * 30, true,
 				    &wim_resp))
 		wim_resp = NULL;
 
@@ -96,7 +96,8 @@ int nrc_mcp_process_wim_request_wait(int request_id, int resp_id, int cmd,
 		// 	tlv_resp->t, tlv_resp->l, wim_resp->len);
 
 		/* send_to_netlink will free the SKB */
-		ret = send_to_netlink(resp_id, wim_resp, hdev, HIF_TYPE_WIM, true);
+		ret = send_to_netlink(resp_id, wim_resp, hdev, HIF_TYPE_WIM,
+				      true);
 		if (ret < 0) {
 			LOG_ERR("Failed to send response to netlink channel %s err %d",
 				channel_id_to_str(resp_id), ret);

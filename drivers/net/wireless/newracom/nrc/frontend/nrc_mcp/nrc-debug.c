@@ -68,6 +68,24 @@ static int nrc_mcp_debugfs_debug_write(void *data, u64 val)
 DEFINE_SIMPLE_ATTRIBUTE(nrc_mcp_debugfs_debug_fops,
 			nrc_mcp_debugfs_debug_read,
 			nrc_mcp_debugfs_debug_write, "%llu\n");
+
+/* MCP module-specific debug level control */
+static int nrc_mcp_debugfs_level_read(void *data, u64 *val)
+{
+	*val = nrc_debug_level;
+	return 0;
+}
+
+static int nrc_mcp_debugfs_level_write(void *data, u64 val)
+{
+	if (val < NRC_DBG_LEVEL_MAX)
+		nrc_debug_level = (enum NRC_DEBUG_LEVEL)val;
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(nrc_mcp_debugfs_level_fops,
+			nrc_mcp_debugfs_level_read,
+			nrc_mcp_debugfs_level_write, "%llu\n");
 #endif /* CONFIG_DEBUG_FS */
 
 /**
@@ -95,9 +113,11 @@ void nrc_init_debugfs(struct mcp_priv *mcp)
 		return;
 	}
 
-	/* MCP module-specific debug mask */
+	/* MCP module-specific debug mask and level */
 	debugfs_create_file("debug_mask", 0664, mcp_debugfs_root, mcp,
 			    &nrc_mcp_debugfs_debug_fops);
+	debugfs_create_file("debug_level", 0664, mcp_debugfs_root, mcp,
+			    &nrc_mcp_debugfs_level_fops);
 
 	/* MCP-specific debugfs entries would be created here if needed */
 	/* Common entries are now in /sys/kernel/debug/nrc_core/ */

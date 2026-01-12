@@ -767,11 +767,37 @@ static int ps_control_show(struct seq_file *m, void *v)
 		   hdev->ps.enabled ? "Yes" : "No");
 	seq_printf(m, "Modem Enabled:        %s\n",
 		   hdev->ps.modem_enabled ? "Yes" : "No");
+	seq_printf(m, "Supports Dynamic PS:  %s\n",
+		   hdev->ps.supports_dynamic_ps ? "Yes" : "No");
 	seq_printf(m, "Dynamic PS Timeout:   %d ms\n", hdev->ps.timeout);
 	seq_printf(m, "Last Sleep Timeout:   %llu ms\n",
 		   hdev->ps.last_sleep_timeout_ms);
 	seq_printf(m, "Wake Pending:         %s\n",
 		   hdev->ps.wake_pending ? "Yes" : "No");
+	seq_printf(m, "\n");
+
+	/* Module parameters */
+	seq_printf(m, "# Module Parameters\n");
+	seq_printf(m, "# -----------------\n");
+	seq_printf(m, "power_save:           %d (%s)\n",
+		   hdev->params->power_save,
+		   hdev->params->power_save == 0 ? "NONE" :
+		   hdev->params->power_save == 1 ? "MODEMSLEEP" :
+		   hdev->params->power_save == 2 ? "DEEPSLEEP_TIM" :
+		   hdev->params->power_save == 3 ? "DEEPSLEEP_NONTIM" : "Unknown");
+	seq_printf(m, "sleep_duration:       [%d, %d] ms\n",
+		   hdev->params->sleep_duration[0],
+		   hdev->params->sleep_duration[1]);
+	seq_printf(m, "listen_interval:      %d\n",
+		   hdev->params->listen_interval);
+	seq_printf(m, "bss_max_idle:         %d\n",
+		   hdev->params->bss_max_idle);
+	seq_printf(m, "bss_max_idle_offset:  %d\n",
+		   hdev->params->bss_max_idle_offset);
+	seq_printf(m, "nullfunc_enable:      %s\n",
+		   hdev->params->nullfunc_enable ? "Yes" : "No");
+	seq_printf(m, "extra_ps_timeout:     %d ms\n",
+		   hdev->params->extra_ps_timeout);
 	seq_printf(m, "\n");
 
 	seq_printf(m, "# Commands:\n");

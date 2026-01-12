@@ -1432,8 +1432,8 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	SLOT_SYNC_LOCK();
 	ret = c_spi_read_regs(spi, C_SPI_EIRQ_MODE, (void *)status,
 			      sizeof(*status));
-	SLOT_SYNC_UNLOCK();
 	if (ret < 0) {
+		SLOT_SYNC_UNLOCK();
 		return ret;
 	}
 
@@ -1446,6 +1446,7 @@ int spi_update_status(struct nrc_hif_device *hdev)
 
 	/* Process device status and check if we should skip slot/credit updates */
 	if (spi_process_device_status(hdev, spi, priv, status, debug)) {
+		SLOT_SYNC_UNLOCK();
 		goto done;
 	}
 
@@ -1504,6 +1505,8 @@ int spi_update_status(struct nrc_hif_device *hdev)
 			spi_hif_reset_rx(hdev);
 		}
 	}
+
+	SLOT_SYNC_UNLOCK();
 
 	/* no need to update credit while loopback test */
 	if (hdev->params->loopback) {

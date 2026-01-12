@@ -76,6 +76,24 @@ DEFINE_SIMPLE_ATTRIBUTE(nrc_wlan_debugfs_debug_fops,
 			nrc_wlan_debugfs_debug_read,
 			nrc_wlan_debugfs_debug_write, "%llu\n");
 
+/* WLAN module-specific debug level control */
+static int nrc_wlan_debugfs_level_read(void *data, u64 *val)
+{
+	*val = nrc_debug_level;
+	return 0;
+}
+
+static int nrc_wlan_debugfs_level_write(void *data, u64 val)
+{
+	if (val < NRC_DBG_LEVEL_MAX)
+		nrc_debug_level = (enum NRC_DEBUG_LEVEL)val;
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(nrc_wlan_debugfs_level_fops,
+			nrc_wlan_debugfs_level_read,
+			nrc_wlan_debugfs_level_write, "%llu\n");
+
 static int nrc_debugfs_wakeup_device_read(void *data, u64 *val)
 {
 	*val = 0;
@@ -387,8 +405,9 @@ void nrc_init_debugfs(struct nrc *nw)
 	 * are now in nrc_core module at /sys/kernel/debug/nrc_core/
 	 */
 
-	/* WLAN module-specific debug mask */
+	/* WLAN module-specific debug mask and level */
 	nrc_debugfs_create_file("debug_mask", &nrc_wlan_debugfs_debug_fops);
+	nrc_debugfs_create_file("debug_level", &nrc_wlan_debugfs_level_fops);
 
 	/* WLAN-specific debugfs entries */
 	nrc_debugfs_create_file("wakeup", &nrc_debugfs_wakeup_device);

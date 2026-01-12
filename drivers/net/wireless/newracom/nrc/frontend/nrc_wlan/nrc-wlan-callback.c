@@ -56,10 +56,8 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event);
-#if defined(ENABLE_DYNAMIC_PS)
 static int
 nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event);
-#endif
 
 /**
  * nrc_wlan_handle_spi_irq - Handle SPI interrupt event
@@ -270,17 +268,18 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 	init_s1g_channels(nw);
 #endif
 
-	if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS)) {
-		// if ps_timeout is short (100ms ~ 300ms), expired before all ready
-		//nrc_ps_dyn_start(nw);
-	} else if (ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
-	} else {
+	/* Restart dynamic PS timer (function checks supports_dynamic_ps internally) */
+	nrc_ps_dyn_start(nw);
+
+	if (!ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
+		/* PS not supported - handle beacon loss */
 		if (hdev->params->power_save >= NRC_PS_DEEPSLEEP_NONTIM) {
 			if (!atomic_read(&nw->d_deauth.delayed_deauth))
 				nrc_send_beacon_loss(nw);
 		} else
 			nw->invoke_beacon_loss = true;
 	}
+
 	if (!hdev->params->disable_cqm && nw->associated_vif) {
 		mod_timer(&nw->bcn_mon_timer,
 			  jiffies + msecs_to_jiffies(nw->beacon_timeout));
@@ -365,10 +364,7 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 	}
 
 	DBG_PS("WLAN: Wake done processing complete");
-
-#if defined(ENABLE_DYNAMIC_PS)
 	nrc_ps_dyn_start(nw);
-#endif
 
 	return 0;
 }
@@ -401,9 +397,7 @@ static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event)
 	/* Need to check if AP is alive, increase timeout more than beacon_timeout
 	 * 2000msec is enough time to check with probe req/resp
 	 */
-#if defined(ENABLE_DYNAMIC_PS)
 	nrc_ps_dyn_start_custom_timeout(nw, nw->beacon_timeout + 2000);
-#endif
 
 	/* Restart beacon monitoring */
 	if (!hdev->params->disable_cqm && nw->associated_vif) {
@@ -416,7 +410,6 @@ static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event)
 	return 0;
 }
 
-#if defined(ENABLE_DYNAMIC_PS)
 static int
 nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event)
 {
@@ -445,7 +438,6 @@ nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event)
 
 	return 0;
 }
-#endif /* ENABLE_DYNAMIC_PS */
 
 /**
  * nrc_wlan_handle_kick_txq - Handle TX queue kick request from HAL
@@ -573,11 +565,9 @@ static int nrc_wlan_hal_callback_handler(struct nrc_hal_event_data *hal_event)
 	case NRC_HAL_EVT_TARGET_NOTI_W_DISABLE_ASSERTED:
 		ret = nrc_wlan_handle_connection_loss(hal_event);
 		break;
-#if defined(ENABLE_DYNAMIC_PS)
 	case NRC_HAL_EVT_PS_DYN_START_CUSTOM_TIMEOUT:
 		ret = nrc_wlan_handle_ps_dyn_start_custom_timeout(hal_event);
 		break;
-#endif
 	case NRC_HAL_EVT_TARGET_NOTI_FW_READY_FROM_WDT:
 		ret = nrc_wlan_handle_fw_ready_from_wdt(hal_event);
 		break;
@@ -849,7 +839,6 @@ void nrc_wlan_callback_cleanup(void)
  */
 static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event)
 {
-	struct nrc_hif_device *hdev;
 	struct nrc *nw;
 
 	nw = nrc_wlan_get_nw();
@@ -857,18 +846,9 @@ static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event)
 		ERR_WLAN("No nw available");
 		return -EINVAL;
 	}
-	hdev = nw->hdev;
 
 	DBG_ST("TARGET_NOTI_TWT_SERVICE");
-	if (ieee80211_hw_check(nw->hw, SUPPORTS_DYNAMIC_PS) &&
-	    NRC_HIF_DRV_STATE(hdev) >= NRC_DRV_RUNNING && nw->twt_sched &&
-	    nw->params->twt_force_sleep) {
-		nw->hw->conf.dynamic_ps_timeout =
-			(int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
-		mod_timer(&nw->dynamic_ps_timer,
-			  jiffies + msecs_to_jiffies(
-					    nw->hw->conf.dynamic_ps_timeout));
-	}
+	nrc_ps_dyn_start_twt(nw);
 	nw->params->twt_service = true;
 	sysfs_notify(&THIS_MODULE->mkobj.kobj, NULL, "twt_service");
 
@@ -939,9 +919,7 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 		nrc_reg_notifier(nw->hw->wiphy, &request);
 	}
 #endif
-#if defined(ENABLE_DYNAMIC_PS)
 	nrc_ps_dyn_start(nw);
-#endif
 
 	return 0;
 }
