@@ -1520,3 +1520,25 @@
 		>;
 	};
 };
+
+/* Remove internnect support as Busfreq is used instead */
+&noc {
+	/delete-property/ #interconnect-cells;
+	/delete-property/ operating-points-v2;
+	/delete-node/ opp-table;
+};
+
+&hsio_blk_ctrl {
+	/delete-property/ interconnects;
+	/delete-property/ interconnect-names;
+};
+
+&media_blk_ctrl {
+	/delete-property/ interconnects;
+	/delete-property/ interconnect-names;
+};
+
+&vpumix_blk_ctrl {
+	/delete-property/ interconnects;
+	/delete-property/ interconnect-names;
+};
