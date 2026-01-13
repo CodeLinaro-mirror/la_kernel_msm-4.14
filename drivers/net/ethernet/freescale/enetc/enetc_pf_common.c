@@ -208,12 +208,6 @@ static int enetc_imdio_create(struct enetc_pf *pf)
 	struct mii_bus *bus;
 	int err;
 
-	if (!pf->ops->create_pcs) {
-		dev_err(dev, "Creating PCS is not supported\n");
-
-		return -EOPNOTSUPP;
-	}
-
 	bus = mdiobus_alloc_size(sizeof(*mdio_priv));
 	if (!bus)
 		return -ENOMEM;
@@ -283,7 +277,7 @@ static void enetc_imdio_remove(struct enetc_pf *pf)
 {
 	struct mii_bus *imdio = pf->imdio;
 
-	if (pf->pcs && pf->ops->destroy_pcs)
+	if (pf->pcs)
 		pf->ops->destroy_pcs(pf->pcs);
 
 	if (imdio) {
@@ -302,7 +296,9 @@ static bool enetc_port_has_pcs(struct enetc_pf *pf)
 	return (pf->if_mode == PHY_INTERFACE_MODE_SGMII ||
 		pf->if_mode == PHY_INTERFACE_MODE_1000BASEX ||
 		pf->if_mode == PHY_INTERFACE_MODE_2500BASEX ||
-		pf->if_mode == PHY_INTERFACE_MODE_USXGMII);
+		pf->if_mode == PHY_INTERFACE_MODE_USXGMII ||
+		pf->if_mode == PHY_INTERFACE_MODE_10GBASER ||
+		pf->if_mode == PHY_INTERFACE_MODE_XGMII);
 }
 
 int enetc_mdiobus_create(struct enetc_pf *pf, struct device_node *node)
@@ -348,7 +344,7 @@ int enetc_phylink_create(struct enetc_ndev_priv *priv, struct device_node *node,
 	pf->phylink_config.dev = &priv->ndev->dev;
 	pf->phylink_config.type = PHYLINK_NETDEV;
 	pf->phylink_config.mac_capabilities = MAC_ASYM_PAUSE | MAC_SYM_PAUSE |
-		MAC_10 | MAC_100 | MAC_1000 | MAC_2500FD;
+		MAC_10 | MAC_100 | MAC_1000 | MAC_2500FD | MAC_10000FD;
 
 	__set_bit(PHY_INTERFACE_MODE_INTERNAL,
 		  pf->phylink_config.supported_interfaces);
@@ -359,6 +355,10 @@ int enetc_phylink_create(struct enetc_ndev_priv *priv, struct device_node *node,
 	__set_bit(PHY_INTERFACE_MODE_2500BASEX,
 		  pf->phylink_config.supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_USXGMII,
+		  pf->phylink_config.supported_interfaces);
+	__set_bit(PHY_INTERFACE_MODE_10GBASER,
+		  pf->phylink_config.supported_interfaces);
+	__set_bit(PHY_INTERFACE_MODE_XGMII,
 		  pf->phylink_config.supported_interfaces);
 	phy_interface_set_rgmii(pf->phylink_config.supported_interfaces);
 
