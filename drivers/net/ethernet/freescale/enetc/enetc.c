@@ -3434,8 +3434,14 @@ EXPORT_SYMBOL_GPL(enetc_init_si_rings_params);
 int enetc_alloc_si_resources(struct enetc_ndev_priv *priv)
 {
 	struct enetc_si *si = priv->si;
+	int cls_num;
 
-	priv->cls_rules = kzalloc_objs(*priv->cls_rules, si->num_fs_entries);
+	if (is_enetc_rev1(si))
+		cls_num = si->num_fs_entries;
+	else
+		cls_num = si->max_ipf_entries;
+
+	priv->cls_rules = kzalloc_objs(*priv->cls_rules, cls_num);
 	if (!priv->cls_rules)
 		return -ENOMEM;
 

@@ -372,6 +372,7 @@ struct enetc_si {
 	int num_tx_rings;
 	int num_fs_entries;
 	int num_rss; /* number of RSS buckets */
+	int max_ipf_entries; /* Only valid for PSI */
 	unsigned short pad;
 	u16 revision;
 	int hw_features;
@@ -455,6 +456,7 @@ struct enetc_int_vector {
 
 struct enetc_cls_rule {
 	struct ethtool_rx_flow_spec fs;
+	u32 entry_id;
 	int used;
 };
 
