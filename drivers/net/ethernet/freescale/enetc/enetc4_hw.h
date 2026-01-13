@@ -87,6 +87,14 @@
 #define ENETC4_PSIVLANFMR		0x2c4
 #define  PSIVLANFMR_VS			BIT(0)
 
+/* Time gate scheduling table capability register */
+#define ENETC4_TGSTCAPR			0x18d4
+#define  TGSTCAPR_NUM_WORDS		GENMASK(15, 0)
+
+/* Time gate scheduling table memory operation register */
+#define ENETC4_TGSTMOR			0x18dc
+#define  TGSTMOR_NUM_WORDS		GENMASK(15, 0)
+
 /* Port Station interface a primary MAC address registers */
 #define ENETC4_PSIPMAR0(a)		((a) * 0x80 + 0x2000)
 #define ENETC4_PSIPMAR1(a)		((a) * 0x80 + 0x2004)
@@ -119,6 +127,9 @@
 
 /* Port capability register */
 #define ENETC4_PCAPR			0x4000
+#define  PCAPR_TGS			BIT(28)
+#define  PCAPR_CBS			BIT(29)
+#define  PCAPR_NUM_TC			GENMASK(15, 12)
 #define  PCAPR_LINK_TYPE		BIT(4)
 
 /* Port configuration register */
@@ -141,6 +152,10 @@
 /* Port status register */
 #define ENETC4_PSR			0x4104
 #define  PSR_RX_BUSY			BIT(1)
+
+/* Port time gate scheduling control register */
+#define ENETC4_PTGSCR			0x4110
+#define  PTGSCR_TGE			BIT(31)
 
 /* Port frame preemption configuration register */
 #define ENETC4_PFPCR			0x4134
