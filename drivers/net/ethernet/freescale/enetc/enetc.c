@@ -3656,6 +3656,10 @@ int enetc_hwtstamp_set(struct net_device *ndev,
 		    enetc_is_pseudo_mac(priv->si))
 			return -EOPNOTSUPP;
 
+		/* Pseudo MAC does not support one-step timestamp */
+		if (enetc_is_pseudo_mac(priv->si))
+			return -EOPNOTSUPP;
+
 		new_offloads &= ~ENETC_F_TX_TSTAMP_MASK;
 		new_offloads |= ENETC_F_TX_ONESTEP_SYNC_TSTAMP;
 		break;
@@ -4016,6 +4020,7 @@ static const struct enetc_drvdata enetc4_pf_data = {
 static const struct enetc_drvdata enetc4_ppm_data = {
 	.sysclk_freq = ENETC_CLK_333M,
 	.tx_csum = true,
+	.shared_tx_rings = true,
 	.max_frags = ENETC4_MAX_SKB_FRAGS,
 	.eth_ops = &enetc4_ppm_ethtool_ops,
 };
