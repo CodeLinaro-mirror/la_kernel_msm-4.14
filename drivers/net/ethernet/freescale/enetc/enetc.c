@@ -1583,10 +1583,17 @@ static struct sk_buff *enetc_build_skb(struct enetc_bdr *rx_ring,
 				       u32 bd_status, union enetc_rx_bd **rxbd,
 				       int *i, int *cleaned_cnt, int buffer_size)
 {
+	struct enetc_ndev_priv *priv = netdev_priv(rx_ring->ndev);
+	union enetc_rx_bd *rxbd_ext;
 	struct sk_buff *skb;
+	u8 frames;
 	u16 size;
 
 	size = le16_to_cpu((*rxbd)->r.buf_len);
+	if (rx_ring->ext_en && priv->active_offloads & ENETC_F_RSC) {
+		rxbd_ext = enetc_rxbd_ext(*rxbd);
+		frames = rxbd_ext->ext.rsc_framse;
+	}
 	skb = enetc_map_rx_buff_to_skb(rx_ring, *i, size);
 	if (!skb)
 		return NULL;
@@ -1613,6 +1620,10 @@ static struct sk_buff *enetc_build_skb(struct enetc_bdr *rx_ring,
 
 		enetc_rxbd_next(rx_ring, rxbd, i);
 	}
+
+	if (rx_ring->ext_en && priv->active_offloads & ENETC_F_RSC &&
+	    frames > 1)
+		skb_shinfo(skb)->gso_size = skb->data_len / frames;
 
 	skb_record_rx_queue(skb, rx_ring->index);
 	skb->protocol = eth_type_trans(skb, rx_ring->ndev);
@@ -2235,6 +2246,9 @@ void enetc_get_si_caps(struct enetc_si *si)
 
 	if (val & ENETC_SIPCAPR0_LSO)
 		si->hw_features |= ENETC_SI_F_LSO;
+
+	if (val & ENETC_SIPCAPR0_RSC)
+		si->hw_features |= ENETC_SI_F_RSC;
 }
 EXPORT_SYMBOL_GPL(enetc_get_si_caps);
 
@@ -2673,6 +2687,7 @@ static void enetc_setup_txbdr(struct enetc_hw *hw, struct enetc_bdr *tx_ring)
 static void enetc_setup_rxbdr(struct enetc_hw *hw, struct enetc_bdr *rx_ring,
 			      bool extended)
 {
+	struct enetc_ndev_priv *priv = netdev_priv(rx_ring->ndev);
 	int idx = rx_ring->index;
 	u32 rbmr = 0;
 
@@ -2720,6 +2735,12 @@ static void enetc_setup_rxbdr(struct enetc_hw *hw, struct enetc_bdr *rx_ring,
 	enetc_unlock_mdio();
 
 	enetc_rxbdr_wr(hw, idx, ENETC_RBMR, rbmr);
+
+	if (rx_ring->ext_en && priv->active_offloads & ENETC_F_RSC)
+		enetc_rxbdr_wr(hw, idx, ENETC_RBRSCR, ENETC_RBRSCR_EN |
+			       ENETC_RBRSCR_SIZE(ENETC_RS_MAX_BYTES));
+	else
+		enetc_rxbdr_wr(hw, idx, ENETC_RBRSCR, 0x0);
 }
 
 static void enetc_setup_bdrs(struct enetc_ndev_priv *priv, bool extended)
@@ -3044,7 +3065,8 @@ int enetc_open(struct net_device *ndev)
 	bool extended;
 	int err;
 
-	extended = !!(priv->active_offloads & ENETC_F_RX_TSTAMP);
+	extended = !!(priv->active_offloads & ENETC_F_RX_TSTAMP ||
+		      priv->active_offloads & ENETC_F_RSC);
 
 	err = clk_prepare_enable(priv->ref_clk);
 	if (err)
@@ -3219,6 +3241,35 @@ out:
 	return err;
 }
 
+static int enetc_set_rsc(struct net_device *ndev, bool en)
+{
+	struct enetc_ndev_priv *priv = netdev_priv(ndev);
+	bool extended = en;
+	int err;
+
+	/* TODO: Supporting both XDP and RSC at the same time. */
+	if (priv->xdp_prog) {
+		netdev_err(ndev, "XDP and RSC cannot be enabled at the same time\n");
+		return -EOPNOTSUPP;
+	}
+
+	if (en)
+		priv->active_offloads |= ENETC_F_RSC;
+	else
+		priv->active_offloads &= ~ENETC_F_RSC;
+
+	if (priv->active_offloads & ENETC_F_RX_TSTAMP && !en)
+		extended = true;
+	err = enetc_reconfigure(priv, extended, NULL, NULL);
+	if (err) {
+		netdev_err(ndev, " %s RSC enetc reconfigure failed(%d)\n",
+			   en ? "Enable" : "Disable", err);
+		return err;
+	}
+
+	return 0;
+}
+
 int enetc_suspend(struct net_device *ndev, bool wol)
 {
 	struct enetc_ndev_priv *priv = netdev_priv(ndev);
@@ -3254,7 +3305,8 @@ int enetc_resume(struct net_device *ndev, bool wol)
 	bool extended;
 	int err;
 
-	extended = !!(priv->active_offloads & ENETC_F_RX_TSTAMP);
+	extended = !!(priv->active_offloads & ENETC_F_RX_TSTAMP ||
+		      priv->active_offloads & ENETC_F_RSC);
 
 	if (!wol) {
 		err = clk_prepare_enable(priv->ref_clk);
@@ -3442,6 +3494,11 @@ static int enetc_setup_xdp_prog(struct net_device *ndev, struct bpf_prog *prog,
 	struct bpf_prog *old_prog;
 	int i;
 
+	if (priv->active_offloads & ENETC_F_RSC) {
+		netdev_err(ndev, "XDP and RSC cannot be enabled at the same time\n");
+		return -EOPNOTSUPP;
+	}
+
 	update_bdrs = !!priv->xdp_prog != !!prog;
 	if (!update_bdrs) {
 		old_prog = xchg(&priv->xdp_prog, prog);
@@ -3543,6 +3600,9 @@ void enetc_set_features(struct net_device *ndev, netdev_features_t features)
 {
 	netdev_features_t changed = ndev->features ^ features;
 
+	if (changed & NETIF_F_LRO)
+		enetc_set_rsc(ndev, !!(features & NETIF_F_LRO));
+
 	if (changed & NETIF_F_RXHASH)
 		enetc_set_rss(ndev, !!(features & NETIF_F_RXHASH));
 
@@ -3597,6 +3657,11 @@ int enetc_hwtstamp_set(struct net_device *ndev,
 
 	if ((new_offloads ^ priv->active_offloads) & ENETC_F_RX_TSTAMP) {
 		bool extended = !!(new_offloads & ENETC_F_RX_TSTAMP);
+
+		if (priv->active_offloads & ENETC_F_RSC) {
+			NL_SET_ERR_MSG_MOD(extack, "Not support if RSC is enabled\n");
+			return -EOPNOTSUPP;
+		}
 
 		err = enetc_reconfigure(priv, extended, NULL, NULL);
 		if (err)

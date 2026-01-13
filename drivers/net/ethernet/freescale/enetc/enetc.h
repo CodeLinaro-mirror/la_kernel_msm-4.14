@@ -85,6 +85,7 @@ struct enetc_lso_t {
 	min(SKB_WITH_OVERHEAD(ENETC_RXB_TRUESIZE) - ENETC_RXB_PAD, 0xffff)
 #define ENETC_RXB_DMA_SIZE_XDP	\
 	min(SKB_WITH_OVERHEAD(ENETC_RXB_TRUESIZE) - XDP_PACKET_HEADROOM, 0xffff)
+#define ENETC_RS_MAX_BYTES	(ENETC_RXB_DMA_SIZE * (MAX_SKB_FRAGS + 1))
 
 struct enetc_rx_swbd {
 	dma_addr_t dma;
@@ -278,6 +279,7 @@ enum enetc_errata {
 #define ENETC_SI_F_QBU  BIT(2)
 #define ENETC_SI_F_LSO	BIT(3)
 #define ENETC_SI_F_PPM	BIT(4) /* pseudo MAC */
+#define ENETC_SI_F_RSC	BIT(5)
 
 struct enetc_drvdata {
 	u32 pmac_offset; /* Only valid for PSI which supports 802.1Qbu */
@@ -403,6 +405,7 @@ static inline bool enetc_is_pseudo_mac(struct enetc_si *si)
 struct enetc_int_vector {
 	void __iomem *rbier;
 	void __iomem *tbier_base;
+	void __iomem *ricr0;
 	void __iomem *ricr1;
 	unsigned long tx_rings_map;
 	int count_tx_rings;
@@ -443,6 +446,7 @@ enum enetc_active_offloads {
 	ENETC_F_QBU			= BIT(11),
 	ENETC_F_TXCSUM			= BIT(12),
 	ENETC_F_LSO			= BIT(13),
+	ENETC_F_RSC			= BIT(14),
 };
 
 enum enetc_flags_bit {
