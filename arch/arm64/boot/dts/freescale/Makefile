@@ -1210,6 +1210,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-verdin-evk.dtb
 
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk.dtb
 
+imx952-evk-adv7535-dtbs := imx952-evk.dtb imx952-evk-adv7535.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-adv7535.dtb
+
 imx952-evk-it6263-lvds0-dtbs := imx952-evk.dtb imx952-evk-it6263-lvds0.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-it6263-lvds0.dtb
 
@@ -1230,6 +1233,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx952-evk-pcie-keym.dtb
 
 imx952-evk-pcie-ep-dtbs +=  imx952-evk.dtb imx-pcie0-ep.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-pcie-ep.dtb
+
+imx952-evk-rm692c9-dtbs := imx952-evk.dtb imx952-evk-rm692c9.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-rm692c9.dtb
 
 imx952-evk-root-dtbs := imx952-evk.dtb imx952-evk-root.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-root.dtb imx952-evk-inmate.dtb
