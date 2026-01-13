@@ -363,7 +363,7 @@ void enetc_mdiobus_destroy(struct enetc_pf *pf)
 }
 EXPORT_SYMBOL_GPL(enetc_mdiobus_destroy);
 
-int enetc_phylink_create(struct enetc_ndev_priv *priv, struct device_node *node,
+int enetc_phylink_create(struct enetc_ndev_priv *priv,
 			 const struct phylink_mac_ops *ops)
 {
 	struct enetc_pf *pf = enetc_si_priv(priv->si);
@@ -391,7 +391,7 @@ int enetc_phylink_create(struct enetc_ndev_priv *priv, struct device_node *node,
 		  pf->phylink_config.supported_interfaces);
 	phy_interface_set_rgmii(pf->phylink_config.supported_interfaces);
 
-	phylink = phylink_create(&pf->phylink_config, of_fwnode_handle(node),
+	phylink = phylink_create(&pf->phylink_config, enetc_fwnode(priv),
 				 pf->if_mode, ops);
 	if (IS_ERR(phylink)) {
 		err = PTR_ERR(phylink);
