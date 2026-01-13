@@ -1304,6 +1304,9 @@ dtb-$(CONFIG_ARCH_MXC) += imx952-evk-pcie-ep.dtb
 imx952-evk-rm692c9-dtbs := imx952-evk.dtb imx952-evk-rm692c9.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-rm692c9.dtb
 
+imx952-evk-dsi-serdes-dtbs := imx952-evk.dtb imx952-evk-dsi-serdes.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-dsi-serdes.dtb
+
 imx952-evk-root-dtbs := imx952-evk.dtb imx952-evk-root.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-root.dtb imx952-evk-inmate.dtb
 
