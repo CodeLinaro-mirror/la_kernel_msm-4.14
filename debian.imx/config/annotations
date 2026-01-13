@@ -432,6 +432,8 @@ CONFIG_ARM_GIC_V2M                              policy<{'arm64': 'y', 'armhf': '
 CONFIG_ARM_GLOBAL_TIMER                         policy<{'armhf': '-'}>
 CONFIG_ARM_GT_INITIAL_PRESCALER_VAL             policy<{'armhf': '-'}>
 CONFIG_ARM_HIGHBANK_CPUFREQ                     policy<{'armhf': '-'}>
+CONFIG_ARM_IMX8M_DDRC_DEVFREQ                   policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_ARM_IMX_BUS_DEVFREQ                      policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ARM_IMX_CPUFREQ_DT                       policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_ARM_L1_CACHE_SHIFT_7                     policy<{'armhf': '-'}>
 CONFIG_ARM_LPAE                                 policy<{'armhf': 'n'}>
