@@ -66,6 +66,15 @@ CONFIG_NOP_USB_XCEIV                            note<'fix a calltrace on i.MX pl
 CONFIG_NOUVEAU_LEGACY_CTX_SUPPORT               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_NOUVEAU_LEGACY_CTX_SUPPORT               note<'Selects CONFIG_DRM_LEGACY which is not wanted'>
 
+CONFIG_NRC7394                                  policy<{'arm64': 'm', 'armhf': 'm'}>
+CONFIG_NRC7394                                  note<'Newracom nrc7394 support'>
+
+CONFIG_NRC7394_DEBUG                            policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_NRC7394_DEBUG                            note<'Newracom nrc7394 debug support'>
+
+CONFIG_NRC7394_MCP                              policy<{'arm64': 'm', 'armhf': 'm'}>
+CONFIG_NRC7394_MCP                              note<'Newracom nrc7394 MCP support'>
+
 CONFIG_NUMA                                     policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_NUMA                                     note<'LP:1543165 LP:1557690'>
 
@@ -4778,6 +4787,7 @@ CONFIG_WLAN_VENDOR_INTEL                        policy<{'arm64': 'n', 'armhf': '
 CONFIG_WLAN_VENDOR_INTERSIL                     policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WLAN_VENDOR_MARVELL                      policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WLAN_VENDOR_MEDIATEK                     policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_WLAN_VENDOR_NEWRACOM                     policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_WLAN_VENDOR_QUANTENNA                    policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WLAN_VENDOR_RALINK                       policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_WLAN_VENDOR_RSI                          policy<{'arm64': 'n', 'armhf': 'n'}>
