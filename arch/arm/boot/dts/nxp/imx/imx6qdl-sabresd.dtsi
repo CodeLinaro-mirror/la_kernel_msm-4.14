@@ -253,14 +253,6 @@
 		compatible = "fsl,mxc_v4l2_output";
 		status = "okay";
 	};
-
-	mipi_dsi_reset: reset-controller {
-		compatible = "gpio-reset";
-		reset-gpios = <&gpio6 11 GPIO_ACTIVE_LOW>;
-		reset-delay-us = <50>;
-		#reset-cells = <0>;
-		status = "okay";
-	};
 };
 
 &ipu1_csi0_from_ipu1_csi0_mux {
@@ -306,7 +298,7 @@
         disp_id = <1>;
         lcd_panel = "TRULY-WVGA";
         disp-power-on-supply = <&reg_mipi_dsi_pwr_on>;
-	resets = <&mipi_dsi_reset>;
+	reset-gpios = <&gpio6 11 GPIO_ACTIVE_LOW>;
         status = "okay";
 };
 
