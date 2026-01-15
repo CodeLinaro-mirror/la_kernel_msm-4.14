@@ -495,13 +495,13 @@ static int mipi_dsi_disp_init(struct mxc_dispdrv_handle *disp,
 {
 	struct mipi_dsi_info *mipi_dsi = mxc_dispdrv_getdata(disp);
 	struct device *dev = &mipi_dsi->pdev->dev;
-	struct device_node *np = dev->of_node;
 	struct reset_control *reset = NULL;
 	int ret = 0;
 
-	reset = of_reset_control_get(np, NULL);
+	reset = devm_reset_control_get_optional_shared(dev, NULL);
 	if (IS_ERR(reset))
 		return PTR_ERR(reset);
+	mipi_dsi->reset = reset;
 
 	ret = mipi_dsi_lcd_init(mipi_dsi, setting);
 	if (ret) {
@@ -512,7 +512,6 @@ static int mipi_dsi_disp_init(struct mxc_dispdrv_handle *disp,
 	dev_info(dev, "MIPI DSI dispdrv inited!\n");
 
 out:
-	reset_control_put(reset);
 	return ret;
 }
 
@@ -585,11 +584,9 @@ static int mipi_dsi_enable(struct mxc_dispdrv_handle *disp,
 			return -EINVAL;
 
 		msleep(20);
-		ret = device_reset(&mipi_dsi->pdev->dev);
-		if (ret) {
-			dev_err(&mipi_dsi->pdev->dev, "failed to reset device: %d\n", ret);
-			return -EINVAL;
-		}
+		reset_control_assert(mipi_dsi->reset);
+		fsleep(1000);
+		reset_control_deassert(mipi_dsi->reset);
 		msleep(120);
 
 		/* the panel should be config under LP mode */
