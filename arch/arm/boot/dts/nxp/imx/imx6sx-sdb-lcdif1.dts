@@ -6,12 +6,6 @@
 
 #include "imx6sx-sdb.dts"
 
-/ {
-	sii902x_reset: sii902x-reset {
-		status = "okay";
-	};
-};
-
 &csi1 {
 	status = "disabled";
 };
