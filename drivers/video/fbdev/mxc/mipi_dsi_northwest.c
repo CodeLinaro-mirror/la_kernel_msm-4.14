@@ -296,14 +296,14 @@ static int mipi_dsi_disp_init(struct mxc_dispdrv_handle *disp,
 {
 	struct mipi_dsi_info *mipi_dsi = mxc_dispdrv_getdata(disp);
 	struct device *dev = &mipi_dsi->pdev->dev;
-	struct device_node *np = dev->of_node;
 	struct reset_control *reset = NULL;
 	int ret = 0;
 
 	if (!mipi_dsi->encoder) {
-		reset = of_reset_control_get(np, NULL);
+		reset = devm_reset_control_get_optional_shared(dev, NULL);
 		if (IS_ERR(reset))
 			return PTR_ERR(reset);
+		mipi_dsi->reset = reset;
 	}
 
 	ret = mipi_dsi_lcd_init(mipi_dsi, setting);
@@ -315,9 +315,6 @@ static int mipi_dsi_disp_init(struct mxc_dispdrv_handle *disp,
 	dev_info(dev, "MIPI DSI dispdv inited\n");
 
 out:
-	if (!mipi_dsi->encoder)
-		reset_control_put(reset);
-
 	return ret;
 }
 
@@ -892,12 +889,9 @@ static int mipi_dsi_enable(struct mxc_dispdrv_handle *disp,
 		msleep(20);
 
 		if (!mipi_dsi->encoder) {
-			ret = device_reset(&mipi_dsi->pdev->dev);
-			if (ret) {
-				dev_err(&mipi_dsi->pdev->dev,
-						"failed to reset device: %d\n", ret);
-				return -EINVAL;
-			}
+			reset_control_assert(mipi_dsi->reset);
+			fsleep(1000);
+			reset_control_deassert(mipi_dsi->reset);
 			msleep(60);
 
 			mipi_dsi_init_interrupt(mipi_dsi);

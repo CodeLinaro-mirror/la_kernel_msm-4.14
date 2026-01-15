@@ -129,6 +129,7 @@ struct mipi_dsi_info {
 	struct backlight_device		*bl;
 	/* callback for lcd panel operation */
 	struct mipi_dsi_lcd_callback	*lcd_callback;
+	struct reset_control		*reset;
 
 	int (*mipi_dsi_pkt_read)(struct mipi_dsi_info *mipi,
 			u8 data_type, u32 *buf, int len);
