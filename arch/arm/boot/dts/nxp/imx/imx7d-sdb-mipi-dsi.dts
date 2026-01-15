@@ -8,15 +8,6 @@
 
 #include "imx7d-sdb.dts"
 
-/ {
-	mipi_dsi_reset: mipi-dsi-reset {
-		compatible = "gpio-reset";
-		reset-gpios = <&gpio6 15 GPIO_ACTIVE_LOW>;
-		reset-delay-us = <1000>;
-		#reset-cells = <0>;
-	};
-};
-
 &lcdif {
 	disp-dev = "mipi_dsi_samsung";
 	disp-videomode = "TRUULY-WVGA-SYNC-LOW";
@@ -26,6 +17,6 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_mipi_dsi_reset>;
 	lcd_panel = "TRULY-WVGA-TFT3P5581E";
-	resets = <&mipi_dsi_reset>;
+	reset-gpios = <&gpio6 15 GPIO_ACTIVE_LOW>;
 	status = "okay";
 };
