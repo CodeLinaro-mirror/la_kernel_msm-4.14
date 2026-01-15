@@ -531,7 +531,7 @@ def self_config_check():
         return 'Fail'
     else:
         print(result)
-        best_channel = re.split('[:,\s,\t,\n]+', result)[-3]
+        best_channel = re.split(r'[:,\s,\t,\n]+', result)[-3]
         os.system("sudo cp " + conf_path + conf_file + " " + conf_temp)
         os.system("sed -i '/channel=/d' " + conf_temp)
         os.system("sed -i '/hw_mode=/d' " + conf_temp)
@@ -972,8 +972,9 @@ def load_mcp_module(skip_if_relay_sta=False):
     print("[*] Loading MCP frontend module (nrc-mcp.ko)")
     print("=" * 70)
 
-    # MCP will use WLAN's fw_name and bd_name (already loaded by WLAN)
+    # MCP module parameters
     mcp_param = " mcp_priority=" + str(mcp_priority)
+    mcp_param += " bd_name=nrc7394_bd.dat fw_name=uni_s1g.bin"
     mcp_insmod_cmd = "sudo insmod /home/pi/nrc_pkg/sw/driver/nrc-mcp.ko" + mcp_param
     print(mcp_insmod_cmd)
 

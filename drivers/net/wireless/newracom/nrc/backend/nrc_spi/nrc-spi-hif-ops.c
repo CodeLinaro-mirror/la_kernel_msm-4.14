@@ -372,12 +372,12 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 	if ((hif->type == HIF_TYPE_FRAME) &&
 	    ((hif->subtype == HIF_FRAME_SUB_DATA_BE) ||
 	     (hif->subtype == HIF_FRAME_SUB_MGMT))) {
-		if (hdev) {
+		if (hdev && fh->flags.tx.ac < CREDIT_QUEUE_MAX) {
 			unsigned long flags;
 			CREDIT_LOCK(hdev, flags);
 			hdev->credit.front[fh->flags.tx.ac] += nr_slot;
 			CREDIT_UNLOCK(hdev, flags);
-		} else {
+		} else if (!hdev) {
 			ERR_SPI(" core references not set");
 		}
 	}
@@ -435,12 +435,14 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 
 	SLOT_SYNC_UNLOCK();
 
-	DBG_HIF_TX("xmit: ac=%d slot=%d(%d/%d) fwpend=%d/%d qlen=%d",
-		   fh->flags.tx.ac, nr_slot, hdev->slot[TX_SLOT].head,
-		   hdev->slot[TX_SLOT].tail,
-		   hdev->credit.front[fh->flags.tx.ac],
-		   hdev->credit.rear[fh->flags.tx.ac],
-		   skb_queue_len(&hdev->queue[0]));
+	if (fh->flags.tx.ac < CREDIT_QUEUE_MAX) {
+		DBG_HIF_TX("xmit: ac=%d slot=%d(%d/%d) fwpend=%d/%d qlen=%d",
+			   fh->flags.tx.ac, nr_slot, hdev->slot[TX_SLOT].head,
+			   hdev->slot[TX_SLOT].tail,
+			   hdev->credit.front[fh->flags.tx.ac],
+			   hdev->credit.rear[fh->flags.tx.ac],
+			   skb_queue_len(&hdev->queue[0]));
+	}
 	trace_nrc_hif_tx_slot(priv, TX_SLOT, "after tx");
 
 	return HIF_TX_COMPLETE;

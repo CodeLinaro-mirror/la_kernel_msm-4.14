@@ -30,7 +30,7 @@ struct BDF {
 	uint16_t reserved[4];
 	uint16_t checksum_data;
 
-	uint8_t data[0];
+	uint8_t data[];
 };
 
 struct bd_ch_table {

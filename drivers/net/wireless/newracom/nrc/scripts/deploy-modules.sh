@@ -2,6 +2,12 @@
 
 # NRC Modular Driver Deployment Script
 # Deploys built modules to Raspberry Pi
+# Usage: ./deploy-modules.sh [method] [ip] [user] [password] [dest_path]
+#   method: ssh|adb (default: ssh)
+#   ip: target IP address (default: 192.168.0.6, or "custom" for manual input)
+#   user: target username (default: pi, or "custom" for manual input)
+#   password: target password (default: raspberry, or "custom" for manual input)
+#   dest_path: destination path on target (default: /home/pi/nrc_pkg/sw/driver, or "custom" for manual input)
 
 set -e  # Exit on any error
 
@@ -11,7 +17,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Default configuration
-DEFAULT_PI_HOST="pi@192.168.0.6"
+DEFAULT_PI_IP="192.168.0.6"
+DEFAULT_PI_USER="pi"
 DEFAULT_PI_PASSWORD="raspberry"
 PI_DEST_DIR="/home/pi/nrc_pkg/sw/driver"
 ANDROID_DEST_DIR="/data/nrc_pkg/sw/driver"
@@ -29,29 +36,27 @@ show_help() {
     echo -e "${BLUE}=== NRC Modular Driver Deploy Script ===${NC}"
     echo ""
     echo -e "${YELLOW}Usage:${NC}"
-    echo "  $0 [SSH_URI] [SSH_PASSWORD]              # Deploy via SSH"
+    echo "  $0 [method] [ip] [user] [password]"
     echo "  $0 adb [DEST_PATH]                       # Deploy via ADB to Android device"
     echo "  $0 help"
     echo ""
-    echo -e "${YELLOW}SSH Mode Arguments:${NC}"
-    echo "  SSH_URI      SSH connection URI (default: $DEFAULT_PI_HOST)"
-    echo "  SSH_PASSWORD SSH password (default: $DEFAULT_PI_PASSWORD)"
-    echo ""
-    echo -e "${YELLOW}ADB Mode Arguments:${NC}"
-    echo "  adb          Use ADB to deploy to Android device"
-    echo "  DEST_PATH    Destination path on Android (default: $ANDROID_DEST_DIR)"
+    echo -e "${YELLOW}Arguments:${NC}"
+    echo "  method     Deploy method: ssh or adb (default: ssh)"
+    echo "  ip         Target IP address (default: $DEFAULT_PI_IP, use 'custom' for prompt)"
+    echo "  user       Target username (default: $DEFAULT_PI_USER, use 'custom' for prompt)"
+    echo "  password   Target password (default: $DEFAULT_PI_PASSWORD, use 'custom' for prompt)"
     echo ""
     echo -e "${YELLOW}Examples:${NC}"
-    echo "  $0                                       # SSH: Use default values"
-    echo "  $0 pi@192.168.1.100                     # SSH: Custom URI, default password"
-    echo "  $0 pi@192.168.1.100 mypassword          # SSH: Custom URI and password"
+    echo "  $0                                       # SSH: Use all defaults"
+    echo "  $0 ssh 192.168.0.4 pi raspberry         # SSH: Explicit values"
+    echo "  $0 ssh custom custom custom             # SSH: Prompt for all values"
     echo "  $0 adb                                   # ADB: Deploy to $ANDROID_DEST_DIR"
-    echo "  $0 adb /data/vendor/nrc                 # ADB: Deploy to custom path"
     echo "  $0 help                                  # Show this help"
     echo ""
     echo -e "${YELLOW}Default Configuration:${NC}"
-    echo "  SSH URI:     $DEFAULT_PI_HOST"
-    echo "  SSH Password: $DEFAULT_PI_PASSWORD"
+    echo "  IP Address:  $DEFAULT_PI_IP"
+    echo "  Username:    $DEFAULT_PI_USER"
+    echo "  Password:    $DEFAULT_PI_PASSWORD"
     echo "  SSH Destination: $PI_DEST_DIR"
     echo "  ADB Destination: $ANDROID_DEST_DIR"
     echo ""
@@ -63,10 +68,25 @@ if [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     exit 0
 fi
 
-# Parse command line arguments
-if [ "$1" = "adb" ]; then
-    DEPLOY_MODE="adb"
-    DEST_DIR="${2:-$ANDROID_DEST_DIR}"
+# Parse command line arguments (unified format)
+# $1: method (ssh/adb)
+# For SSH: $2: ip, $3: user, $4: password
+# For ADB: $2: destination path
+DEPLOY_MODE="${1:-ssh}"
+
+if [ "$DEPLOY_MODE" = "adb" ]; then
+    # For ADB: $2 is destination path
+    ADB_DEST="${2:-$ANDROID_DEST_DIR}"
+    # Handle "-" as skip/default
+    if [ "$ADB_DEST" = "-" ] || [ -z "$ADB_DEST" ]; then
+        ADB_DEST="$ANDROID_DEST_DIR"
+    fi
+    # Handle "custom" for manual input
+    if [ "$ADB_DEST" = "custom" ]; then
+        read -p "Enter ADB destination path: " ADB_DEST
+        ADB_DEST="${ADB_DEST:-$ANDROID_DEST_DIR}"
+    fi
+    DEST_DIR="$ADB_DEST"
 
     # Check if adb is installed
     if ! command -v adb &> /dev/null; then
@@ -97,9 +117,56 @@ if [ "$1" = "adb" ]; then
     fi
 else
     DEPLOY_MODE="ssh"
-    PI_HOST="${1:-$DEFAULT_PI_HOST}"
-    PI_PASSWORD="${2:-$DEFAULT_PI_PASSWORD}"
-    DEST_DIR="$PI_DEST_DIR"
+    
+    # Parse IP address
+    PI_IP="${2:-$DEFAULT_PI_IP}"
+    # Handle "-" as skip/default
+    if [ "$PI_IP" = "-" ]; then
+        PI_IP="$DEFAULT_PI_IP"
+    fi
+    if [ "$PI_IP" = "custom" ]; then
+        read -p "Enter target IP address: " PI_IP
+        PI_IP="${PI_IP:-$DEFAULT_PI_IP}"
+    fi
+    
+    # Parse username
+    PI_USER="${3:-$DEFAULT_PI_USER}"
+    # Handle "-" as skip/default
+    if [ "$PI_USER" = "-" ]; then
+        PI_USER="$DEFAULT_PI_USER"
+    fi
+    if [ "$PI_USER" = "custom" ]; then
+        read -p "Enter target username: " PI_USER
+        PI_USER="${PI_USER:-$DEFAULT_PI_USER}"
+    fi
+    
+    # Parse password
+    PI_PASSWORD="${4:-$DEFAULT_PI_PASSWORD}"
+    # Handle "-" as skip/default
+    if [ "$PI_PASSWORD" = "-" ]; then
+        PI_PASSWORD="$DEFAULT_PI_PASSWORD"
+    fi
+    if [ "$PI_PASSWORD" = "custom" ]; then
+        read -sp "Enter target password: " PI_PASSWORD
+        echo ""
+        PI_PASSWORD="${PI_PASSWORD:-$DEFAULT_PI_PASSWORD}"
+    fi
+    
+    # Construct PI_HOST from IP and user
+    PI_HOST="${PI_USER}@${PI_IP}"
+    
+    # Parse destination path
+    SSH_DEST="${5:-$PI_DEST_DIR}"
+    # Handle "-" as skip/default
+    if [ "$SSH_DEST" = "-" ] || [ -z "$SSH_DEST" ]; then
+        SSH_DEST="$PI_DEST_DIR"
+    fi
+    # Handle "custom" for manual input
+    if [ "$SSH_DEST" = "custom" ]; then
+        read -p "Enter destination path: " SSH_DEST
+        SSH_DEST="${SSH_DEST:-$PI_DEST_DIR}"
+    fi
+    DEST_DIR="$SSH_DEST"
 
     # Check if sshpass is installed
     if ! command -v sshpass &> /dev/null; then
@@ -163,13 +230,6 @@ adb_shell() {
 
     adb shell "$command"
 }
-
-# Check if sshpass is installed
-if [ "$DEPLOY_MODE" = "ssh" ] && ! command -v sshpass &> /dev/null; then
-    echo -e "${RED}Error: sshpass is not installed${NC}"
-    echo "Please install sshpass: sudo apt-get install sshpass"
-    exit 1
-fi
 
 # Step 1: Check if modules exist
 echo -e "${YELLOW}Step 1: Checking built modules...${NC}"

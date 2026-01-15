@@ -2,13 +2,39 @@
 # Remote Target Build Script using rsync
 # Sync local source to target device and build kernel modules
 # Usage: ./remote-build.sh [target_ip] [target_user] [target_password]
+#   target_ip: IP address (default: 192.168.0.4, "custom" for manual input)
+#   target_user: username (default: pi, "custom" for manual input)
+#   target_password: password (default: raspberry, "custom" for manual input)
 
 set -e
 
 # Default configuration
-TARGET_IP="${1:-192.168.0.4}"
-TARGET_USER="${2:-pi}"
-TARGET_PASS="${3:-raspberry}"
+DEFAULT_IP="192.168.0.4"
+DEFAULT_USER="pi"
+DEFAULT_PASS="raspberry"
+
+# Parse IP address
+TARGET_IP="${1:-$DEFAULT_IP}"
+if [ "$TARGET_IP" = "custom" ]; then
+    read -p "Enter target IP address: " TARGET_IP
+    TARGET_IP="${TARGET_IP:-$DEFAULT_IP}"
+fi
+
+# Parse username
+TARGET_USER="${2:-$DEFAULT_USER}"
+if [ "$TARGET_USER" = "custom" ]; then
+    read -p "Enter target username: " TARGET_USER
+    TARGET_USER="${TARGET_USER:-$DEFAULT_USER}"
+fi
+
+# Parse password
+TARGET_PASS="${3:-$DEFAULT_PASS}"
+if [ "$TARGET_PASS" = "custom" ]; then
+    read -sp "Enter target password: " TARGET_PASS
+    echo ""
+    TARGET_PASS="${TARGET_PASS:-$DEFAULT_PASS}"
+fi
+
 LOCAL_SOURCE="$(cd "$(dirname "$0")/.." && pwd)"
 REMOTE_SOURCE="/tmp/nrc_modular"
 

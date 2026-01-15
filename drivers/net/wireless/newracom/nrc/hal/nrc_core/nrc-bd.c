@@ -479,7 +479,7 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 						   (bd->data[5 + len + 4 * i]
 						    << 8));
 
-				for (j = 0; j < bd_sel->length - 2; j++) {
+				for (j = 0; j < bd_sel->length - 2 && j < WIM_MAX_BD_DATA_LEN; j++) {
 					bd_sel->value[j] =
 						bd->data[8 + len + 4 * i + j];
 				}

@@ -953,6 +953,10 @@ static void fw_on_ready(struct sk_buff *skb)
 	hdev->fw.info.buffer_size = ready->v.buffer_size;
 	hdev->fw.info.hw_version = ready->v.hw_version;
 
+	INFO("FW hw_version=%d, version=0x%08X, buffer_size=%d",
+	     hdev->fw.info.hw_version, hdev->fw.info.version,
+	     hdev->fw.info.buffer_size);
+
 	if (hdev->chip_id == 0x7394) {
 		hdev->fw.info.chip_rev_num =
 			(ready->v.chip_rev_num > 0) ? ready->v.chip_rev_num : 0;
