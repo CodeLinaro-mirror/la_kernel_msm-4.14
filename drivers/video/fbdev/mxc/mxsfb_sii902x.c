@@ -436,6 +436,7 @@ static int sii902x_probe(struct i2c_client *client)
 	struct fb_info edid_fbi;
 	struct fb_info *init_fbi = sii902x.fbi;
 	struct lcd_device *lcd;
+	struct reset_control *reset;
 
 	memset(&sii902x, 0, sizeof(sii902x));
 
@@ -444,11 +445,12 @@ static int sii902x_probe(struct i2c_client *client)
 	dev_dbg(&sii902x.client->dev, "%s\n", __func__);;
 
 	/* Reset sii902x */
-	ret = device_reset(&sii902x.client->dev);
-	if (ret)
-		dev_warn(&sii902x.client->dev, "No reset pin found\n");
-	if (ret == -EPROBE_DEFER)
-		return ret;
+	reset = devm_reset_control_get_optional_shared(&sii902x.client->dev, NULL);
+	if (IS_ERR(reset))
+		return PTR_ERR(reset);
+	reset_control_assert(reset);
+	msleep(100);
+	reset_control_deassert(reset);
 
 	/* Set 902x in hardware TPI mode on and jump out of D3 state */
 	if (i2c_smbus_write_byte_data(sii902x.client, 0xc7, 0x00) < 0) {
