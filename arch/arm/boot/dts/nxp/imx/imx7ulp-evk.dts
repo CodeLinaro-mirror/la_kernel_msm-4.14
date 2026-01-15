@@ -68,13 +68,6 @@
 		status = "okay";
 	};
 
-	mipi_dsi_reset: mipi-dsi-reset {
-		compatible = "gpio-reset";
-		reset-gpios = <&gpio_ptc 19 GPIO_ACTIVE_LOW>;
-		reset-delay-us = <1000>;
-		#reset-cells = <0>;
-	};
-
 	pf1550-rpmsg {
 		compatible = "fsl,pf1550-rpmsg";
 		sw1_reg: SW1 {
@@ -392,7 +385,7 @@
 	pinctrl-0 = <&pinctrl_mipi_dsi_reset>;
 	pinctrl-1 = <&pinctrl_mipi_dsi_reset>;
 	lcd_panel = "TRULY-WVGA-TFT3P5581E";
-	resets = <&mipi_dsi_reset>;
+	reset-gpios = <&gpio_ptc 19 GPIO_ACTIVE_LOW>;
 	status = "okay";
 
 	port {

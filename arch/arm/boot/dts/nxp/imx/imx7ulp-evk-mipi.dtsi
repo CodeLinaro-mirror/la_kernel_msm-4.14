@@ -17,7 +17,7 @@
 	pinctrl-0 = <&pinctrl_mipi_dsi_reset>;
 	pinctrl-1 = <&pinctrl_mipi_dsi_reset>;
 	lcd_panel = "TRULY-WVGA-TFT3P5581E";
-	resets = <&mipi_dsi_reset>;
+	reset-gpios = <&gpio_ptc 19 GPIO_ACTIVE_LOW>;
 
 	/delete-node/ port;
 };
