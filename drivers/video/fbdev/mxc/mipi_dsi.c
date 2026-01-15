@@ -789,6 +789,7 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 					&pdev->dev);
 	struct mipi_dsi_info *mipi_dsi;
 	struct resource *res;
+	struct reset_control *reset = NULL;
 	u32 dev_id, disp_id;
 	const char *lcd_panel;
 	int mux;
@@ -876,12 +877,12 @@ static int mipi_dsi_probe(struct platform_device *pdev)
 		mipi_dsi->disp_power_on = NULL;
 	}
 
-	ret = device_reset(&pdev->dev);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to reset: %d\n", ret);
+	reset = devm_reset_control_get_optional_shared(&pdev->dev, NULL);
+	if (IS_ERR(reset))
 		goto dev_reset_fail;
-	}
+	reset_control_assert(reset);
+	fsleep(50);
+	reset_control_deassert(reset);
 
 	if (of_id)
 		mipi_dsi->bus_mux = of_id->data;
