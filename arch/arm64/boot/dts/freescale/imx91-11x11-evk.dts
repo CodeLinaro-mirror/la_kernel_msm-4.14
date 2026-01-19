@@ -856,8 +856,8 @@
 
 	pinctrl_spdif: spdifgrp {
 		fsl,pins = <
-			MX91_PAD_GPIO_IO22__SPDIF_IN			0x31e
-			MX91_PAD_GPIO_IO23__SPDIF_OUT			0x31e
+			MX91_PAD_GPIO_IO22__SPDIF_IN			0x39e
+			MX91_PAD_GPIO_IO23__SPDIF_OUT			0x39e
 		>;
 	};
 
