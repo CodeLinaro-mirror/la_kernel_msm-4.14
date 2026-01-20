@@ -1362,8 +1362,18 @@ dtb-$(CONFIG_ARCH_MXC) += imx95-19x19-frdm-pro-waveshare-7inch-c-panel.dtb
 imx952-evk-ox03c10-csi0-dtbs := imx952-evk.dtb imx952-evk-ox03c10-csi0.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-ox03c10-csi0.dtb
 
+imx952-evk-it6263-lvds0-ox03c10-csi0-dtbs := imx952-evk.dtb \
+					     imx952-evk-it6263-lvds0.dtbo \
+					     imx952-evk-ox03c10-csi0.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-it6263-lvds0-ox03c10-csi0.dtb
+
 imx952-evk-os08a20-csi0-4lanes-dtbs := imx952-evk.dtb imx952-evk-os08a20-csi0-4lanes.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-os08a20-csi0-4lanes.dtb
+
+imx952-evk-it6263-lvds0-os08a20-csi0-4lanes-dtbs := imx952-evk.dtb \
+						    imx952-evk-it6263-lvds0.dtbo \
+						    imx952-evk-os08a20-csi0-4lanes.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-it6263-lvds0-os08a20-csi0-4lanes.dtb
 
 imx952-evk-os08a20-csi0-2lanes-dtbs := imx952-evk.dtb imx952-evk-os08a20-csi0-2lanes.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-os08a20-csi0-2lanes.dtb
@@ -1389,6 +1399,11 @@ dtb-$(CONFIG_ARCH_MXC) += imx952-evk-it6263-lvds0-os08a20-dual.dtb
 
 imx952-evk-ox05b1s-csi0-4lanes-dtbs := imx952-evk.dtb imx952-evk-ox05b1s-csi0-4lanes.dtbo
 dtb-$(CONFIG_ARCH_MXC) += imx952-evk-ox05b1s-csi0-4lanes.dtb
+
+imx952-evk-it6263-lvds0-ox05b1s-csi0-4lanes-dtbs := imx952-evk.dtb \
+						    imx952-evk-it6263-lvds0.dtbo \
+						    imx952-evk-ox05b1s-csi0-4lanes.dtbo
+dtb-$(CONFIG_ARCH_MXC) += imx952-evk-it6263-lvds0-ox05b1s-csi0-4lanes.dtb
 
 imx8mm-kontron-dl-dtbs			:= imx8mm-kontron-bl.dtb imx8mm-kontron-dl.dtbo
 imx8mm-kontron-bl-lte-dtbs		:= imx8mm-kontron-bl.dtb imx8mm-kontron-bl-lte.dtbo
