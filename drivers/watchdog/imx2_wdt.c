@@ -264,7 +264,7 @@ static void imx2_wdt_action(void *data)
 	clk_disable_unprepare(data);
 }
 
-static int __init imx2_wdt_probe(struct platform_device *pdev)
+static int imx2_wdt_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct imx2_wdt_device *wdev;
@@ -473,6 +473,7 @@ static const struct of_device_id imx2_wdt_dt_ids[] = {
 MODULE_DEVICE_TABLE(of, imx2_wdt_dt_ids);
 
 static struct platform_driver imx2_wdt_driver = {
+	.probe		= imx2_wdt_probe,
 	.shutdown	= imx2_wdt_shutdown,
 	.driver		= {
 		.name	= DRIVER_NAME,
@@ -481,7 +482,7 @@ static struct platform_driver imx2_wdt_driver = {
 	},
 };
 
-module_platform_driver_probe(imx2_wdt_driver, imx2_wdt_probe);
+module_platform_driver(imx2_wdt_driver);
 
 MODULE_AUTHOR("Wolfram Sang");
 MODULE_DESCRIPTION("Watchdog driver for IMX2 and later");
