@@ -1168,7 +1168,7 @@ F: Documentation/devicetree/bindings/usb/typec-switch-gpio.txt
 F: drivers/usb/typec/
 
 vfio
-M: Diana Craciun <diana.craciun@nxp.com>
+M: Ioana Ciornei <ioana.ciornei@nxp.com>
 M: Peng Fan <peng.fan@nxp.com>
 M: Catalin Dan Udma <catalin-dan.udma@nxp.com>
 F: drivers/vfio/
