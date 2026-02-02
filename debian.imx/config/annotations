@@ -1,0 +1,846 @@
+# Menu: HEADER
+# FORMAT: 4
+# ARCH: arm64
+# FLAVOUR: arm64-imx
+
+include "../../debian.master/config/annotations"
+
+CONFIG_ACCESSIBILITY                            policy<{'arm64': 'y'}>
+CONFIG_ACCESSIBILITY                            note<'TODO: update note'>
+
+CONFIG_ARCH_MHP_MEMMAP_ON_MEMORY_ENABLE         policy<{'arm64': 'y'}>
+CONFIG_ARCH_MHP_MEMMAP_ON_MEMORY_ENABLE         note<'TODO: update note'>
+
+CONFIG_ARCH_MMAP_RND_BITS                       policy<{'arm64': '33'}>
+CONFIG_ARCH_MMAP_RND_BITS                       note<'TODO: update note'>
+
+CONFIG_ARCH_MMAP_RND_COMPAT_BITS                policy<{'arm64': '16'}>
+CONFIG_ARCH_MMAP_RND_COMPAT_BITS                note<'TODO: update note'>
+
+CONFIG_ARCH_ROCKCHIP                            policy<{'arm64': 'y'}>
+CONFIG_ARCH_ROCKCHIP                            note<'TODO: update note'>
+
+CONFIG_ARM64_ERRATUM_843419                     policy<{'arm64': 'y'}>
+CONFIG_ARM64_ERRATUM_843419                     note<'TODO: update note'>
+
+CONFIG_ARM64_ERRATUM_858921                     policy<{'arm64': 'y'}>
+CONFIG_ARM64_ERRATUM_858921                     note<'TODO: update note'>
+
+CONFIG_ARM64_USE_LSE_ATOMICS                    policy<{'arm64': '-'}>
+CONFIG_ARM64_USE_LSE_ATOMICS                    note<'TODO: update note'>
+
+CONFIG_ARMV8_DEPRECATED                         policy<{'arm64': 'y'}>
+CONFIG_ARMV8_DEPRECATED                         note<'TODO: update note'>
+
+CONFIG_ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT       policy<{'arm64': 'n'}>
+CONFIG_ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT       note<'TODO: update note'>
+
+CONFIG_ASYMMETRIC_KEY_TYPE                      policy<{'arm64': 'y'}>
+CONFIG_ASYMMETRIC_KEY_TYPE                      note<'TODO: update note'>
+
+CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE            policy<{'arm64': 'y'}>
+CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE            note<'TODO: update note'>
+
+CONFIG_ATA_PIIX                                 policy<{'arm64': 'm'}>
+CONFIG_ATA_PIIX                                 note<'TODO: update note'>
+
+CONFIG_BINFMT_SCRIPT                            policy<{'arm64': 'y'}>
+CONFIG_BINFMT_SCRIPT                            note<'TODO: update note'>
+
+CONFIG_BLK_DEV_DM                               policy<{'arm64': 'y'}>
+CONFIG_BLK_DEV_DM                               note<'TODO: update note'>
+
+CONFIG_BLK_DEV_NVME                             policy<{'arm64': 'm'}>
+CONFIG_BLK_DEV_NVME                             note<'TODO: update note'>
+
+CONFIG_BLK_DEV_RAM                              policy<{'arm64': 'm'}>
+CONFIG_BLK_DEV_RAM                              note<'TODO: update note'>
+
+CONFIG_BLK_DEV_RAM_SIZE                         policy<{'arm64': '65536'}>
+CONFIG_BLK_DEV_RAM_SIZE                         note<'TODO: update note'>
+
+CONFIG_BLK_DEV_SR                               policy<{'arm64': 'y'}>
+CONFIG_BLK_DEV_SR                               note<'TODO: update note'>
+
+CONFIG_BLK_DEV_THROTTLING                       policy<{'arm64': 'y'}>
+CONFIG_BLK_DEV_THROTTLING                       note<'TODO: update note'>
+
+CONFIG_BPF_UNPRIV_DEFAULT_OFF                   policy<{'arm64': 'y'}>
+CONFIG_BPF_UNPRIV_DEFAULT_OFF                   note<'TODO: update note'>
+
+CONFIG_CHR_DEV_SG                               policy<{'arm64': 'y'}>
+CONFIG_CHR_DEV_SG                               note<'TODO: update note'>
+
+CONFIG_CONSOLE_LOGLEVEL_QUIET                   policy<{'arm64': '3'}>
+CONFIG_CONSOLE_LOGLEVEL_QUIET                   note<'TODO: update note'>
+
+CONFIG_CP15_BARRIER_EMULATION                   policy<{'arm64': 'y'}>
+CONFIG_CP15_BARRIER_EMULATION                   note<'TODO: update note'>
+
+CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE         policy<{'arm64': 'n'}>
+CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE         note<'TODO: update note'>
+
+CONFIG_CPU_FREQ_GOV_ONDEMAND                    policy<{'arm64': 'y'}>
+CONFIG_CPU_FREQ_GOV_ONDEMAND                    note<'TODO: update note'>
+
+CONFIG_CPU_FREQ_GOV_PERFORMANCE                 policy<{'arm64': 'y'}>
+CONFIG_CPU_FREQ_GOV_PERFORMANCE                 note<'TODO: update note'>
+
+CONFIG_CRASH_DUMP                               policy<{'arm64': 'y'}>
+CONFIG_CRASH_DUMP                               note<'TODO: update note'>
+
+CONFIG_CRYPTO_LIB_SHA512_ARCH                   policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_LIB_SHA512_ARCH                   note<'TODO: update note'>
+
+CONFIG_CRYPTO_SHA512                            policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_SHA512                            note<'TODO: update note'>
+
+CONFIG_CRYPTO_USER_API_ENABLE_OBSOLETE          policy<{'arm64': 'n'}>
+CONFIG_CRYPTO_USER_API_ENABLE_OBSOLETE          note<'TODO: update note'>
+
+CONFIG_DEBUG_INFO                               policy<{'arm64': 'y'}>
+CONFIG_DEBUG_INFO                               note<'TODO: update note'>
+
+CONFIG_DEBUG_INFO_BTF                           policy<{'arm64': 'y'}>
+CONFIG_DEBUG_INFO_BTF                           note<'TODO: update note'>
+
+CONFIG_DEBUG_INFO_SPLIT                         policy<{'arm64': 'n'}>
+CONFIG_DEBUG_INFO_SPLIT                         note<'TODO: update note'>
+
+CONFIG_DEFAULT_MMAP_MIN_ADDR                    policy<{'arm64': '32768'}>
+CONFIG_DEFAULT_MMAP_MIN_ADDR                    note<'TODO: update note'>
+
+CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING policy<{'arm64': 'y'}>
+CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING note<'TODO: update note'>
+
+CONFIG_DRM_AMDGPU_CIK                           policy<{'arm64': 'y'}>
+CONFIG_DRM_AMDGPU_CIK                           note<'TODO: update note'>
+
+CONFIG_DRM_MGAG200                              policy<{'arm64': 'm'}>
+CONFIG_DRM_MGAG200                              note<'TODO: update note'>
+
+CONFIG_DRM_SIMPLEDRM                            policy<{'arm64': 'y'}>
+CONFIG_DRM_SIMPLEDRM                            note<'TODO: update note'>
+
+CONFIG_DVB_DUMMY_FE                             policy<{'arm64': 'm'}>
+CONFIG_DVB_DUMMY_FE                             note<'TODO: update note'>
+
+CONFIG_ECRYPT_FS                                policy<{'arm64': 'y'}>
+CONFIG_ECRYPT_FS                                note<'TODO: update note'>
+
+CONFIG_EFI_ZBOOT                                policy<{'arm64': 'y'}>
+CONFIG_EFI_ZBOOT                                note<'TODO: update note'>
+
+CONFIG_EVM                                      policy<{'arm64': 'y'}>
+CONFIG_EVM                                      note<'TODO: update note'>
+
+CONFIG_EVM_ATTR_FSUUID                          policy<{'arm64': 'y'}>
+CONFIG_EVM_ATTR_FSUUID                          note<'TODO: update note'>
+
+CONFIG_EVM_LOAD_X509                            policy<{'arm64': 'n'}>
+CONFIG_EVM_LOAD_X509                            note<'TODO: update note'>
+
+CONFIG_EXT2_FS                                  policy<{'arm64': 'n'}>
+CONFIG_EXT2_FS                                  note<'TODO: update note'>
+
+CONFIG_FB_EFI                                   policy<{'arm64': 'n'}>
+CONFIG_FB_EFI                                   note<'TODO: update note'>
+
+CONFIG_FHANDLE                                  policy<{'arm64': 'y'}>
+CONFIG_FHANDLE                                  note<'TODO: update note'>
+
+CONFIG_FUSE_FS                                  policy<{'arm64': 'y'}>
+CONFIG_FUSE_FS                                  note<'TODO: update note'>
+
+CONFIG_FW_LOADER_USER_HELPER_FALLBACK           policy<{'arm64': 'n'}>
+CONFIG_FW_LOADER_USER_HELPER_FALLBACK           note<'TODO: update note'>
+
+CONFIG_GPIO_CDEV_V1                             policy<{'arm64': 'y'}>
+CONFIG_GPIO_CDEV_V1                             note<'TODO: update note'>
+
+CONFIG_GPIO_TWL4030                             policy<{'arm64': 'm'}>
+CONFIG_GPIO_TWL4030                             note<'TODO: update note'>
+
+CONFIG_HIBERNATION                              policy<{'arm64': 'n'}>
+CONFIG_HIBERNATION                              note<'TODO: update note'>
+
+CONFIG_HOTPLUG_PCI_PCIE                         policy<{'arm64': 'y'}>
+CONFIG_HOTPLUG_PCI_PCIE                         note<'TODO: update note'>
+
+CONFIG_HOTPLUG_PCI_SHPC                         policy<{'arm64': 'y'}>
+CONFIG_HOTPLUG_PCI_SHPC                         note<'TODO: update note'>
+
+CONFIG_HSA_AMD_P2P                              policy<{'arm64': 'y'}>
+CONFIG_HSA_AMD_P2P                              note<'TODO: update note'>
+
+CONFIG_HZ_100                                   policy<{'arm64': 'n'}>
+CONFIG_HZ_100                                   note<'TODO: update note'>
+
+CONFIG_HZ_1000                                  policy<{'arm64': 'y'}>
+CONFIG_HZ_1000                                  note<'TODO: update note'>
+
+CONFIG_HZ_250                                   policy<{'arm64': 'n'}>
+CONFIG_HZ_250                                   note<'TODO: update note'>
+
+CONFIG_IDLE_PAGE_TRACKING                       policy<{'arm64': 'y'}>
+CONFIG_IDLE_PAGE_TRACKING                       note<'TODO: update note'>
+
+CONFIG_IIO_SIMPLE_DUMMY_BUFFER                  policy<{'arm64': 'n'}>
+CONFIG_IIO_SIMPLE_DUMMY_BUFFER                  note<'TODO: update note'>
+
+CONFIG_IIO_SIMPLE_DUMMY_EVENTS                  policy<{'arm64': 'n'}>
+CONFIG_IIO_SIMPLE_DUMMY_EVENTS                  note<'TODO: update note'>
+
+CONFIG_IMA                                      policy<{'arm64': 'y'}>
+CONFIG_IMA                                      note<'TODO: update note'>
+
+CONFIG_IMA_APPRAISE                             policy<{'arm64': 'y'}>
+CONFIG_IMA_APPRAISE                             note<'TODO: update note'>
+
+CONFIG_IMA_ARCH_POLICY                          policy<{'arm64': 'y'}>
+CONFIG_IMA_ARCH_POLICY                          note<'TODO: update note'>
+
+CONFIG_IMA_DEFAULT_HASH_SHA256                  policy<{'arm64': 'y'}>
+CONFIG_IMA_DEFAULT_HASH_SHA256                  note<'TODO: update note'>
+
+CONFIG_IMA_KEXEC                                policy<{'arm64': 'y'}>
+CONFIG_IMA_KEXEC                                note<'TODO: update note'>
+
+CONFIG_IMA_KEYRINGS_PERMIT_SIGNED_BY_BUILTIN_OR_SECONDARY policy<{'arm64': 'n'}>
+CONFIG_IMA_KEYRINGS_PERMIT_SIGNED_BY_BUILTIN_OR_SECONDARY note<'TODO: update note'>
+
+CONFIG_IMA_READ_POLICY                          policy<{'arm64': 'n'}>
+CONFIG_IMA_READ_POLICY                          note<'TODO: update note'>
+
+CONFIG_IMA_SIG_TEMPLATE                         policy<{'arm64': 'n'}>
+CONFIG_IMA_SIG_TEMPLATE                         note<'TODO: update note'>
+
+CONFIG_IMA_WRITE_POLICY                         policy<{'arm64': 'n'}>
+CONFIG_IMA_WRITE_POLICY                         note<'TODO: update note'>
+
+CONFIG_INTEGRITY_PLATFORM_KEYRING               policy<{'arm64': 'y'}>
+CONFIG_INTEGRITY_PLATFORM_KEYRING               note<'TODO: update note'>
+
+CONFIG_IOMMU_DEBUGFS                            policy<{'arm64': 'n'}>
+CONFIG_IOMMU_DEBUGFS                            note<'TODO: update note'>
+
+CONFIG_IOMMU_DEFAULT_DMA_LAZY                   policy<{'arm64': 'n'}>
+CONFIG_IOMMU_DEFAULT_DMA_LAZY                   note<'TODO: update note'>
+
+CONFIG_IOMMU_DEFAULT_DMA_STRICT                 policy<{'arm64': 'y'}>
+CONFIG_IOMMU_DEFAULT_DMA_STRICT                 note<'TODO: update note'>
+
+CONFIG_IPMMU_VMSA                               policy<{'arm64': 'n'}>
+CONFIG_IPMMU_VMSA                               note<'TODO: update note'>
+
+CONFIG_IPV6                                     policy<{'arm64': 'y'}>
+CONFIG_IPV6                                     note<'TODO: update note'>
+
+CONFIG_IP_PNP                                   policy<{'arm64': 'n'}>
+CONFIG_IP_PNP                                   note<'TODO: update note'>
+
+CONFIG_KERNEL_ZSTD                              policy<{'arm64': 'y'}>
+CONFIG_KERNEL_ZSTD                              note<'TODO: update note'>
+
+CONFIG_KFENCE_STATIC_KEYS                       policy<{'arm64': 'n'}>
+CONFIG_KFENCE_STATIC_KEYS                       note<'TODO: update note'>
+
+CONFIG_KGDB_SERIAL_CONSOLE                      policy<{'arm64': 'y'}>
+CONFIG_KGDB_SERIAL_CONSOLE                      note<'TODO: update note'>
+
+CONFIG_LATENCYTOP                               policy<{'arm64': 'y'}>
+CONFIG_LATENCYTOP                               note<'TODO: update note'>
+
+CONFIG_LEGACY_TIOCSTI                           policy<{'arm64': 'n'}>
+CONFIG_LEGACY_TIOCSTI                           note<'TODO: update note'>
+
+CONFIG_LOCALVERSION_AUTO                        policy<{'arm64': 'n'}>
+CONFIG_LOCALVERSION_AUTO                        note<'TODO: update note'>
+
+CONFIG_LRU_GEN                                  policy<{'arm64': 'y'}>
+CONFIG_LRU_GEN                                  note<'TODO: update note'>
+
+CONFIG_LRU_GEN_ENABLED                          policy<{'arm64': 'y'}>
+CONFIG_LRU_GEN_ENABLED                          note<'TODO: update note'>
+
+CONFIG_MFD_SM501                                policy<{'arm64': 'm'}>
+CONFIG_MFD_SM501                                note<'TODO: update note'>
+
+CONFIG_MFD_TPS65217                             policy<{'arm64': 'm'}>
+CONFIG_MFD_TPS65217                             note<'TODO: update note'>
+
+CONFIG_MHP_DEFAULT_ONLINE_TYPE_OFFLINE          policy<{'arm64': 'n'}>
+CONFIG_MHP_DEFAULT_ONLINE_TYPE_OFFLINE          note<'TODO: update note'>
+
+CONFIG_MHP_MEMMAP_ON_MEMORY                     policy<{'arm64': 'y'}>
+CONFIG_MHP_MEMMAP_ON_MEMORY                     note<'TODO: update note'>
+
+CONFIG_MMC_BLOCK                                policy<{'arm64': 'm'}>
+CONFIG_MMC_BLOCK                                note<'TODO: update note'>
+
+CONFIG_MMC_SDHCI                                policy<{'arm64': 'm'}>
+CONFIG_MMC_SDHCI                                note<'TODO: update note'>
+
+CONFIG_MMC_SDHCI_PLTFM                          policy<{'arm64': 'm'}>
+CONFIG_MMC_SDHCI_PLTFM                          note<'TODO: update note'>
+
+CONFIG_MODULE_COMPRESS_ZSTD                     policy<{'arm64': 'y'}>
+CONFIG_MODULE_COMPRESS_ZSTD                     note<'TODO: update note'>
+
+CONFIG_MTD                                      policy<{'arm64': 'm'}>
+CONFIG_MTD                                      note<'TODO: update note'>
+
+CONFIG_MTD_BLOCK                                policy<{'arm64': 'm'}>
+CONFIG_MTD_BLOCK                                note<'TODO: update note'>
+
+CONFIG_MTD_DOCG3                                policy<{'arm64': 'n'}>
+CONFIG_MTD_DOCG3                                note<'TODO: update note'>
+
+CONFIG_MTD_NAND_DISKONCHIP_BBTWRITE             policy<{'arm64': 'n'}>
+CONFIG_MTD_NAND_DISKONCHIP_BBTWRITE             note<'TODO: update note'>
+
+CONFIG_MTD_OF_PARTS                             policy<{'arm64': 'm'}>
+CONFIG_MTD_OF_PARTS                             note<'TODO: update note'>
+
+CONFIG_MTD_ONENAND_VERIFY_WRITE                 policy<{'arm64': 'y'}>
+CONFIG_MTD_ONENAND_VERIFY_WRITE                 note<'TODO: update note'>
+
+CONFIG_MTD_RAW_NAND                             policy<{'arm64': 'm'}>
+CONFIG_MTD_RAW_NAND                             note<'TODO: update note'>
+
+CONFIG_NETWORK_PHY_TIMESTAMPING                 policy<{'arm64': 'y'}>
+CONFIG_NETWORK_PHY_TIMESTAMPING                 note<'TODO: update note'>
+
+CONFIG_NET_9P                                   policy<{'arm64': 'm'}>
+CONFIG_NET_9P                                   note<'TODO: update note'>
+
+CONFIG_NET_DROP_MONITOR                         policy<{'arm64': 'y'}>
+CONFIG_NET_DROP_MONITOR                         note<'TODO: update note'>
+
+CONFIG_NET_SWITCHDEV                            policy<{'arm64': 'y'}>
+CONFIG_NET_SWITCHDEV                            note<'TODO: update note'>
+
+CONFIG_NET_VENDOR_EMULEX                        policy<{'arm64': 'y'}>
+CONFIG_NET_VENDOR_EMULEX                        note<'TODO: update note'>
+
+CONFIG_NLS                                      policy<{'arm64': 'y'}>
+CONFIG_NLS                                      note<'TODO: update note'>
+
+CONFIG_NOP_USB_XCEIV                            policy<{'arm64': 'm'}>
+CONFIG_NOP_USB_XCEIV                            note<'TODO: update note'>
+
+CONFIG_NO_HZ_FULL                               policy<{'arm64': 'y'}>
+CONFIG_NO_HZ_FULL                               note<'TODO: update note'>
+
+CONFIG_NO_HZ_IDLE                               policy<{'arm64': 'n'}>
+CONFIG_NO_HZ_IDLE                               note<'TODO: update note'>
+
+CONFIG_NR_CPUS                                  policy<{'arm64': '512'}>
+CONFIG_NR_CPUS                                  note<'TODO: update note'>
+
+CONFIG_NUMA_BALANCING_DEFAULT_ENABLED           policy<{'arm64': 'y'}>
+CONFIG_NUMA_BALANCING_DEFAULT_ENABLED           note<'TODO: update note'>
+
+CONFIG_NUMA_EMU                                 policy<{'arm64': 'n'}>
+CONFIG_NUMA_EMU                                 note<'TODO: update note'>
+
+CONFIG_NVMEM                                    policy<{'arm64': 'y'}>
+CONFIG_NVMEM                                    note<'TODO: update note'>
+
+CONFIG_N_GSM                                    policy<{'arm64': 'm'}>
+CONFIG_N_GSM                                    note<'TODO: update note'>
+
+CONFIG_OSNOISE_TRACER                           policy<{'arm64': 'y'}>
+CONFIG_OSNOISE_TRACER                           note<'TODO: update note'>
+
+CONFIG_PAGE_POISONING                           policy<{'arm64': 'y'}>
+CONFIG_PAGE_POISONING                           note<'TODO: update note'>
+
+CONFIG_PANIC_ON_OOPS                            policy<{'arm64': 'n'}>
+CONFIG_PANIC_ON_OOPS                            note<'TODO: update note'>
+
+CONFIG_PATA_HPT3X3_DMA                          policy<{'arm64': 'n'}>
+CONFIG_PATA_HPT3X3_DMA                          note<'TODO: update note'>
+
+CONFIG_PCIEASPM_DEFAULT                         policy<{'arm64': 'y'}>
+CONFIG_PCIEASPM_DEFAULT                         note<'TODO: update note'>
+
+CONFIG_PCI_DYNAMIC_OF_NODES                     policy<{'arm64': 'y'}>
+CONFIG_PCI_DYNAMIC_OF_NODES                     note<'TODO: update note'>
+
+CONFIG_PM                                       policy<{'arm64': 'y'}>
+CONFIG_PM                                       note<'TODO: update note'>
+
+CONFIG_PREEMPT_DYNAMIC                          policy<{'arm64': 'y'}>
+CONFIG_PREEMPT_DYNAMIC                          note<'TODO: update note'>
+
+CONFIG_PSI_DEFAULT_DISABLED                     policy<{'arm64': 'n'}>
+CONFIG_PSI_DEFAULT_DISABLED                     note<'TODO: update note'>
+
+CONFIG_QCOM_QDF2400_ERRATUM_0065                policy<{'arm64': 'y'}>
+CONFIG_QCOM_QDF2400_ERRATUM_0065                note<'TODO: update note'>
+
+CONFIG_RCU_LAZY                                 policy<{'arm64': 'y'}>
+CONFIG_RCU_LAZY                                 note<'TODO: update note'>
+
+CONFIG_RCU_LAZY_DEFAULT_OFF                     policy<{'arm64': 'y'}>
+CONFIG_RCU_LAZY_DEFAULT_OFF                     note<'TODO: update note'>
+
+CONFIG_RCU_NOCB_CPU                             policy<{'arm64': 'y'}>
+CONFIG_RCU_NOCB_CPU                             note<'TODO: update note'>
+
+CONFIG_RCU_NOCB_CPU_DEFAULT_ALL                 policy<{'arm64': 'n'}>
+CONFIG_RCU_NOCB_CPU_DEFAULT_ALL                 note<'TODO: update note'>
+
+CONFIG_REGULATOR_TPS65217                       policy<{'arm64': 'm'}>
+CONFIG_REGULATOR_TPS65217                       note<'TODO: update note'>
+
+CONFIG_REGULATOR_TWL4030                        policy<{'arm64': 'm'}>
+CONFIG_REGULATOR_TWL4030                        note<'TODO: update note'>
+
+CONFIG_RTC_DRV_TWL4030                          policy<{'arm64': 'm'}>
+CONFIG_RTC_DRV_TWL4030                          note<'TODO: update note'>
+
+CONFIG_RT_GROUP_SCHED                           policy<{'arm64': 'n'}>
+CONFIG_RT_GROUP_SCHED                           note<'TODO: update note'>
+
+CONFIG_RUST                                     policy<{'arm64': 'n'}>
+CONFIG_RUST                                     note<'TODO: update note'>
+
+CONFIG_SAMPLE_TRACE_PRINTK                      policy<{'arm64': 'm'}>
+CONFIG_SAMPLE_TRACE_PRINTK                      note<'TODO: update note'>
+
+CONFIG_SATA_AHCI_PLATFORM                       policy<{'arm64': 'm'}>
+CONFIG_SATA_AHCI_PLATFORM                       note<'TODO: update note'>
+
+CONFIG_SCSI_IPR_DUMP                            policy<{'arm64': 'y'}>
+CONFIG_SCSI_IPR_DUMP                            note<'TODO: update note'>
+
+CONFIG_SCSI_IPR_TRACE                           policy<{'arm64': 'y'}>
+CONFIG_SCSI_IPR_TRACE                           note<'TODO: update note'>
+
+CONFIG_SCSI_SYM53C8XX_2                         policy<{'arm64': 'y'}>
+CONFIG_SCSI_SYM53C8XX_2                         note<'TODO: update note'>
+
+CONFIG_SCSI_VIRTIO                              policy<{'arm64': 'y'}>
+CONFIG_SCSI_VIRTIO                              note<'TODO: update note'>
+
+CONFIG_SECURITY_SAFESETID                       policy<{'arm64': 'y'}>
+CONFIG_SECURITY_SAFESETID                       note<'TODO: update note'>
+
+CONFIG_SERIAL_DEV_CTRL_TTYPORT                  policy<{'arm64': 'y'}>
+CONFIG_SERIAL_DEV_CTRL_TTYPORT                  note<'TODO: update note'>
+
+CONFIG_SERIAL_SH_SCI                            policy<{'arm64': 'y'}>
+CONFIG_SERIAL_SH_SCI                            note<'TODO: update note'>
+
+CONFIG_SERIAL_SH_SCI_CONSOLE                    policy<{'arm64': 'y'}>
+CONFIG_SERIAL_SH_SCI_CONSOLE                    note<'TODO: update note'>
+
+CONFIG_SERIAL_SH_SCI_EARLYCON                   policy<{'arm64': 'y'}>
+CONFIG_SERIAL_SH_SCI_EARLYCON                   note<'TODO: update note'>
+
+CONFIG_SETEND_EMULATION                         policy<{'arm64': 'y'}>
+CONFIG_SETEND_EMULATION                         note<'TODO: update note'>
+
+CONFIG_SMC                                      policy<{'arm64': 'm'}>
+CONFIG_SMC                                      note<'TODO: update note'>
+
+CONFIG_SMC_DIAG                                 policy<{'arm64': 'm'}>
+CONFIG_SMC_DIAG                                 note<'TODO: update note'>
+
+CONFIG_SND                                      policy<{'arm64': 'm'}>
+CONFIG_SND                                      note<'TODO: update note'>
+
+CONFIG_SND_HDA_POWER_SAVE_DEFAULT               policy<{'arm64': '1'}>
+CONFIG_SND_HDA_POWER_SAVE_DEFAULT               note<'TODO: update note'>
+
+CONFIG_SND_HDA_RECONFIG                         policy<{'arm64': 'y'}>
+CONFIG_SND_HDA_RECONFIG                         note<'TODO: update note'>
+
+CONFIG_SND_PCM_OSS                              policy<{'arm64': 'n'}>
+CONFIG_SND_PCM_OSS                              note<'TODO: update note'>
+
+CONFIG_SND_SOC                                  policy<{'arm64': 'm'}>
+CONFIG_SND_SOC                                  note<'TODO: update note'>
+
+CONFIG_SOUND                                    policy<{'arm64': 'm'}>
+CONFIG_SOUND                                    note<'TODO: update note'>
+
+CONFIG_SOUND_OSS_CORE_PRECLAIM                  policy<{'arm64': 'n'}>
+CONFIG_SOUND_OSS_CORE_PRECLAIM                  note<'TODO: update note'>
+
+CONFIG_SQUASHFS_4K_DEVBLK_SIZE                  policy<{'arm64': 'n'}>
+CONFIG_SQUASHFS_4K_DEVBLK_SIZE                  note<'TODO: update note'>
+
+CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU             policy<{'arm64': 'y'}>
+CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU             note<'TODO: update note'>
+
+CONFIG_SWP_EMULATION                            policy<{'arm64': 'y'}>
+CONFIG_SWP_EMULATION                            note<'TODO: update note'>
+
+CONFIG_SYSFB_SIMPLEFB                           policy<{'arm64': 'y'}>
+CONFIG_SYSFB_SIMPLEFB                           note<'TODO: update note'>
+
+CONFIG_TCG_TIS_I2C_ATMEL                        policy<{'arm64': 'm'}>
+CONFIG_TCG_TIS_I2C_ATMEL                        note<'TODO: update note'>
+
+CONFIG_TCG_TIS_I2C_INFINEON                     policy<{'arm64': 'm'}>
+CONFIG_TCG_TIS_I2C_INFINEON                     note<'TODO: update note'>
+
+CONFIG_TCG_TIS_I2C_NUVOTON                      policy<{'arm64': 'm'}>
+CONFIG_TCG_TIS_I2C_NUVOTON                      note<'TODO: update note'>
+
+CONFIG_TIMERLAT_TRACER                          policy<{'arm64': 'y'}>
+CONFIG_TIMERLAT_TRACER                          note<'TODO: update note'>
+
+CONFIG_TOUCHSCREEN_APPLE_Z2                     policy<{'arm64': 'm'}>
+CONFIG_TOUCHSCREEN_APPLE_Z2                     note<'TODO: update note'>
+
+CONFIG_TOUCHSCREEN_ELAN                         policy<{'arm64': 'm'}>
+CONFIG_TOUCHSCREEN_ELAN                         note<'TODO: update note'>
+
+CONFIG_UBSAN                                    policy<{'arm64': 'y'}>
+CONFIG_UBSAN                                    note<'TODO: update note'>
+
+CONFIG_USB_EHCI_HCD_PLATFORM                    policy<{'arm64': 'm'}>
+CONFIG_USB_EHCI_HCD_PLATFORM                    note<'TODO: update note'>
+
+CONFIG_USB_HCD_BCMA                             policy<{'arm64': 'm'}>
+CONFIG_USB_HCD_BCMA                             note<'TODO: update note'>
+
+CONFIG_USB_HCD_SSB                              policy<{'arm64': 'm'}>
+CONFIG_USB_HCD_SSB                              note<'TODO: update note'>
+
+CONFIG_USB_M66592                               policy<{'arm64': 'n'}>
+CONFIG_USB_M66592                               note<'TODO: update note'>
+
+CONFIG_USB_MUSB_HDRC                            policy<{'arm64': 'm'}>
+CONFIG_USB_MUSB_HDRC                            note<'TODO: update note'>
+
+CONFIG_USB_OTG                                  policy<{'arm64': 'n'}>
+CONFIG_USB_OTG                                  note<'TODO: update note'>
+
+CONFIG_USB_SERIAL_DEBUG                         policy<{'arm64': 'm'}>
+CONFIG_USB_SERIAL_DEBUG                         note<'TODO: update note'>
+
+CONFIG_USB_UHCI_HCD                             policy<{'arm64': 'y'}>
+CONFIG_USB_UHCI_HCD                             note<'TODO: update note'>
+
+CONFIG_USB_XHCI_DBGCAP                          policy<{'arm64': 'y'}>
+CONFIG_USB_XHCI_DBGCAP                          note<'TODO: update note'>
+
+CONFIG_VFIO                                     policy<{'arm64': 'm'}>
+CONFIG_VFIO                                     note<'TODO: update note'>
+
+CONFIG_VFIO_PCI                                 policy<{'arm64': 'm'}>
+CONFIG_VFIO_PCI                                 note<'TODO: update note'>
+
+CONFIG_VIDEO_VIMC                               policy<{'arm64': 'm'}>
+CONFIG_VIDEO_VIMC                               note<'TODO: update note'>
+
+CONFIG_WWAN                                     policy<{'arm64': 'm'}>
+CONFIG_WWAN                                     note<'TODO: update note'>
+
+CONFIG_X509_CERTIFICATE_PARSER                  policy<{'arm64': 'y'}>
+CONFIG_X509_CERTIFICATE_PARSER                  note<'TODO: update note'>
+
+CONFIG_XEN_BLKDEV_FRONTEND                      policy<{'arm64': 'y'}>
+CONFIG_XEN_BLKDEV_FRONTEND                      note<'TODO: update note'>
+
+CONFIG_XEN_NETDEV_FRONTEND                      policy<{'arm64': 'y'}>
+CONFIG_XEN_NETDEV_FRONTEND                      note<'TODO: update note'>
+
+CONFIG_XZ_DEC                                   policy<{'arm64': 'y'}>
+CONFIG_XZ_DEC                                   note<'TODO: update note'>
+
+CONFIG_ZONE_DMA                                 policy<{'arm64': 'y'}>
+CONFIG_ZONE_DMA                                 note<'TODO: update note'>
+
+
+# ---- Annotations without notes ----
+
+CONFIG_AHCI_IMX_PMP                             policy<{'arm64': 'n'}>
+CONFIG_AMCC_QT2025_PHY                          policy<{'arm64': '-'}>
+CONFIG_ANDROID_BINDER_IPC_RUST                  policy<{'arm64': '-'}>
+CONFIG_ARCH_S32_CLK                             policy<{'arm64': 'y'}>
+CONFIG_AX88796B_RUST_PHY                        policy<{'arm64': '-'}>
+CONFIG_BATTERY_LENOVO_YOGA_C630                 policy<{'arm64': 'm'}>
+CONFIG_BINDGEN_VERSION_TEXT                     policy<{'arm64': '-'}>
+CONFIG_BLK_DEV_RUST_NULL                        policy<{'arm64': '-'}>
+CONFIG_CEC_CORE                                 policy<{'arm64': 'y'}>
+CONFIG_CLKSRC_IMX_TPM                           policy<{'arm64': 'y'}>
+CONFIG_CLK_QCM2290_GPUCC                        policy<{'arm64': 'm'}>
+CONFIG_COMMON_CLK_C3_PERIPHERALS                policy<{'arm64': 'm'}>
+CONFIG_CPUFREQ_DT_RUST                          policy<{'arm64': '-'}>
+CONFIG_CRYPTO_AUTHENC                           policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_CRYPTO_API_QI        policy<{'arm64': '-'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_DMA                  policy<{'arm64': 'm'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_JR_UIO               policy<{'arm64': 'm'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_KEYBLOB_API_DESC     policy<{'arm64': 'm'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_SECVIO               policy<{'arm64': 'm'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_SM                   policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_SM_SLOTSIZE          policy<{'arm64': '7'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_SM_TEST              policy<{'arm64': 'n'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_TK_API               policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_TK_API_TEST          policy<{'arm64': 'n'}>
+CONFIG_CRYPTO_TLS                               policy<{'arm64': 'y'}>
+CONFIG_DMABUF_HEAPS_DSP                         policy<{'arm64': 'n'}>
+CONFIG_DRM_CDNS_AUDIO                           policy<{'arm64': 'm'}>
+CONFIG_DRM_CDNS_DP                              policy<{'arm64': 'm'}>
+CONFIG_DRM_CDNS_HDCP                            policy<{'arm64': 'm'}>
+CONFIG_DRM_CDNS_HDMI                            policy<{'arm64': 'm'}>
+CONFIG_DRM_CDNS_HDMI_CEC                        policy<{'arm64': 'm'}>
+CONFIG_DRM_CDNS_MHDP                            policy<{'arm64': 'm'}>
+CONFIG_DRM_DISPLAY_HELPER                       policy<{'arm64': 'y'}>
+CONFIG_DRM_DW_HDMI                              policy<{'arm64': 'y'}>
+CONFIG_DRM_DW_MIPI_DSI                          policy<{'arm64': 'y'}>
+CONFIG_DRM_DW_MIPI_DSI2                         policy<{'arm64': 'y'}>
+CONFIG_DRM_FSL_IMX_LVDS_BRIDGE                  policy<{'arm64': 'y'}>
+CONFIG_DRM_GEM_DMA_HELPER                       policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX                                  policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX8MM_LCDIF                         policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX8MP_LDB                           policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX93_LDB                            policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX93_PARALLEL_DISPLAY_FORMAT        policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX952_MIPI_DSI2                     policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX95_DPU                            policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX95_LDB                            policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX95_MIPI_DSI                       policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX95_PIXEL_INTERLEAVER              policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX95_PIXEL_LINK                     policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_CDNS_MHDP                        policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX_DCIF                             policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX_DCNANO                           policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX_DPU                              policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_DW_MIPI_DSI                      policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_HDMI                             policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_LCDIFV3                          policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX_LCDIF_MUX_DISPLAY                policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_LDB                              policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_LDB_HELPER                       policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_LEGACY_BRIDGE                    policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_PARALLEL_DISPLAY                 policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_SEC_DSIM                         policy<{'arm64': 'm'}>
+CONFIG_DRM_IMX_TVE                              policy<{'arm64': 'y'}>
+CONFIG_DRM_ITE_IT6161                           policy<{'arm64': 'n'}>
+CONFIG_DRM_ITE_IT6263_NXP                       policy<{'arm64': 'n'}>
+CONFIG_DRM_NOVA                                 policy<{'arm64': '-'}>
+CONFIG_DRM_NXP_SEIKO_43WVFIG                    policy<{'arm64': 'n'}>
+CONFIG_DRM_PANEL_RAYDIUM_RM692C9                policy<{'arm64': 'n'}>
+CONFIG_DRM_PANEL_ROCKTECK_HIMAX8394F            policy<{'arm64': 'n'}>
+CONFIG_DRM_PANEL_TIANMA_TM050RDH03              policy<{'arm64': 'n'}>
+CONFIG_DRM_PANEL_WKS_101WX001                   policy<{'arm64': 'n'}>
+CONFIG_DRM_PANIC_SCREEN_QR_CODE                 policy<{'arm64': '-'}>
+CONFIG_DRM_SEC_MIPI_DSIM                        policy<{'arm64': 'm'}>
+CONFIG_DRM_TYR                                  policy<{'arm64': '-'}>
+CONFIG_DRM_XE_PAGEMAP                           policy<{'arm64': 'y'}>
+CONFIG_EC_LENOVO_YOGA_C630                      policy<{'arm64': 'm'}>
+CONFIG_ETHOSU                                   policy<{'arm64': 'n'}>
+CONFIG_FB_MXC                                   policy<{'arm64': 'n'}>
+CONFIG_FB_MXC_ADV7535                           policy<{'arm64': '-'}>
+CONFIG_FB_MXC_DISP_FRAMEWORK                    policy<{'arm64': 'm'}>
+CONFIG_FB_MXC_EDID                              policy<{'arm64': '-'}>
+CONFIG_FB_MXC_EINK_PANEL                        policy<{'arm64': '-'}>
+CONFIG_FB_MXC_EINK_V2_PANEL                     policy<{'arm64': '-'}>
+CONFIG_FB_MXC_MIPI_DSI                          policy<{'arm64': '-'}>
+CONFIG_FB_MXC_MIPI_DSI_NORTHWEST                policy<{'arm64': '-'}>
+CONFIG_FB_MXC_MIPI_DSI_SAMSUNG                  policy<{'arm64': '-'}>
+CONFIG_FB_MXC_OVERLAY                           policy<{'arm64': '-'}>
+CONFIG_FB_MXC_RK_PANEL_RK055AHD042              policy<{'arm64': '-'}>
+CONFIG_FB_MXC_RK_PANEL_RK055IQH042              policy<{'arm64': '-'}>
+CONFIG_FB_MXC_TRULY_PANEL_TFT3P5581E            policy<{'arm64': '-'}>
+CONFIG_FB_MXC_TRULY_WVGA_SYNC_PANEL             policy<{'arm64': '-'}>
+CONFIG_FB_MXS                                   policy<{'arm64': 'n'}>
+CONFIG_FB_MXS_SII902X                           policy<{'arm64': '-'}>
+CONFIG_FEC_UIO                                  policy<{'arm64': 'y'}>
+CONFIG_FIND_BIT_BENCHMARK_RUST                  policy<{'arm64': '-'}>
+CONFIG_FSL_DPAA2                                policy<{'arm64': 'y'}>
+CONFIG_FSL_DPAA2_ETH_CEETM                      policy<{'arm64': 'y'}>
+CONFIG_FSL_DPAA2_EVB                            policy<{'arm64': 'y'}>
+CONFIG_FSL_DPAA2_MAC                            policy<{'arm64': 'm'}>
+CONFIG_FSL_DPAA2_MAC_NETDEVS                    policy<{'arm64': 'y'}>
+CONFIG_FSL_PPFE                                 policy<{'arm64': 'y'}>
+CONFIG_FSL_PPFE_UTIL_DISABLED                   policy<{'arm64': 'y'}>
+CONFIG_GARP                                     policy<{'arm64': 'y'}>
+CONFIG_GIC_GENTLE_CONFIG                        policy<{'arm64': 'n'}>
+CONFIG_GMSL_MAX9286                             policy<{'arm64': 'm'}>
+CONFIG_GPIO_IMX_RPMSG                           policy<{'arm64': 'm'}>
+CONFIG_GPIO_PI4IOE5V6408                        policy<{'arm64': 'y'}>
+CONFIG_HAVE_IMX_BUSFREQ                         policy<{'arm64': 'y'}>
+CONFIG_HAVE_IMX_RPMSG                           policy<{'arm64': 'y'}>
+CONFIG_HAVE_PAGE_SIZE_4KB                       policy<{'arm64': 'y'}>
+CONFIG_HUGETLB_PMD_PAGE_TABLE_SHARING           policy<{'arm64': 'y'}>
+CONFIG_I2C_IMX_FLEXIO                           policy<{'arm64': 'm'}>
+CONFIG_I2C_RPBUS                                policy<{'arm64': 'm'}>
+CONFIG_IMX8MM_LCDIF_CORE                        policy<{'arm64': 'y'}>
+CONFIG_IMX8MP_HDMI_PAVI                         policy<{'arm64': 'y'}>
+CONFIG_IMX8M_BUSFREQ                            policy<{'arm64': 'y'}>
+CONFIG_IMX8M_PM_DOMAINS                         policy<{'arm64': 'y'}>
+CONFIG_IMX8ULP_LPM_CTRL                         policy<{'arm64': 'y'}>
+CONFIG_IMX8_DPRC                                policy<{'arm64': 'y'}>
+CONFIG_IMX8_ISI_CAPTURE                         policy<{'arm64': 'm'}>
+CONFIG_IMX8_ISI_CORE                            policy<{'arm64': 'm'}>
+CONFIG_IMX8_ISI_HW                              policy<{'arm64': 'm'}>
+CONFIG_IMX8_ISI_M2M                             policy<{'arm64': 'm'}>
+CONFIG_IMX8_MEDIA_DEVICE                        policy<{'arm64': 'm'}>
+CONFIG_IMX8_MIPI_CSI2_SAM                       policy<{'arm64': 'm'}>
+CONFIG_IMX8_PC                                  policy<{'arm64': 'y'}>
+CONFIG_IMX8_PRG                                 policy<{'arm64': 'y'}>
+CONFIG_IMX9_LPM_CTRL                            policy<{'arm64': 'm'}>
+CONFIG_IMX_CM0P_REMOTEPROC                      policy<{'arm64': 'y'}>
+CONFIG_IMX_DISPMU                               policy<{'arm64': 'm'}>
+CONFIG_IMX_DPU_BLIT                             policy<{'arm64': 'y'}>
+CONFIG_IMX_DPU_CORE                             policy<{'arm64': 'y'}>
+CONFIG_IMX_ELE_TRNG                             policy<{'arm64': 'y'}>
+CONFIG_IMX_LCDIFV3_CORE                         policy<{'arm64': 'y'}>
+CONFIG_IMX_NEUTRON_REMOTEPROC                   policy<{'arm64': 'm'}>
+CONFIG_IMX_RPMSG_PINGPONG                       policy<{'arm64': 'm'}>
+CONFIG_IMX_RPMSG_TTY                            policy<{'arm64': 'm'}>
+CONFIG_IMX_SEC_ENCLAVE                          policy<{'arm64': 'm'}>
+CONFIG_IMX_SHMEM_NET                            policy<{'arm64': 'm'}>
+CONFIG_INTEL_MEI_GSC                            policy<{'arm64': 'n'}>
+CONFIG_INTEL_MEI_GSC_PROXY                      policy<{'arm64': 'n'}>
+CONFIG_INTEL_MEI_HDCP                           policy<{'arm64': 'n'}>
+CONFIG_INTEL_MEI_LB                             policy<{'arm64': 'n'}>
+CONFIG_INTEL_MEI_PXP                            policy<{'arm64': 'n'}>
+CONFIG_IVSHMEM_NET                              policy<{'arm64': 'n'}>
+CONFIG_JAILHOUSE_DBGCON                         policy<{'arm64': 'n'}>
+CONFIG_KEYBOARD_RPMSG                           policy<{'arm64': 'm'}>
+CONFIG_LLC                                      policy<{'arm64': 'y'}>
+CONFIG_MALI_MEMORY_GROUP_MANAGER                policy<{'arm64': 'n'}>
+CONFIG_MALI_MIDGARD                             policy<{'arm64': 'n'}>
+CONFIG_MARVELL_GTI_WDT                          policy<{'arm64': 'm'}>
+CONFIG_MEDIA_CEC_RC                             policy<{'arm64': '-'}>
+CONFIG_MFD_FP9931                               policy<{'arm64': '-'}>
+CONFIG_MFD_IMX_FLEXIO                           policy<{'arm64': 'm'}>
+CONFIG_MFD_MAX17135                             policy<{'arm64': 'n'}>
+CONFIG_MFD_MAX96752                             policy<{'arm64': 'n'}>
+CONFIG_MFD_MAX96789                             policy<{'arm64': 'n'}>
+CONFIG_MFD_MAXIM_SERDES                         policy<{'arm64': 'n'}>
+CONFIG_MFD_MXC_HDMI                             policy<{'arm64': 'n'}>
+CONFIG_MRP                                      policy<{'arm64': 'y'}>
+CONFIG_MSHV_ROOT                                policy<{'arm64': 'm'}>
+CONFIG_MTIP_BACKPLANE_PHY                       policy<{'arm64': 'y'}>
+CONFIG_MXC_CAMERA_OV5640_MIPI_V2                policy<{'arm64': 'n'}>
+CONFIG_MXC_CAMERA_OV5640_V2                     policy<{'arm64': 'n'}>
+CONFIG_MXC_CAMERA_OV5647_MIPI                   policy<{'arm64': 'n'}>
+CONFIG_MXC_EMVSIM                               policy<{'arm64': 'n'}>
+CONFIG_MXC_GPU_VIV                              policy<{'arm64': 'n'}>
+CONFIG_MXC_HANTRO                               policy<{'arm64': 'y'}>
+CONFIG_MXC_HANTRO_845                           policy<{'arm64': 'y'}>
+CONFIG_MXC_HANTRO_845_H1                        policy<{'arm64': 'y'}>
+CONFIG_MXC_HANTRO_V4L2                          policy<{'arm64': 'm'}>
+CONFIG_MXC_HANTRO_VC8000E                       policy<{'arm64': 'y'}>
+CONFIG_MXC_IPU                                  policy<{'arm64': 'n'}>
+CONFIG_MXC_MIPI_CSI                             policy<{'arm64': 'm'}>
+CONFIG_MXC_MLB150                               policy<{'arm64': 'n'}>
+CONFIG_MXC_MUR                                  policy<{'arm64': 'm'}>
+CONFIG_MXC_PXP_V3                               policy<{'arm64': 'n'}>
+CONFIG_MXC_SIM                                  policy<{'arm64': 'm'}>
+CONFIG_MXC_SIMv2                                policy<{'arm64': 'n'}>
+CONFIG_MXC_VADC                                 policy<{'arm64': 'm'}>
+CONFIG_MXC_VIDEO_CODA980                        policy<{'arm64': 'm'}>
+CONFIG_MXC_VIDEO_WAVE511                        policy<{'arm64': 'm'}>
+CONFIG_MXC_VIDEO_WAVE511_CTRL                   policy<{'arm64': 'y'}>
+CONFIG_MXC_VIDEO_WAVE6                          policy<{'arm64': 'n'}>
+CONFIG_MXC_VIDEO_WAVE6_CTRL                     policy<{'arm64': 'n'}>
+CONFIG_NET_DSA_NETC_SWITCH                      policy<{'arm64': 'n'}>
+CONFIG_NET_DSA_TAG_NETC                         policy<{'arm64': 'n'}>
+CONFIG_NEUTRON                                  policy<{'arm64': 'm'}>
+CONFIG_NOVA_CORE                                policy<{'arm64': '-'}>
+CONFIG_OVMF_DEBUG_LOG                           policy<{'arm64': 'n'}>
+CONFIG_PAGE_SHIFT                               policy<{'arm64': '12'}>
+CONFIG_PAGE_SIZE_4KB                            policy<{'arm64': 'y'}>
+CONFIG_PCI_NXP_RPMSG                            policy<{'arm64': 'n'}>
+CONFIG_PCS_XPCS                                 policy<{'arm64': 'y'}>
+CONFIG_PHY_FSL_IMX8MP_LVDS                      policy<{'arm64': 'm'}>
+CONFIG_PHY_FSL_IMX93_MIPI_DPHY                  policy<{'arm64': 'm'}>
+CONFIG_PHY_FSL_IMX952_MIPI_DPHY                 policy<{'arm64': 'y'}>
+CONFIG_PHY_FSL_IMX9_DPHY_RX                     policy<{'arm64': 'm'}>
+CONFIG_PHY_FSL_LYNX_10G                         policy<{'arm64': 'm'}>
+CONFIG_PHY_FSL_LYNX_CORE                        policy<{'arm64': 'm'}>
+CONFIG_PHY_INPHI_IN112525_RETIMER               policy<{'arm64': 'n'}>
+CONFIG_PHY_MIXEL_LVDS                           policy<{'arm64': 'n'}>
+CONFIG_PHY_MIXEL_LVDS_COMBO                     policy<{'arm64': 'n'}>
+CONFIG_PHY_TI_DS125DF111                        policy<{'arm64': 'n'}>
+CONFIG_PINCTRL_S32V_CORE                        policy<{'arm64': 'y'}>
+CONFIG_POWER_RESET_IMX                          policy<{'arm64': 'm'}>
+CONFIG_PWM_RPCHIP                               policy<{'arm64': 'n'}>
+CONFIG_REGULATOR_PF1550_RPMSG                   policy<{'arm64': 'n'}>
+CONFIG_RESET_DISPMIX                            policy<{'arm64': 'y'}>
+CONFIG_RESET_IMX8ULP_CSR                        policy<{'arm64': '-'}>
+CONFIG_RESET_IMX8ULP_SIM                        policy<{'arm64': 'm'}>
+CONFIG_RPMSG_IIO_PEDOMETER                      policy<{'arm64': 'n'}>
+CONFIG_RPMSG_LIFE_CYCLE                         policy<{'arm64': 'm'}>
+CONFIG_RTC_DRV_IMX_RPMSG                        policy<{'arm64': 'm'}>
+CONFIG_RUSTC_LLVM_VERSION                       policy<{'arm64': '210108'}>
+CONFIG_RUSTC_VERSION                            policy<{'arm64': '109301'}>
+CONFIG_RUSTC_VERSION_TEXT                       policy<{'arm64': '-'}>
+CONFIG_RUST_BITMAP_HARDENED                     policy<{'arm64': '-'}>
+CONFIG_RUST_BUILD_ASSERT_ALLOW                  policy<{'arm64': '-'}>
+CONFIG_RUST_DEBUG_ASSERTIONS                    policy<{'arm64': '-'}>
+CONFIG_RUST_FW_LOADER_ABSTRACTIONS              policy<{'arm64': '-'}>
+CONFIG_RUST_OVERFLOW_CHECKS                     policy<{'arm64': '-'}>
+CONFIG_RUST_PHYLIB_ABSTRACTIONS                 policy<{'arm64': '-'}>
+CONFIG_SABRESD_MAX8903                          policy<{'arm64': 'n'}>
+CONFIG_SAMPLES_RUST                             policy<{'arm64': '-'}>
+CONFIG_SECURE_KEYS                              policy<{'arm64': 'm'}>
+CONFIG_SECVIO_SC                                policy<{'arm64': 'y'}>
+CONFIG_SENSORS_MAX17135                         policy<{'arm64': 'n'}>
+CONFIG_SENSORS_MAX17616                         policy<{'arm64': 'n'}>
+CONFIG_SERIAL_FSL_LPUART                        policy<{'arm64': 'y'}>
+CONFIG_SERIAL_FSL_LPUART_CONSOLE                policy<{'arm64': 'y'}>
+CONFIG_SERIAL_IMX_EARLYCON                      policy<{'arm64': 'y'}>
+CONFIG_SERIES_DIODE_RESISTANCE_PARAM            policy<{'arm64': '3'}>
+CONFIG_SND_SOC_FSL_HDMI                         policy<{'arm64': '-'}>
+CONFIG_SND_SOC_IMX6QDL_HDMI                     policy<{'arm64': '-'}>
+CONFIG_SND_SOC_IMX_HDMI_DMA                     policy<{'arm64': '-'}>
+CONFIG_SND_SOC_IMX_PCM512X                      policy<{'arm64': 'm'}>
+CONFIG_SND_SOC_RPMSG_AK4497                     policy<{'arm64': 'n'}>
+CONFIG_SND_SOC_RPMSG_WM8960                     policy<{'arm64': 'n'}>
+CONFIG_SOC_S32V234                              policy<{'arm64': 'n'}>
+CONFIG_STMMAC_ETH                               policy<{'arm64': 'y'}>
+CONFIG_STMMAC_LIBPCI                            policy<{'arm64': 'y'}>
+CONFIG_STMMAC_PCI                               policy<{'arm64': 'y'}>
+CONFIG_STMMAC_PLATFORM                          policy<{'arm64': 'y'}>
+CONFIG_STP                                      policy<{'arm64': 'y'}>
+CONFIG_TEE_CRYPTO                               policy<{'arm64': 'm'}>
+CONFIG_TEE_STMM_EFI                             policy<{'arm64': 'n'}>
+CONFIG_TOUCHSCREEN_ELAN_TS                      policy<{'arm64': 'n'}>
+CONFIG_TOUCHSCREEN_FTS                          policy<{'arm64': 'n'}>
+CONFIG_TOUCHSCREEN_SYNAPTICS_DSX                policy<{'arm64': 'y'}>
+CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_I2C            policy<{'arm64': 'n'}>
+CONFIG_TSN                                      policy<{'arm64': 'n'}>
+CONFIG_TYPEC_SWITCH_GPIO                        policy<{'arm64': 'n'}>
+CONFIG_UCSI_LENOVO_YOGA_C630                    policy<{'arm64': 'm'}>
+CONFIG_UIO                                      policy<{'arm64': 'y'}>
+CONFIG_UIO_IVSHMEM                              policy<{'arm64': 'n'}>
+CONFIG_UIO_V2X_FCE                              policy<{'arm64': 'm'}>
+CONFIG_VHOST_XEN                                policy<{'arm64': 'm'}>
+CONFIG_VIDEOBUF_DMA_CONTIG                      policy<{'arm64': 'm'}>
+CONFIG_VIDEOBUF_GEN                             policy<{'arm64': 'm'}>
+CONFIG_VIDEO_AP1302                             policy<{'arm64': 'm'}>
+CONFIG_VIDEO_DWC_MIPI_CSIS                      policy<{'arm64': 'n'}>
+CONFIG_VIDEO_IMX_CAPTURE                        policy<{'arm64': 'm'}>
+CONFIG_VIDEO_IMX_CSI_FORMATTER                  policy<{'arm64': 'm'}>
+CONFIG_VIDEO_IMX_PARALLEL_CSI                   policy<{'arm64': 'm'}>
+CONFIG_VIDEO_MAX96717_LIB                       policy<{'arm64': 'n'}>
+CONFIG_VIDEO_MAX96724                           policy<{'arm64': 'n'}>
+CONFIG_VIDEO_MHDP_HDMIRX                        policy<{'arm64': 'n'}>
+CONFIG_VIDEO_MHDP_HDMIRX_CEC                    policy<{'arm64': 'm'}>
+CONFIG_VIDEO_MT9M114X                           policy<{'arm64': 'm'}>
+CONFIG_VIDEO_MX95MBCAM                          policy<{'arm64': 'n'}>
+CONFIG_VIDEO_MXC_CAPTURE                        policy<{'arm64': 'm'}>
+CONFIG_VIDEO_MXC_CSI_CAMERA                     policy<{'arm64': 'm'}>
+CONFIG_VIDEO_MXC_OUTPUT                         policy<{'arm64': '-'}>
+CONFIG_VIDEO_MXC_PXP_V4L2                       policy<{'arm64': 'm'}>
+CONFIG_VIDEO_NXP_NEOISP                         policy<{'arm64': 'm'}>
+CONFIG_VIDEO_OX03C10_DRV                        policy<{'arm64': 'n'}>
+CONFIG_VIDEO_OX03C10_LIB                        policy<{'arm64': 'n'}>
+CONFIG_VIDEO_OX05B1S                            policy<{'arm64': 'n'}>
+CONFIG_VIRTIO_IVSHMEM                           policy<{'arm64': 'n'}>
+CONFIG_VIRTIO_VIDEO                             policy<{'arm64': 'n'}>
+CONFIG_VLAN_8021Q                               policy<{'arm64': 'y'}>
+CONFIG_XE_VFIO_PCI                              policy<{'arm64': 'n'}>
+SCHED_PROXY_EXEC                                policy<{'arm64': '-'}>

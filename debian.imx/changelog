@@ -1,0 +1,14 @@
+linux-imx (7.0.0-1001.1) resolute; urgency=medium
+
+  * resolute/linux: 7.0.0-12.12 -proposed tracker (LP: #2146778)
+
+  * Packaging resync (LP: #1786013)
+    - [Packaging] debian.master/dkms-versions -- update from kernel-versions
+      (main/d2025.10.20)
+
+  * Miscellaneous Ubuntu changes
+    - Update dropped.txt
+    - [Packaging] debian.master/dkms-versions: Drop failing dkms packages
+    - rename dropped.txt to Changes.md
+
+ -- Paolo Pisati <paolo.pisati@canonical.com>  Mon, 01 Dec 2025 14:52:34 +0100
