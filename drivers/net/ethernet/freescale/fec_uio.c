@@ -169,7 +169,7 @@ static int imx_dwmac_clks_config(void *priv, bool enabled)
 	return ret;
 }
 
-static int imx_dwmac_init(struct platform_device *pdev, void *priv)
+static int imx_dwmac_init(struct device *pdev, void *priv)
 {
 	struct plat_stmmacenet_data *plat_dat;
 	struct imx_priv_data *dwmac = priv;
@@ -663,7 +663,7 @@ static int enet_qos_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_clks_config;
 
-	ret = imx_dwmac_init(pdev, dwmac);
+	ret = imx_dwmac_init(&pdev->dev, dwmac);
 	if (ret)
 		goto err_dwmac_init;
 
