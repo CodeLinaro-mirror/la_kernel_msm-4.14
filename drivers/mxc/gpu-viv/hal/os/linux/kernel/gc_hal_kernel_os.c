@@ -105,6 +105,10 @@ gctBOOL memTraceFlag = 1;
 #define _GC_OBJ_ZONE        gcvZONE_OS
 #define USING_PFN_FOLLOW    0
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 11, 0)
+#define in_hardirq()        in_irq()
+#endif
+
 #include "gc_hal_kernel_allocator.h"
 
 #define gcmkBUG_ON(x)                                                    \
@@ -279,7 +283,7 @@ _AllocateIntegerId(IN gcsINTEGER_DB_PTR Database,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
     idr_preload(GFP_KERNEL | gcdNOWARN);
 
-    if (in_irq())
+    if (in_hardirq())
         spin_lock(&Database->lock);
     else
         spin_lock_irqsave(&Database->lock, flags);
@@ -294,7 +298,7 @@ _AllocateIntegerId(IN gcsINTEGER_DB_PTR Database,
     if (result > 0)
         Database->curr = *Id = result;
 
-    if (in_irq())
+    if (in_hardirq())
         spin_unlock(&Database->lock);
     else
         spin_unlock_irqrestore(&Database->lock, flags);
@@ -308,7 +312,7 @@ again:
     if (idr_pre_get(&Database->idr, GFP_KERNEL | gcdNOWARN) == 0)
         return gcvSTATUS_OUT_OF_MEMORY;
 
-    if (in_irq())
+    if (in_hardirq())
         spin_lock(&Database->lock);
     else
         spin_lock_irqsave(&Database->lock, flags);
@@ -321,7 +325,7 @@ again:
     if (!result)
         Database->curr = *Id;
 
-    if (in_irq())
+    if (in_hardirq())
         spin_unlock(&Database->lock);
     else
         spin_unlock_irqrestore(&Database->lock, flags);
@@ -344,14 +348,14 @@ _QueryIntegerId(IN gcsINTEGER_DB_PTR Database,
     gctPOINTER    pointer;
     unsigned long flags = 0;
 
-    if (in_irq())
+    if (in_hardirq())
         spin_lock(&Database->lock);
     else
         spin_lock_irqsave(&Database->lock, flags);
 
     pointer = idr_find(&Database->idr, Id);
 
-    if (in_irq())
+    if (in_hardirq())
         spin_unlock(&Database->lock);
     else
         spin_unlock_irqrestore(&Database->lock, flags);
@@ -373,14 +377,14 @@ _DestroyIntegerId(IN gcsINTEGER_DB_PTR Database, IN gctUINT32 Id)
 {
     unsigned long flags = 0;
 
-    if (in_irq())
+    if (in_hardirq())
         spin_lock(&Database->lock);
     else
         spin_lock_irqsave(&Database->lock, flags);
 
     idr_remove(&Database->idr, Id);
 
-    if (in_irq())
+    if (in_hardirq())
         spin_unlock(&Database->lock);
     else
         spin_unlock_irqrestore(&Database->lock, flags);
@@ -1733,7 +1737,7 @@ gckOS_ReadRegisterEx(IN gckOS      Os,
     if (Address > device->registerSizes[Kernel->core] - 1)
         return gcvSTATUS_INVALID_ARGUMENT;
 
-    if (in_irq()) {
+    if (in_hardirq()) {
         uint32_t data;
 
         spin_lock(&Os->registerAccessLock);
@@ -1813,7 +1817,7 @@ _WriteRegisterEx(IN gckOS     Os,
     if (Address > device->registerSizes[Kernel->core] - 1)
         return gcvSTATUS_INVALID_ARGUMENT;
 
-    if (in_irq()) {
+    if (in_hardirq()) {
         spin_lock(&Os->registerAccessLock);
 
         if (unlikely(Os->clockStates[device->id][Kernel->core] == gcvFALSE)) {
@@ -5418,7 +5422,7 @@ gckOS_DestroySignal(IN gckOS Os, IN gctSIGNAL Signal)
     gcmkVERIFY_OBJECT(Os, gcvOBJ_OS);
     gcmkVERIFY_ARGUMENT(Signal != gcvNULL);
 
-    if (in_irq())
+    if (in_hardirq())
         spin_lock(&Os->signalLock);
     else
         spin_lock_irqsave(&Os->signalLock, flags);
@@ -5438,7 +5442,7 @@ gckOS_DestroySignal(IN gckOS Os, IN gctSIGNAL Signal)
         kfree(signal);
     }
 
-    if (in_irq())
+    if (in_hardirq())
         spin_unlock(&Os->signalLock);
     else
         spin_unlock_irqrestore(&Os->signalLock, flags);
@@ -5448,7 +5452,7 @@ gckOS_DestroySignal(IN gckOS Os, IN gctSIGNAL Signal)
 OnError:
     if (acquired) {
         /* Release the mutex. */
-        if (in_irq())
+        if (in_hardirq())
             spin_unlock(&Os->signalLock);
         else
             spin_unlock_irqrestore(&Os->signalLock, flags);
