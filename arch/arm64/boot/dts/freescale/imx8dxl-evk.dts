@@ -105,13 +105,6 @@
 		};
 	};
 
-	enet0_reset: enet0-reset {
-		compatible = "gpio-reset";
-		reset-gpios = <&pca6416_1 0 GPIO_ACTIVE_LOW>;
-		reset-delay-us = <10000>;
-		#reset-cells = <0>;
-	};
-
 	m2_uart1_sel: regulator-m2uart1sel {
 		compatible = "regulator-fixed";
 		regulator-min-microvolt = <3300000>;
@@ -459,7 +452,6 @@
 				reg = <0x68>;
 				gpio-controller;
 				#gpio-cells = <2>;
-				resets = <&enet0_reset>;
 				status = "disabled";
 			};
 		};
