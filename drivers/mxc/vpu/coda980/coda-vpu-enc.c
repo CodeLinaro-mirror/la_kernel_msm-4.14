@@ -347,7 +347,7 @@ static void coda_vpu_enc_handle_encoded_frame(struct vpu_instance *inst,
 	inst->total_sw_time += (inst->ts_finish - inst->ts_start);
 	inst->processed_buf_num++;
 
-	v4l2_m2m_buf_copy_metadata(src_buf, dst_buf, true);
+	v4l2_m2m_buf_copy_metadata(src_buf, dst_buf);
 	v4l2_m2m_buf_done(src_buf, state);
 
 	vb2_set_plane_payload(&dst_buf->vb2_buf, 0, info->bitstream_buf_size);
