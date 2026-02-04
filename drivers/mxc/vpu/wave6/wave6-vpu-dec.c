@@ -1758,8 +1758,6 @@ static int wave6_vpu_dec_buf_init(struct vb2_buffer *vb)
 
 static const struct vb2_ops wave6_vpu_dec_vb2_ops = {
 	.queue_setup = wave6_vpu_dec_queue_setup,
-	.wait_prepare = vb2_ops_wait_prepare,
-	.wait_finish = vb2_ops_wait_finish,
 	.buf_queue = wave6_vpu_dec_buf_queue,
 	.start_streaming = wave6_vpu_dec_start_streaming,
 	.stop_streaming = wave6_vpu_dec_stop_streaming,

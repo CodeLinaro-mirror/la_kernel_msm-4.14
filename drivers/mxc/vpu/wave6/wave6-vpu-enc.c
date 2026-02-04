@@ -2651,8 +2651,6 @@ exit:
 
 static const struct vb2_ops wave6_vpu_enc_vb2_ops = {
 	.queue_setup = wave6_vpu_enc_queue_setup,
-	.wait_prepare = vb2_ops_wait_prepare,
-	.wait_finish = vb2_ops_wait_finish,
 	.buf_queue = wave6_vpu_enc_buf_queue,
 	.buf_finish = wave6_vpu_enc_buf_finish,
 	.buf_init = wave6_vpu_buf_init,
