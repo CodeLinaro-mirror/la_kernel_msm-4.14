@@ -2,6 +2,7 @@
 config FSL_ENETC_CORE
 	tristate
 	select NXP_NETC_LIB if NXP_NTMP
+	select NXP_NETC_BLK_CTRL if NXP_ENETC4 || NXP_ENETC4 = m
 	help
 	  This module supports common functionality between the PF and VF
 	  drivers for the NXP ENETC controller.
