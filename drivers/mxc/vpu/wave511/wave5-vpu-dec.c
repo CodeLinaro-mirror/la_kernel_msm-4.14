@@ -1759,8 +1759,6 @@ static int wave5_vpu_dec_buf_init(struct vb2_buffer *vb)
 
 static const struct vb2_ops wave5_vpu_dec_vb2_ops = {
 	.queue_setup = wave5_vpu_dec_queue_setup,
-	.wait_prepare = vb2_ops_wait_prepare,
-	.wait_finish = vb2_ops_wait_finish,
 	.buf_queue = wave5_vpu_dec_buf_queue,
 	.buf_init = wave5_vpu_dec_buf_init,
 	.buf_prepare = wave5_vpu_dec_buf_prepare,
