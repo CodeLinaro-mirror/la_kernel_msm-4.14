@@ -973,20 +973,8 @@ static void vsi_enc_buf_cleanup(struct vb2_buffer *vb)
 	vsiv4l2_buf_cleanup(vb);
 }
 
-static void vsi_enc_buf_wait_finish(struct vb2_queue *vq)
-{
-	vb2_ops_wait_finish(vq);
-}
-
-static void vsi_enc_buf_wait_prepare(struct vb2_queue *vq)
-{
-	vb2_ops_wait_prepare(vq);
-}
-
 static struct vb2_ops vsi_enc_qops = {
 	.queue_setup = vsi_enc_queue_setup,
-	.wait_prepare = vsi_enc_buf_wait_prepare,	/*these two are just mutex protection for done_que*/
-	.wait_finish = vsi_enc_buf_wait_finish,
 	.buf_init = vsiv4l2_buf_init,
 	.buf_prepare = vsi_enc_buf_prepare,
 	.buf_finish = vsi_enc_buf_finish,
