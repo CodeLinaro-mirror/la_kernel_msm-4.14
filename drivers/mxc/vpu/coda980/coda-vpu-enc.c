@@ -1320,8 +1320,6 @@ static const struct v4l2_ioctl_ops coda_vpu_enc_ioctl_ops = {
 
 static const struct vb2_ops coda_vpu_enc_vb2_ops = {
 	.queue_setup = coda_vpu_enc_queue_setup,
-	.wait_prepare = vb2_ops_wait_prepare,
-	.wait_finish = vb2_ops_wait_finish,
 	.buf_queue = coda_vpu_enc_buf_queue,
 	.start_streaming = coda_vpu_enc_start_streaming,
 	.stop_streaming = coda_vpu_enc_stop_streaming,
