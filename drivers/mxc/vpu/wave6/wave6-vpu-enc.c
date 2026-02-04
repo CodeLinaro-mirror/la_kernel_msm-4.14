@@ -983,7 +983,7 @@ static void wave6_handle_encoded_frame(struct vpu_instance *inst,
 	dst_vpu_buf->ts_output = ktime_get_raw();
 	wave6_vpu_handle_performance(inst, dst_vpu_buf);
 
-	v4l2_m2m_buf_copy_metadata(src_buf, dst_buf, true);
+	v4l2_m2m_buf_copy_metadata(src_buf, dst_buf);
 	v4l2_m2m_buf_done(src_buf, state);
 
 	vb2_set_plane_payload(&dst_buf->vb2_buf, 0, info->bitstream_size);

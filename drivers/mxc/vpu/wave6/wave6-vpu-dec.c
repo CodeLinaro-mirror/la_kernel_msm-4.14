@@ -667,7 +667,7 @@ static void wave6_handle_decoded_frame(struct vpu_instance *inst,
 			dev_warn(inst->dev->dev, "[%d] duplication frame buffer\n", inst->id);
 			inst->sequence++;
 		}
-		v4l2_m2m_buf_copy_metadata(src_buf, dst_buf, true);
+		v4l2_m2m_buf_copy_metadata(src_buf, dst_buf);
 		dst_vpu_buf->used = true;
 		if (state == VB2_BUF_STATE_ERROR)
 			dst_vpu_buf->error = true;
