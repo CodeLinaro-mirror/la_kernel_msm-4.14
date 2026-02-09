@@ -766,6 +766,7 @@ CONFIG_DWMAC_ROCKCHIP                           policy<{'arm64': '-', 'armhf': '
 CONFIG_EC_LENOVO_YOGA_C630                      policy<{'arm64': 'm'}>
 CONFIG_EDAC_LAYERSCAPE                          policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_EMAC_ROCKCHIP                            policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_EROFS_FS                                 policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_ETHOSU                                   policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_EXT_GROUP_SCHED                          policy<{'arm64': '-'}>
 CONFIG_FB_MXC                                   policy<{'arm64': 'n', 'armhf': 'y'}>
