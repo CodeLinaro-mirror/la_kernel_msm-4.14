@@ -305,8 +305,7 @@ int panthor_device_init(struct panthor_device *ptdev)
 
 	panthor_gem_init(ptdev);
 
-	/* ~3 frames */
-	pm_runtime_set_autosuspend_delay(ptdev->base.dev, 50);
+	pm_runtime_set_autosuspend_delay(ptdev->base.dev, 200);
 	pm_runtime_use_autosuspend(ptdev->base.dev);
 
 	ret = drm_dev_register(&ptdev->base, 0);
