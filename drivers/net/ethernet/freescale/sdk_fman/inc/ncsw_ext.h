@@ -191,8 +191,6 @@ do                                      \
 #define SINGLE_BUF      (LAST_BUF | FIRST_BUF)
 #define MIDDLE_BUF      4
 
-#define ARRAY_END       -1
-
 #define ILLEGAL_BASE    (~0)
 
 #define BUF_POSITION(first, last)   state[(!!(last))<<1 | !!(first)]
