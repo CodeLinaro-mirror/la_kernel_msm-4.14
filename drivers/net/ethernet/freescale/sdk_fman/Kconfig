@@ -9,13 +9,6 @@ menuconfig FSL_SDK_FMAN
 
 if FSL_SDK_FMAN
 
-config FSL_SDK_FMAN_TEST
-	bool "FMan test module"
-	default n
-	select FSL_DPAA_HOOKS
-	help
-		This option compiles test code for FMan.
-
 config FSL_SDK_FMAN_RTC_API
 	bool "FMan RTC (1588 timer) APIs"
 	default n
