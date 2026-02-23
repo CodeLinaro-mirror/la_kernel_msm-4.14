@@ -4471,7 +4471,8 @@ CONFIG_TRANSPARENT_HUGEPAGE_MADVISE             policy<{'arm64': 'y', 'armhf': '
 CONFIG_TRANSPARENT_HUGEPAGE_NEVER               policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_TRUSTED_KEYS_CAAM                        policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_TRUSTED_KEYS_DCP                         policy<{'armhf': 'y'}>
-CONFIG_TRUSTED_KEYS_TEE                         policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_TRUSTED_KEYS_TEE                         policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_TRUSTED_KEYS_TPM                         policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_TS4800_IRQ                               policy<{'armhf': '-'}>
 CONFIG_TS4800_WATCHDOG                          policy<{'armhf': '-'}>
 CONFIG_TSN                                      policy<{'arm64': 'm', 'armhf': 'm'}>
