@@ -1435,17 +1435,16 @@ dpaa_eth_init_rx_port(struct fm_port *port, struct dpa_bp *bp, size_t count,
 			   buf_layout, frag_enabled);
 }
 
-int dpa_alloc_pcd_fqids(struct device *dev, uint32_t num,
-				uint8_t alignment, uint32_t *base_fqid)
+static int dpa_alloc_pcd_fqids(struct device *dev, uint32_t num,
+			       uint8_t alignment, uint32_t *base_fqid)
 {
 	dev_crit(dev, "callback not implemented!\n");
 
 	return 0;
 }
 
-int dpa_free_pcd_fqids(struct device *dev, uint32_t base_fqid)
+static int dpa_free_pcd_fqids(struct device *dev, uint32_t base_fqid)
 {
-
 	dev_crit(dev, "callback not implemented!\n");
 
 	return 0;
