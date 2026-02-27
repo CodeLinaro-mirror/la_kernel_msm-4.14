@@ -208,12 +208,12 @@ static struct se_if_node_info_list imx95_info = {
 			},
 			{
 			.se_if_id = 2,
-			.mu_buff_size = 256,
+			.mu_buff_size = 64,
 			.if_defs = {
-				.se_if_type = SE_TYPE_ID_V2X_SHE,
+				.se_if_type = SE_TYPE_ID_V2X_SV,
 				.se_instance_id = 0,
-				.cmd_tag = 0x1a,
-				.rsp_tag = 0xe4,
+				.cmd_tag = 0x18,
+				.rsp_tag = 0xe2,
 				.success_tag = ELE_SUCCESS_IND,
 				.base_api_ver = MESSAGING_VERSION_2,
 				.fw_api_ver = MESSAGING_VERSION_2,
@@ -226,12 +226,12 @@ static struct se_if_node_info_list imx95_info = {
 			},
 			{
 			.se_if_id = 3,
-			.mu_buff_size = 64,
+			.mu_buff_size = 256,
 			.if_defs = {
-				.se_if_type = SE_TYPE_ID_V2X_SV,
+				.se_if_type = SE_TYPE_ID_V2X_SHE,
 				.se_instance_id = 0,
-				.cmd_tag = 0x18,
-				.rsp_tag = 0xe2,
+				.cmd_tag = 0x1a,
+				.rsp_tag = 0xe4,
 				.success_tag = ELE_SUCCESS_IND,
 				.base_api_ver = MESSAGING_VERSION_2,
 				.fw_api_ver = MESSAGING_VERSION_2,
