@@ -32,6 +32,16 @@ COMMON_DIR = common
 # Common paths
 COMMON_INCLUDE = $(PWD)/$(COMMON_DIR)
 
+# Module install path (for modprobe support)
+INSTALL_MOD_DIR ?= /lib/modules/$(shell uname -r)/extra/nrc
+
+# Firmware
+FIRMWARE_DIR    = firmware
+FW_SRC          = $(FIRMWARE_DIR)/nrc7394_cspi.bin
+FW_DST_NAME     = uni_s1g.bin
+BD_SRC          = $(FIRMWARE_DIR)/nrc7394_bd.dat
+LIB_FIRMWARE    = /lib/firmware
+
 # Compilation flags
 COMMON_CFLAGS := -I$(COMMON_DIR) -DCONFIG_NRC_HIF_CSPI -Wall -Werror
 SPI_FEATURES := -DCONFIG_NRC_SPI_TRACE -DENABLE_HW_RESET
@@ -41,7 +51,7 @@ ifeq ($(DEBUG),y)
     COMMON_CFLAGS += -DDEBUG -g
 endif
 
-.PHONY: all modules clean install uninstall help
+.PHONY: all modules clean install uninstall firmware_install help
 .PHONY: backend hal wlan mcp
 
 all: modules
@@ -109,23 +119,49 @@ clean-frontend clean-wlan:
 clean-mcp:
 	@$(MAKE) -C $(MCP_DIR) clean
 
-install: modules
-	@sudo insmod $(BACKEND_DIR)/nrc_spi.ko
-	@sudo insmod $(HAL_DIR)/nrc_core.ko
-	@sudo insmod $(WLAN_DIR)/nrc_wlan.ko
-	@echo "Modules installed!"
+firmware_install:
+	@echo "Installing firmware to $(LIB_FIRMWARE)..."
+	@if [ ! -f "$(FW_SRC)" ]; then \
+		echo "Error: $(FW_SRC) not found"; exit 1; \
+	fi
+	@if [ ! -f "$(BD_SRC)" ]; then \
+		echo "Error: $(BD_SRC) not found"; exit 1; \
+	fi
+	@sudo install -m 0644 $(FW_SRC) $(LIB_FIRMWARE)/$(FW_DST_NAME)
+	@sudo install -m 0644 $(BD_SRC) $(LIB_FIRMWARE)/
+	@echo "  $(FW_SRC) -> $(LIB_FIRMWARE)/$(FW_DST_NAME)"
+	@echo "  $(BD_SRC) -> $(LIB_FIRMWARE)/$(notdir $(BD_SRC))"
+	@echo "Firmware installed!"
+
+install: modules firmware_install modules_install
+	@echo "Running depmod..."
+	@sudo depmod -a
+	@echo "Install completed! Use 'modprobe nrc_spi / nrc_core / nrc_wlan / nrc-mcp' to load."
 
 uninstall:
-	@sudo rmmod nrc_wlan 2>/dev/null || true
-	@sudo rmmod nrc-mcp 2>/dev/null || true
-	@sudo rmmod nrc_core 2>/dev/null || true
-	@sudo rmmod nrc_spi 2>/dev/null || true
-	@echo "Modules uninstalled!"
+	@echo "Removing installed modules..."
+	@sudo rm -f $(INSTALL_MOD_DIR)/nrc_spi.ko
+	@sudo rm -f $(INSTALL_MOD_DIR)/nrc_core.ko
+	@sudo rm -f $(INSTALL_MOD_DIR)/nrc_wlan.ko
+	@sudo rm -f $(INSTALL_MOD_DIR)/nrc-mcp.ko
+	@echo "Removing installed firmware..."
+	@sudo rm -f $(LIB_FIRMWARE)/$(FW_DST_NAME)
+	@sudo rm -f $(LIB_FIRMWARE)/$(notdir $(BD_SRC))
+	@echo "Running depmod..."
+	@sudo depmod -a
+	@echo "Uninstall completed!"
 
 modules_install:
-	@$(MAKE) -C $(BACKEND_DIR) modules_install
-	@$(MAKE) -C $(HAL_DIR) modules_install
-	@$(MAKE) -C $(WLAN_DIR) modules_install
+	@echo "Installing kernel modules to $(INSTALL_MOD_DIR)..."
+	@sudo install -d $(INSTALL_MOD_DIR)
+	@for ko in $(BACKEND_DIR)/nrc_spi.ko $(HAL_DIR)/nrc_core.ko \
+	            $(WLAN_DIR)/nrc_wlan.ko $(MCP_DIR)/nrc-mcp.ko; do \
+		if [ -f "$$ko" ]; then \
+			sudo install -m 0644 $$ko $(INSTALL_MOD_DIR)/; \
+			echo "  $$ko -> $(INSTALL_MOD_DIR)/"; \
+		fi; \
+	done
+	@echo "Kernel modules installed!"
 
 help:
 	@echo "NRC7394 Modular Driver Build System"
@@ -137,8 +173,10 @@ help:
 	@echo "  wlan         - Build nrc_wlan.ko only"
 	@echo "  mcp          - Build nrc-mcp.ko only"
 	@echo "  clean        - Clean all modules"
-	@echo "  install      - Load modules (requires sudo)"
-	@echo "  uninstall    - Unload modules (requires sudo)"
+	@echo "  install          - Build + install modules & firmware to system (requires sudo)"
+	@echo "  firmware_install - Install firmware files to $(LIB_FIRMWARE) only"
+	@echo "  modules_install  - Install .ko files to $(INSTALL_MOD_DIR) + firmware"
+	@echo "  uninstall        - Remove installed modules & firmware from system"
 	@echo ""
 	@echo "Options:"
 	@echo "  DEBUG=y      - Enable debug messages and symbols"
