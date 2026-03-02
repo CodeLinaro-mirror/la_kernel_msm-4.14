@@ -612,6 +612,8 @@
 	pinctrl-names = "default";
 	reset-gpio = <&pcal6524 5 GPIO_ACTIVE_LOW>;
 	vpcie-supply = <&reg_pcie0_keye>;
+	vpcie3v3aux-supply = <&reg_pcie0_keye>;
+	supports-clkreq;
 	status = "okay";
 };
 
