@@ -3,6 +3,7 @@
  * Copyright 2021 NXP
  */
 
+#include <linux/delay.h>
 #include <linux/cpu.h>
 #include <linux/imx_rpmsg.h>
 #include <linux/kernel.h>
@@ -157,7 +158,17 @@ static int __maybe_unused rpmsg_lifecycle_pm_notify(bool enter)
 
 static int __maybe_unused rpmsg_lifecycle_suspend_noirq(struct device *dev)
 {
-	return rpmsg_lifecycle_pm_notify(true);
+	int ret;
+
+	ret = rpmsg_lifecycle_pm_notify(true);
+
+	/*
+	 * Sleep for a while to make sure the remote proc side
+	 * is quiescent.
+	 */
+	msleep(50);
+
+	return ret;
 }
 
 static int __maybe_unused rpmsg_lifecycle_resume_noirq(struct device *dev)
