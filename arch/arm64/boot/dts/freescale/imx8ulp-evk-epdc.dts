@@ -16,69 +16,30 @@
 	#size-cells = <0>;
 	status = "okay";
 
-	fp9931: fp9931@18 {
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_pf9931>;
+	pmic@18 {
 		compatible = "fitipower,fp9931";
 		reg = <0x18>;
-		status = "okay";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pf9931>;
+		pg-gpios = <&gpioe 17 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&gpioe 18 GPIO_ACTIVE_HIGH>;
+		fitipower,tdly-ms = <1 1 1 1>;
 
-		/* power up and down timings in mseconds */
-		vgl-pwrup = <1>;
-		vneg-pwrup = <1>;
-		vgh-pwrup = <1>;
-		vpos-pwrup = <1>;
-		ss-time = <3>;
-		gpio-pmic-pwrgood = <&gpioe 17 0>;
-		gpio-pmic-wakeup = <&gpioe 18 0>;
-
-		/* enable sequence for panel VB3300:
-		 *
-		 * V3P3->VGL->VNEG->VGH->VPOS->VCOM
-		 */
 		regulators {
-			/* fifth enabe VPOS */
-			vpos_reg: VPOS-LDO {
-				regulator-name = "VPOS";
-				regulator-min-microvolt = <7040000>;
+			vcom: vcom {
+				regulator-name = "vcom";
+				regulator-min-microvolt = <2548910>;
+				regulator-max-microvolt = <2548910>;
+			};
+
+			vposneg: vposneg {
+				regulator-name = "vposneg";
+				regulator-min-microvolt = <15060000>;
 				regulator-max-microvolt = <15060000>;
 			};
 
-			/* third enable VNEG */
-			vneg_reg: VNEG-LDO {
-				regulator-name = "VNEG";
-				/* Real max value: -7040000 uV */
-				regulator-min-microvolt = <7040000>;
-				/* Real min value: -15060000 uV */
-				regulator-max-microvolt = <15060000>;
-			};
-
-			/* fourth enable VGH */
-			vgh_reg: VGH-CHARGE-PUMP {
-				/* 15V to 30V with External Dividual Resistor */
-				regulator-name = "VGH";
-			};
-
-			/* second enable VGL */
-			vgl_reg: VGL-CHARGE-PUMP {
-				/* -15V to -25V with External Dividual Resistor */
-				regulator-name = "VGL";
-			};
-
-			/* last enable VCOM */
-			vcom_reg: VCOM {
-				regulator-name = "VCOM";
-				/* Real max value:  -19608 uV */
-				regulator-min-microvolt = <19608>;
-				/* Real min value: -5000000 uV */
-				regulator-max-microvolt = <5000000>;
-			};
-
-			/* V3P3 is the first power need to be enabled
-			 * according to VB3300 panel spec.
-			 */
-			v3p3_reg: V3P3 {
-				regulator-name = "V3P3";
+			v3p3: v3p3 {
+				regulator-name = "v3p3";
 			};
 		};
 	};
@@ -120,10 +81,9 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_epdc0>;
 	en-gpios = <&pca6416_1 10 GPIO_ACTIVE_HIGH>; /* switch */
-	V3P3-supply = <&v3p3_reg>;
-	VCOM-supply = <&vcom_reg>;
-	VPOS-supply = <&vpos_reg>;
-	VNEG-supply = <&vneg_reg>;
+	V3P3-supply = <&v3p3>;
+	VCOM-supply = <&vcom>;
+	VPOS-supply = <&vposneg>;
 	status = "okay";
 };
 
