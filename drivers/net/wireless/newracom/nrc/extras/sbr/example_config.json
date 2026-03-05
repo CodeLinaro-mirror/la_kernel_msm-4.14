@@ -1,0 +1,27 @@
+{
+  "device": {
+    "mac_address": "01:12:34:56:78:c1",
+    "product_id": "0x23456789",
+    "pan_id": "0xabcd",
+    "role": "light"
+  },
+  "test_mode": {
+    "enabled":false,
+    "mac_any_of": [
+    ],
+    "product_id_any_of": [
+      "0x23456789"
+    ],
+    "pan_id_any_of": [
+      "0xabcd"
+    ],
+    "scan_freq_100khz": [
+      "9090",
+      "9030"
+    ],
+    "scan_bandwidth": [
+      "1",
+      "1"
+    ]
+  }
+}
