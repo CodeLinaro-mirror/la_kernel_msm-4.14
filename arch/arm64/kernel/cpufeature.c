@@ -2326,6 +2326,14 @@ static bool has_gic_prio_relaxed_sync(const struct arm64_cpu_capabilities *entry
 }
 #endif
 
+static bool enable_jailhouse;
+
+static int __init parse_jailhouse_param(char *p)
+{
+	return kstrtobool(p, &enable_jailhouse);
+}
+early_param("jailhouse", parse_jailhouse_param);
+
 static bool can_trap_icv_dir_el1(const struct arm64_cpu_capabilities *entry,
 				 int scope)
 {
@@ -2348,6 +2356,10 @@ static bool can_trap_icv_dir_el1(const struct arm64_cpu_capabilities *entry,
 
 	BUILD_BUG_ON(ARM64_HAS_ICH_HCR_EL2_TDIR <= ARM64_HAS_GICV3_CPUIF);
 	BUILD_BUG_ON(ARM64_HAS_ICH_HCR_EL2_TDIR <= ARM64_HAS_GICV5_LEGACY);
+
+	if (enable_jailhouse)
+		return true;
+
 	if (!is_hyp_mode_available())
 		return false;
 
