@@ -106,7 +106,6 @@ enum {
 #define V4L2_PIX_FMT_411SP			v4l2_fourcc('4', '1', 'S', 'P') /* YUV 411 Semi planar */
 
 /*codec format*/
-#define V4L2_PIX_FMT_AV1			v4l2_fourcc('A', 'V', '1', '0')	/* av1 */
 #define V4L2_PIX_FMT_AVS			v4l2_fourcc('A', 'V', 'S', '0')	/* avs */
 /*codec formats*/
 #endif	//#ifndef _UAPI__LINUX_IMX_VPU_H
