@@ -1039,6 +1039,7 @@ int nrc_fw_start(struct nrc_hif_device *hdev)
 
 	p = nrc_wim_skb_add_tlv(skb_req, WIM_TLV_DRV_INFO,
 				sizeof(struct wim_drv_info_param), NULL);
+	memset(p, 0, sizeof(*p));
 	p->boot_mode = !!hdev->params->fw_name;
 	p->cqm_off = hdev->params->disable_cqm;
 	p->bitmap_encoding = hdev->params->bitmap_encoding;
@@ -1071,6 +1072,7 @@ int nrc_fw_start(struct nrc_hif_device *hdev)
 		p->twt_wake_interval = 0;
 	}
 	p->raw = hdev->params->raw;
+	p->sub_xtal_bypass = hdev->params->sub_xtal_bypass;
 
 	p->auth_control_enable = hdev->params->set_auth_control[0] ? true :
 								     false;

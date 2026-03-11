@@ -286,6 +286,11 @@ bool raw = 0;
 module_param(raw, bool, S_IRUSR | S_IWUSR);
 MODULE_PARM_DESC(raw, "RAW Enable (AP only)");
 
+/* Sub-crystal oscillator block bypass enable */
+bool sub_xtal_bypass = false;
+module_param(sub_xtal_bypass, bool, 0600);
+MODULE_PARM_DESC(sub_xtal_bypass, "Set sub-crystal oscillator block bypass enable");
+
 /* ===========================================================================
  * Test and Debug Parameters
  * =========================================================================== */
@@ -425,6 +430,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 	params->twt_num_in_group = twt_num_in_group;
 	params->twt_algo = twt_algo;
 	params->raw = raw;
+	params->sub_xtal_bypass = sub_xtal_bypass;
 	params->ps_pretend = ps_pretend;
 	params->set_cca_threshold = set_cca_threshold;
 	params->nullfunc_enable = nullfunc_enable;

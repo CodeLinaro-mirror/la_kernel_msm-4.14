@@ -77,6 +77,7 @@
  * @band_selection_gpio_num: Target GPIO number for band selection
  * @band_selection_gpio_polarity: Target GPIO polarity for band selection
  * @mcp_priority: Enable MCP priority over WLAN TX
+ * @sub_xtal_bypass: Sub-crystal oscillator block bypass enable
  */
 struct nrc_params {
 	/* Power Management */
@@ -114,6 +115,9 @@ struct nrc_params {
 
 	/* RAW (Restricted Access Window) */
 	bool raw;
+
+	/* Sub-crystal oscillator bypass */
+	bool sub_xtal_bypass;
 
 	/* Advanced Configuration */
 	bool ps_pretend;
