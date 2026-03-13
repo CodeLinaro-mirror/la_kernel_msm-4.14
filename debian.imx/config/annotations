@@ -1980,7 +1980,7 @@ CONFIG_IMX_SC_THERMAL                           policy<{'arm64': 'm', 'armhf': '
 CONFIG_IMX_SC_WDT                               policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_IMX_SDMA                                 policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMX_SECO_MU                              policy<{'arm64': 'm', 'armhf': 'y'}>
-CONFIG_IMX_SEC_ENCLAVE                          policy<{'arm64': 'm'}>
+CONFIG_IMX_SEC_ENCLAVE                          policy<{'arm64': 'y'}>
 CONFIG_IMX_SEMA4                                policy<{'armhf': 'y'}>
 CONFIG_IMX_SHMEM_NET                            policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_IMX_WEIM                                 policy<{'arm64': 'y', 'armhf': 'n'}>
@@ -4141,7 +4141,7 @@ CONFIG_SOC_HAS_REALTIME_COUNTER                 policy<{'armhf': '-'}>
 CONFIG_SOC_IMX5                                 policy<{'armhf': '-'}>
 CONFIG_SOC_IMX50                                policy<{'armhf': 'n'}>
 CONFIG_SOC_IMX51                                policy<{'armhf': 'n'}>
-CONFIG_SOC_IMX9                                 policy<{'arm64': 'm', 'armhf': '-'}>
+CONFIG_SOC_IMX9                                 policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_SOC_IMX_MU                               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SOC_LS1021A                              policy<{'armhf': 'y'}>
 CONFIG_SOC_RENESAS                              policy<{'arm64': '-', 'armhf': '-'}>
