@@ -2,6 +2,7 @@
 # FORMAT: 4
 # ARCH: arm64 armhf
 # FLAVOUR: arm64-imx armhf-imx
+# FLAVOUR_DEP: {'arm64-imx': 'arm64-generic', 'armhf-imx': 'armhf-generic'}
 
 include "../../debian.master/config/annotations"
 
