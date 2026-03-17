@@ -1369,8 +1369,10 @@ static int ci_controller_resume(struct device *dev)
 
 	dev_dbg(dev, "at %s\n", __func__);
 
-	if (!ci->in_lpm)
+	if (!ci->in_lpm) {
+		WARN_ON(1);
 		return 0;
+	}
 
 	ci_hdrc_enter_lpm(ci, false);
 
@@ -1484,8 +1486,10 @@ static int ci_runtime_suspend(struct device *dev)
 
 	dev_dbg(dev, "at %s\n", __func__);
 
-	if (ci->in_lpm)
+	if (ci->in_lpm) {
+		WARN_ON(1);
 		return 0;
+	}
 
 	if (ci_otg_is_fsm_mode(ci))
 		ci_otg_fsm_suspend_for_srp(ci);
