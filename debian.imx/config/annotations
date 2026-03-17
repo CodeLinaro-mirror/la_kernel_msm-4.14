@@ -1008,9 +1008,13 @@ CONFIG_DEVFREQ_EVENT_ROCKCHIP_DFI               policy<{'arm64': '-'}>
 CONFIG_DEVICE_THERMAL                           policy<{'arm64': '-'}>
 CONFIG_DEV_DAX_HMEM                             policy<{'arm64': '-'}>
 CONFIG_DEV_DAX_HMEM_DEVICES                     policy<{'arm64': '-'}>
+CONFIG_DM_BUFIO                                 policy<{'arm64': 'y'}>
 CONFIG_DMABUF_HEAPS_DSP                         policy<{'arm64': '-'}>
 CONFIG_DMA_ACPI                                 policy<{'arm64': '-'}>
 CONFIG_DMA_BCM2835                              policy<{'arm64': '-'}>
+CONFIG_DM_VERITY                                policy<{'arm64': 'y'}>
+CONFIG_DM_VERITY_FEC                            policy<{'arm64': 'y'}>
+CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG            policy<{'arm64': 'y'}>
 CONFIG_DMA_NUMA_CMA                             policy<{'arm64': '-'}>
 CONFIG_DMA_PERNUMA_CMA                          policy<{'arm64': '-'}>
 CONFIG_DMA_RESTRICTED_POOL                      policy<{'arm64': 'n'}>
