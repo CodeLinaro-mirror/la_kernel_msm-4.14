@@ -699,7 +699,10 @@ CONFIG_DEV_DAX                                  policy<{'arm64': 'm', 'armhf': '
 CONFIG_DEV_DAX_CXL                              policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_DMABUF_HEAPS_DSP                         policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_DMA_RESTRICTED_POOL                      policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_DM_BUFIO                                 policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DM_PCACHE                                policy<{'arm64': 'm', 'armhf': '-'}>
+CONFIG_DM_VERITY                                policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_DM_VERITY_FEC                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DRM_ACCEL_ROCKET                         policy<{'arm64': '-'}>
 CONFIG_DRM_CDNS_AUDIO                           policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_CDNS_DP                              policy<{'arm64': 'm', 'armhf': 'm'}>
