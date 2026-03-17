@@ -67,8 +67,6 @@ struct ci_hdrc_platform_data {
 #define CI_HDRC_FORCE_VBUS_ACTIVE_ALWAYS	BIT(18)
 #define	CI_HDRC_HAS_SHORT_PKT_LIMIT	BIT(19)
 #define	CI_HDRC_OUT_BAND_WAKEUP		BIT(20)
-/* PHY enter low power mode when bus suspend */
-#define CI_HDRC_HOST_SUSP_PHY_LPM	BIT(21)
 	enum usb_dr_mode	dr_mode;
 #define CI_HDRC_CONTROLLER_RESET_EVENT		0
 #define CI_HDRC_CONTROLLER_STOPPED_EVENT	1
