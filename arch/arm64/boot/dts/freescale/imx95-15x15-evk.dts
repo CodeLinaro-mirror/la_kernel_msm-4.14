@@ -1116,7 +1116,6 @@
 &tpm6 {
 	pinctrl-0 = <&pinctrl_tpm6>;
 	pinctrl-names = "default";
-	pwm-rst;
 	status = "okay";
 };
 
