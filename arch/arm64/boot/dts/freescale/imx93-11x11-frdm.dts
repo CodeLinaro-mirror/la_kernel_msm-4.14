@@ -648,7 +648,7 @@
 
 &lpuart5 {
 	/* BT */
-	pinctrl-0 = "pinctrl_uart5";
+	pinctrl-0 = <&pinctrl_uart5>;
 	pinctrl-names = "default";
 	status = "okay";
 
