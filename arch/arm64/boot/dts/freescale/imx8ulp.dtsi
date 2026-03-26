@@ -1029,7 +1029,8 @@
 
 			mipi_csi: csi@2daf0000 {
 				compatible = "fsl,imx8ulp-mipi-csi2";
-				reg = <0x2daf0000 0x10000>;
+				reg = <0x2daf0000 0x10000>,
+				      <0x2dad0000 0x10000>;
 				clocks = <&pcc5 IMX8ULP_CLK_CSI>,
 					 <&pcc5 IMX8ULP_CLK_CSI_CLK_ESC>,
 					 <&pcc5 IMX8ULP_CLK_CSI_CLK_UI>,
@@ -1042,25 +1043,30 @@
 				assigned-clock-parents = <&cgc2 IMX8ULP_CLK_PLL4_PFD1_DIV1>,
 							 <&cgc2 IMX8ULP_CLK_PLL4_PFD1_DIV2>,
 							 <&cgc2 IMX8ULP_CLK_PLL4_PFD1_DIV2>;
-				power-domains = <&scmi_devpd IMX8ULP_PD_MIPI_CSI>;
 				assigned-clock-rates = <200000000>,
 						       <80000000>,
 						       <100000000>,
 						       <79200000>;
-				resets = <&csr_regs_rst 0>;
-				fsl,mipi-phy-gpr = <&csr_regs 0x0>;
+				power-domains = <&scmi_devpd IMX8ULP_PD_MIPI_CSI>;
+				resets = <&pcc5 PCC5_CSI_SWRST>,
+					 <&pcc5 PCC5_CSI_REGS_SWRST>;
 				status = "disabled";
-			};
 
-			csr_regs: csr@2dad0000 {
-				compatible = "syscon", "simple-mfd";
-				reg = <0x2dad0000 0x10000>;
-				clocks = <&pcc5 IMX8ULP_CLK_CSI_REGS>;
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
 
-				csr_regs_rst: reset-controller {
-					compatible = "nxp,imx8ulp-csr-regs-reset";
-					#reset-cells = <1>;
-					fsl,offset = <0x44>;
+					port@0 {
+						reg = <0>;
+					};
+
+					port@1 {
+						reg = <1>;
+
+						mipi_csi_out: endpoint {
+							remote-endpoint = <&isi_in>;
+						};
+					};
 				};
 			};
 
