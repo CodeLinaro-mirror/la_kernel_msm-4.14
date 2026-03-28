@@ -23,6 +23,19 @@ struct ptshare_desc {
 	ANDROID_BACKPORT_RESERVE(2);
 };
 
+#ifdef CONFIG_PTSHARE
+/* dup_mm() copies the parent's mm_struct: start outside any domain. */
+static inline void ptshare_mm_init(struct mm_struct *mm)
+{
+	RCU_INIT_POINTER(mm->ptshare_desc, NULL);
+	refcount_set(&mm->ptshare_vmas, 0);
+}
+#else /* !CONFIG_PTSHARE */
+static inline void ptshare_mm_init(struct mm_struct *mm)
+{
+}
+#endif /* CONFIG_PTSHARE */
+
 #endif /* !__ASSEMBLY__ */
 
 #endif /* _LINUX_PTSHARE_H */
