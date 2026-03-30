@@ -2749,9 +2749,8 @@
 				 <&scmi_clk IMX95_CLK_HSIOPLL>,
 				 <&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
 				 <&scmi_clk IMX95_CLK_HSIOPCIEAUX>,
-				 <&hsio_blk_ctl 0>, <&hsio_blk_ctl 1>;
-			clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_aux", "ref",
-				      "refout_en";
+				 <&hsio_blk_ctl 0>;
+			clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_aux", "ref";
 			assigned-clocks = <&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
 					  <&scmi_clk IMX95_CLK_HSIOPLL>,
 					  <&scmi_clk IMX95_CLK_HSIOPCIEAUX>;
@@ -2828,9 +2827,8 @@
 				 <&scmi_clk IMX95_CLK_HSIOPLL>,
 				 <&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
 				 <&scmi_clk IMX95_CLK_HSIOPCIEAUX>,
-				 <&hsio_blk_ctl 0>, <&hsio_blk_ctl 1>;
-			clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_aux", "ref",
-				      "refout_en";
+				 <&hsio_blk_ctl 0>;
+			clock-names = "pcie", "pcie_bus", "pcie_phy", "pcie_aux", "ref";
 			assigned-clocks = <&scmi_clk IMX95_CLK_HSIOPLL_VCO>,
 					  <&scmi_clk IMX95_CLK_HSIOPLL>,
 					  <&scmi_clk IMX95_CLK_HSIOPCIEAUX>;
