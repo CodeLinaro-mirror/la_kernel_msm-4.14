@@ -1418,6 +1418,8 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
 	struct spi_status_reg *status = &priv->hw.status;
 	struct nrc_debug *debug;
+	bool need_tx_reset = false;
+	bool need_rx_reset = false;
 	int ret, ac = 0;
 	u32 rear;
 
@@ -1502,26 +1504,34 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	trace_nrc_hif_rx_slot(priv, RX_SLOT, "update");
 	trace_nrc_hif_tx_slot(priv, TX_SLOT, "update");
 
+	/* NOTE: spi_hif_reset_tx/rx must NOT be called while SLOT_SYNC_LOCK
+	 * is held — they call disable_irq → synchronize_irq, which waits for
+	 * the IRQ handler thread. That thread also acquires SLOT_SYNC_LOCK,
+	 * causing a deadlock. Instead, set flags here and call after unlock.
+	 */
 	if (c_spi_num_slots(hdev, TX_SLOT) > 32) {
 		WARN_SPI("TX_gap:%u head:%u vs tail:%u",
 			 c_spi_num_slots(hdev, TX_SLOT),
 			 hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail);
-		if (priv->hw.sys.chip_id == 0x7394 && NRC_PS_IS_AWAKE(hdev)) {
-			spi_hif_reset_tx(hdev);
-		}
+		if (priv->hw.sys.chip_id == 0x7394 && NRC_PS_IS_AWAKE(hdev))
+			need_tx_reset = true;
 	}
 
 	if (c_spi_num_slots(hdev, RX_SLOT) > 33) {
 		WARN_SPI("RX_gap:%u head:%u vs tail:%u",
 			 c_spi_num_slots(hdev, RX_SLOT),
 			 hdev->slot[RX_SLOT].head, hdev->slot[RX_SLOT].tail);
-		//hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head = 0;
-		if (priv->hw.sys.chip_id == 0x7394 && NRC_PS_IS_AWAKE(hdev)) {
-			spi_hif_reset_rx(hdev);
-		}
+		if (priv->hw.sys.chip_id == 0x7394 && NRC_PS_IS_AWAKE(hdev))
+			need_rx_reset = true;
 	}
 
 	SLOT_SYNC_UNLOCK();
+
+	/* Deferred HIF resets — safe now that SLOT_SYNC_LOCK is released */
+	if (need_tx_reset)
+		spi_hif_reset_tx(hdev);
+	if (need_rx_reset)
+		spi_hif_reset_rx(hdev);
 
 	/* no need to update credit while loopback test */
 	if (hdev->params->loopback) {

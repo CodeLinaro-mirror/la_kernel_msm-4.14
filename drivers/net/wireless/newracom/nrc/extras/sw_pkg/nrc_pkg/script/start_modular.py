@@ -3,6 +3,7 @@
 
 import sys, os, time, subprocess, re
 import threading
+import signal
 from mesh import *
 
 # Auto-detect nrc_pkg path based on script location
@@ -161,6 +162,8 @@ debug_level_param = None
 debug_mask_param = None
 ps_param = None
 idle_param = None
+recovery_param = 0             # 0: disabled, 1: enable recovery daemon
+load_method = 'modprobe'       # 'modprobe' (default) or 'insmod'
 
 # Default Configuration (you can change value you want here)
 ##################################################################################
@@ -440,11 +443,12 @@ def parse_debug_mask(mask_str):
 
 def parse_debug_args():
     """
-    Parse command line arguments to extract debug and power save parameters
+    Parse command line arguments to extract debug, power save and recovery parameters
     dbg=MASK automatically sets debug_level=DBG (3) and debug_mask=MASK
     Returns: positional_args
     """
     global debug_level_param, debug_mask_param, ps_param, idle_param, raw
+    global recovery_param, load_method
 
     positional_args = []
 
@@ -481,6 +485,13 @@ def parse_debug_args():
                 print("[*] Idle mode set to %d" % idle_param)
             except ValueError:
                 print("[!] Invalid idle value: %s (must be integer)" % idle_str)
+        elif arg.startswith('recovery='):
+            rec_str = arg.split('=', 1)[1]
+            try:
+                recovery_param = int(rec_str)
+                print("[*] Recovery daemon set to %d" % recovery_param)
+            except ValueError:
+                print("[!] Invalid recovery value: %s (must be 0 or 1)" % rec_str)
         elif arg.startswith('raw='):
             raw_str = arg.split('=', 1)[1]
             try:
@@ -488,6 +499,28 @@ def parse_debug_args():
                 print("[*] RAW set to %d" % raw)
             except ValueError:
                 print("[!] Invalid raw value: %s (must be 0 or 1)" % raw_str)
+        elif arg.startswith('debug_level='):
+            lvl_str = arg.split('=', 1)[1]
+            try:
+                debug_level_param = int(lvl_str)
+                print("[*] Debug level set to %d" % debug_level_param)
+            except ValueError:
+                print("[!] Invalid debug_level value: %s (must be 0-4)" % lvl_str)
+        elif arg.startswith('debug_mask='):
+            mask_str = arg.split('=', 1)[1]
+            debug_mask_param = parse_debug_mask(mask_str)
+            if debug_mask_param is not None:
+                print("[*] Debug mask set to 0x%X (%s)" % (debug_mask_param, mask_str))
+            else:
+                print("[!] Invalid debug_mask value: %s" % mask_str)
+        elif arg.startswith('load='):
+            load_str = arg.split('=', 1)[1].lower()
+            if load_str in ('modprobe', 'insmod'):
+                load_method = load_str
+                print("[*] Module load method set to '%s'" % load_method)
+            else:
+                print("[!] Invalid load value: %s (must be 'modprobe' or 'insmod')" % load_str)
+                print("[!] Using default: modprobe")
         else:
             positional_args.append(arg)
 
@@ -532,7 +565,9 @@ def usage_print():
                          \n\tvbs/verbose    [same categories as dbg] * Optional (auto sets level=VBS - verbose/trace) \
                          \n\tps            [0-3: Power save type] * Optional \
                          \n\tidle          [0:Disable | 1:Enable idle mode] * Optional \
-                         \n\traw           [0:Disable | 1:Enable RAW (AP only)] * Optional")
+                         \n\traw           [0:Disable | 1:Enable RAW (AP only)] * Optional \
+                         \n\trecovery      [0:Disable | 1:Enable recovery daemon] * Optional \
+                         \n\tload          [modprobe (default) | insmod] * Optional (module loading method)")
     print("Example:  \n\tOPEN mode STA for US                : ./start_modular.py 0 0 US \
                       \n\tSecurity mode AP for US                : ./start_modular.py 1 1 US \
                       \n\tLocal Sniffer mode on CH 40 for Japan  : ./start_modular.py 2 0 JP 40 0 \
@@ -549,12 +584,19 @@ def usage_print():
                       \n\tSTA with hex debug mask                : ./start_modular.py 0 0 US dbg=0x480 \
                       \n\tSTA with power save type 2             : ./start_modular.py 0 0 US ps=2 \
                       \n\tSTA with power save and idle mode      : ./start_modular.py 0 0 US ps=2 idle=1 \
-                      \n\tSTA with all optional params           : ./start_modular.py 0 0 US ps=2 idle=1 \"dbg=PS|FW\"")
+                      \n\tSTA with all optional params           : ./start_modular.py 0 0 US ps=2 idle=1 \"dbg=PS|FW\" \
+                      \n\tSTA with recovery daemon               : ./start_modular.py 0 1 US recovery=1 \
+                      \n\t----------------------------------------------------------- \
+                      \n\tModule loading method: \
+                      \n\tSTA using modprobe (default)            : ./start_modular.py 0 0 US \
+                      \n\tSTA using insmod (legacy)               : ./start_modular.py 0 0 US load=insmod")
     print("Note: \n\tsniffer_mode should be set as '1' when running sniffer on remote terminal \
                   \n\tMPP, MP mode support only Open, WPA3-SAE security mode \
                   \n\tOptional parameters (dbg/debug, vbs/verbose, ps, idle) can be placed anywhere in the command line \
                   \n\tUse quotes around dbg/vbs when using pipe operator: \"dbg=PS|FW\" or \"vbs=TX|PS\" \
-                  \n\tdbg=/debug= sets debug level to DBG(3), vbs=/verbose= sets level to VBS(4) - verbose/trace")
+                  \n\tdbg=/debug= sets debug level to DBG(3), vbs=/verbose= sets level to VBS(4) - verbose/trace \
+                  \n\tload=modprobe (default): loads modules via modprobe from system path (requires 'make install') \
+                  \n\tload=insmod: loads modules via insmod from nrc_pkg/sw/driver/ (legacy behavior)")
     exit()
 
 def strSTA():
@@ -782,6 +824,9 @@ def argv_print():
         print("Power Save (CLI) : " + str(ps_param))
     if idle_param is not None:
         print("Idle Mode (CLI)  : " + str(idle_param))
+    if recovery_param > 0:
+        print("Recovery Daemon  : Enabled")
+    print("Load Method      : " + load_method)
     print("------------------------------")
 
 def copyConf():
@@ -803,6 +848,222 @@ def copyConf():
             os.system("sudo " + bridge_script + " " + strSTA() + " " + str(use_bridge_setup - 1) + " " + str(bridge_ip_mode))
         else:
             print("[!] Skipping bridge config (script not available)")
+
+# ---------------------------------------------------------------------------
+# Module loading helpers (modprobe / insmod)
+# ---------------------------------------------------------------------------
+
+def get_system_module_dir():
+    """Return the system module directory for NRC modules."""
+    import platform
+    kernel_version = platform.release()
+    return "/lib/modules/%s/extra/nrc" % kernel_version
+
+def check_nrc_pkg_modules():
+    """
+    Check if .ko files exist in nrc_pkg/sw/driver/.
+    Returns list of (filename, full_path) for found .ko files.
+    """
+    driver_dir = NRC_PKG_PATH + "/sw/driver"
+    ko_files = [
+        ("nrc_spi.ko", os.path.join(driver_dir, "nrc_spi.ko")),
+        ("nrc_core.ko", os.path.join(driver_dir, "nrc_core.ko")),
+        ("nrc_wlan.ko", os.path.join(driver_dir, "nrc_wlan.ko")),
+        ("nrc-mcp.ko", os.path.join(driver_dir, "nrc-mcp.ko")),
+    ]
+    found = []
+    for name, path in ko_files:
+        if os.path.isfile(path):
+            found.append((name, path))
+    return found
+
+def _modules_need_sync(pkg_modules, mod_dir):
+    """
+    Compare .ko files in nrc_pkg/sw/driver/ with system module path.
+    Returns True if any file is missing or has a different size/mtime,
+    meaning sync + depmod is required.
+    """
+    for name, src_path in pkg_modules:
+        dst_path = os.path.join(mod_dir, name)
+        if not os.path.isfile(dst_path):
+            return True
+        try:
+            src_stat = os.stat(src_path)
+            dst_stat = os.stat(dst_path)
+            if src_stat.st_size != dst_stat.st_size:
+                return True
+            if src_stat.st_mtime > dst_stat.st_mtime:
+                return True
+        except OSError:
+            return True
+    return False
+
+def sync_modules_to_system():
+    """
+    If .ko files exist in nrc_pkg/sw/driver/, copy them to the system
+    module directory and run depmod.  This keeps the existing build→deploy
+    workflow (remote-build.sh → nrc_pkg/sw/driver/) compatible with modprobe.
+
+    Skips copy + depmod if the system files are already up-to-date
+    (same size and not older than nrc_pkg copies).
+
+    Returns True if modules are available in the system path after sync.
+    """
+    pkg_modules = check_nrc_pkg_modules()
+    if not pkg_modules:
+        return check_system_modules_installed()
+
+    mod_dir = get_system_module_dir()
+
+    if not _modules_need_sync(pkg_modules, mod_dir):
+        ret = os.system("sudo modprobe --dry-run --quiet nrc_spi 2>/dev/null")
+        if ret == 0:
+            print("[*] System modules are up-to-date — skipping sync/depmod")
+            return True
+
+    print("[*] Found .ko files in %s/sw/driver/ — syncing to system path" % NRC_PKG_PATH)
+
+    os.system("sudo mkdir -p %s" % mod_dir)
+
+    for name, src_path in pkg_modules:
+        dst_path = os.path.join(mod_dir, name)
+        ret = os.system("sudo cp %s %s" % (src_path, dst_path))
+        if ret == 0:
+            print("[*]   %s -> %s" % (name, mod_dir))
+        else:
+            print("[!]   Failed to copy %s" % name)
+            return False
+
+    print("[*] Running depmod...")
+    ret = os.system("sudo depmod -a")
+    if ret != 0:
+        print("[!] WARNING: depmod failed")
+        return False
+
+    print("[*] System modules synced and depmod completed")
+    return True
+
+def check_system_modules_installed():
+    """
+    Check if NRC modules are installed in the system module path.
+    Returns True if at least the three core modules are present.
+    """
+    mod_dir = get_system_module_dir()
+    required = ["nrc_spi.ko", "nrc_core.ko", "nrc_wlan.ko"]
+    if not os.path.isdir(mod_dir):
+        return False
+    for ko in required:
+        if not os.path.isfile(os.path.join(mod_dir, ko)):
+            return False
+    return True
+
+def ensure_depmod():
+    """
+    Ensure modules are available for modprobe.
+    1. If .ko files exist in nrc_pkg/sw/driver/, sync them to system path
+    2. Otherwise check system path directly
+    3. Run depmod if needed
+    Returns True if modprobe can resolve modules after this call.
+    """
+    # First, sync from nrc_pkg if .ko files are present there
+    if check_nrc_pkg_modules():
+        return sync_modules_to_system()
+
+    # No .ko in nrc_pkg — check if already installed in system
+    ret = os.system("sudo modprobe --dry-run --quiet nrc_spi 2>/dev/null")
+    if ret == 0:
+        return True
+
+    # Modules installed but depmod not run?
+    if check_system_modules_installed():
+        print("[*] Running depmod to update module dependencies...")
+        ret = os.system("sudo depmod -a")
+        if ret != 0:
+            print("[!] WARNING: depmod failed (exit code %d)" % ret)
+            return False
+        ret = os.system("sudo modprobe --dry-run --quiet nrc_spi 2>/dev/null")
+        if ret == 0:
+            print("[*] depmod completed — modules are now available via modprobe")
+            return True
+        else:
+            print("[!] WARNING: depmod ran but modprobe still cannot resolve modules")
+            return False
+
+    # Modules not installed at all
+    return False
+
+def load_module(module_name, ko_path, params):
+    """
+    Load a kernel module using the configured method (modprobe or insmod).
+
+    Args:
+        module_name: Module name for modprobe (e.g. 'nrc_spi')
+        ko_path:     Full path to .ko file for insmod (e.g. '/path/nrc_spi.ko')
+        params:      Module parameter string (e.g. 'hifspeed=20000000 ...')
+
+    Returns:
+        0 on success, non-zero on failure.
+    """
+    if load_method == 'modprobe':
+        cmd = "sudo modprobe %s %s" % (module_name, params)
+    else:
+        cmd = "sudo insmod %s %s" % (ko_path, params)
+    print(cmd)
+    return os.system(cmd)
+
+MODPROBE_CONF_DIR = "/etc/modprobe.d"
+
+def _write_modprobe_conf(module_name, params):
+    """
+    Write a per-module conf file to /etc/modprobe.d/<module_name>.conf.
+    Called every time start_modular.py runs so that parameter changes
+    are always reflected.  The file is overwritten (not appended).
+    """
+    conf_path = "%s/%s.conf" % (MODPROBE_CONF_DIR, module_name)
+    stripped = params.strip() if params else ""
+    header = (
+        "# NRC7394 Modular Driver — %s parameters\n"
+        "# Auto-generated by start_modular.py — regenerated on every run\n"
+    ) % module_name
+    if stripped:
+        content = header + "options %s %s\n" % (module_name, stripped)
+    else:
+        content = header + "# (no parameters)\n"
+
+    import tempfile
+    try:
+        fd, tmp_path = tempfile.mkstemp(suffix='.conf', prefix=module_name + '_')
+        with os.fdopen(fd, 'w') as f:
+            f.write(content)
+        ret = os.system("sudo cp %s %s && sudo chmod 644 %s" % (
+            tmp_path, conf_path, conf_path))
+        os.remove(tmp_path)
+        if ret == 0:
+            print("[*] %s written" % conf_path)
+        else:
+            print("[!] WARNING: Failed to write %s" % conf_path)
+    except Exception as e:
+        print("[!] WARNING: Failed to generate %s: %s" % (conf_path, str(e)))
+
+def generate_modprobe_confs(spi_param, core_param, wlan_param):
+    """
+    Generate per-module conf files under /etc/modprobe.d/.
+    Each file is overwritten so that the latest parameters from
+    start_modular.py are always used by modprobe.
+
+    Files created:
+      /etc/modprobe.d/nrc_spi.conf
+      /etc/modprobe.d/nrc_core.conf
+      /etc/modprobe.d/nrc_wlan.conf
+    """
+    print("[*] Generating modprobe configuration files...")
+    _write_modprobe_conf("nrc_spi", spi_param)
+    _write_modprobe_conf("nrc_core", core_param)
+    _write_modprobe_conf("nrc_wlan", wlan_param)
+
+def generate_mcp_modprobe_conf(mcp_param):
+    """Generate /etc/modprobe.d/nrc_mcp.conf for MCP module."""
+    _write_modprobe_conf("nrc_mcp", mcp_param)
 
 def startNAT():
     os.system('sudo sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"')
@@ -890,7 +1151,12 @@ static ip_address=%s/24
     os.system("echo '%s' | sudo tee -a %s" % (interface_config, dhcpcd_conf))
 
 def startDHCPCD():
-    os.system("sudo dhcpcd wlan0")
+    # Use -b to background immediately so dhcpcd persists as a daemon
+    # even when carrier is not yet available (wpa_supplicant starts later).
+    # Without -b, dhcpcd exits(1) on timeout if no carrier → no DHCP after
+    # wpa_supplicant connects. This is critical for recovery restarts where
+    # the systemd dhcpcd.service was stopped by stop_modular.py.
+    os.system("sudo dhcpcd -b wlan0")
 
 def stopDHCPCD():
     os.system("sudo dhcpcd -k wlan0 2>/dev/null")
@@ -1274,6 +1540,10 @@ def setWLANModuleParam():
     if debug_mask_param is not None:
         wlan_module_param += " debug_mask=" + str(debug_mask_param)
 
+    # Add recovery parameter to kernel module
+    if recovery_param > 0:
+        wlan_module_param += " recovery=" + str(recovery_param)
+
     return wlan_module_param
 
 def run_common():
@@ -1300,6 +1570,8 @@ def run_common():
             print("[!] Skipping clock configuration (script not available)")
 
     print("[0] Clear")
+    # Stop recovery daemon if running
+    stop_recovery_daemon()
     # NetworkManager 중지 (wlan0 충돌 방지)
     os.system("sudo systemctl stop NetworkManager 2>/dev/null")
     os.system("sudo systemctl stop wpa_supplicant 2>/dev/null")
@@ -1332,6 +1604,10 @@ def run_common():
     core_param = setCoreModuleParam()
     wlan_param = setWLANModuleParam()
 
+    # Generate /etc/modprobe.d/nrc.conf for modprobe mode
+    if load_method == 'modprobe':
+        generate_modprobe_confs(spi_param, core_param, wlan_param)
+
     print("[2] Set Initial Country")
     country_code = strOriCountry()
     ret = os.system("sudo iw reg set " + country_code)
@@ -1351,37 +1627,55 @@ def run_common():
 
     print("[3] Loading NRC Modular Driver modules")
 
-    # Load SPI backend module (nrc_spi.ko) first
-    print("[3.1] Loading SPI backend module (nrc_spi.ko)")
-    spi_insmod_cmd = "sudo insmod " + NRC_PKG_PATH + "/sw/driver/nrc_spi.ko " + spi_param
-    print(spi_insmod_cmd)
-    ret = os.system(spi_insmod_cmd)
-    if ret != 0:
-        print("ERROR: Failed to load SPI module (nrc_spi.ko)")
-        sys.exit(1)
-    time.sleep(2)
+    if load_method == 'modprobe':
+        # --- modprobe path: single command loads all dependencies ---
+        print("[*] Using modprobe to load modules (system-installed)")
+        if not ensure_depmod():
+            print("[!] ERROR: Modules are not installed in system path.")
+            print("[!] Run 'make install' in the driver source directory first,")
+            print("[!] or use 'load=insmod' to load from %s/sw/driver/" % NRC_PKG_PATH)
+            sys.exit(1)
 
-    # Load HAL core module (nrc_core.ko) second
-    print("[3.2] Loading HAL core module (nrc_core.ko)")
-    core_insmod_cmd = "sudo insmod " + NRC_PKG_PATH + "/sw/driver/nrc_core.ko " + core_param
-    print(core_insmod_cmd)
-    ret = os.system(core_insmod_cmd)
-    if ret != 0:
-        print("ERROR: Failed to load HAL core module (nrc_core.ko)")
-        os.system("sudo rmmod nrc_spi")
-        sys.exit(1)
-    time.sleep(2)
+        # modprobe nrc_wlan → auto-loads nrc_spi → nrc_core → nrc_wlan
+        # Per-module parameters are read from /etc/modprobe.d/<module>.conf
+        print("[3.1] Loading all modules via modprobe (nrc_spi → nrc_core → nrc_wlan)")
+        ret = os.system("sudo modprobe nrc_wlan")
+        if ret != 0:
+            print("ERROR: Failed to load modules via modprobe")
+            print("[!] Check: 'make install' done? depmod run? conf files in /etc/modprobe.d/?")
+            os.system("sudo rmmod nrc_wlan 2>/dev/null")
+            os.system("sudo rmmod nrc_core 2>/dev/null")
+            os.system("sudo rmmod nrc_spi 2>/dev/null")
+            sys.exit(1)
+    else:
+        # --- insmod path: load each module individually with params ---
+        print("[*] Using insmod to load modules from %s/sw/driver/" % NRC_PKG_PATH)
 
-    # Load WLAN frontend module (nrc_wlan.ko) third
-    print("[3.3] Loading WLAN frontend module (nrc_wlan.ko)")
-    wlan_insmod_cmd = "sudo insmod " + NRC_PKG_PATH + "/sw/driver/nrc_wlan.ko " + wlan_param
-    print(wlan_insmod_cmd)
-    ret = os.system(wlan_insmod_cmd)
-    if ret != 0:
-        print("ERROR: Failed to load WLAN module (nrc_wlan.ko)")
-        os.system("sudo rmmod nrc_core")
-        os.system("sudo rmmod nrc_spi")
-        sys.exit(1)
+        print("[3.1] Loading SPI backend module (nrc_spi.ko)")
+        spi_ko_path = NRC_PKG_PATH + "/sw/driver/nrc_spi.ko"
+        ret = load_module("nrc_spi", spi_ko_path, spi_param)
+        if ret != 0:
+            print("ERROR: Failed to load SPI module (nrc_spi.ko)")
+            sys.exit(1)
+        time.sleep(2)
+
+        print("[3.2] Loading HAL core module (nrc_core.ko)")
+        core_ko_path = NRC_PKG_PATH + "/sw/driver/nrc_core.ko"
+        ret = load_module("nrc_core", core_ko_path, core_param)
+        if ret != 0:
+            print("ERROR: Failed to load HAL core module (nrc_core.ko)")
+            os.system("sudo rmmod nrc_spi")
+            sys.exit(1)
+        time.sleep(2)
+
+        print("[3.3] Loading WLAN frontend module (nrc_wlan.ko)")
+        wlan_ko_path = NRC_PKG_PATH + "/sw/driver/nrc_wlan.ko"
+        ret = load_module("nrc_wlan", wlan_ko_path, wlan_param)
+        if ret != 0:
+            print("ERROR: Failed to load WLAN module (nrc_wlan.ko)")
+            os.system("sudo rmmod nrc_core")
+            os.system("sudo rmmod nrc_spi")
+            sys.exit(1)
 
     if int(spi_polling_interval) <= 0:
         time.sleep(5)
@@ -1480,10 +1774,14 @@ def load_mcp_module(skip_if_relay_sta=False):
     if debug_mask_param is not None:
         mcp_param += " debug_mask=" + str(debug_mask_param)
 
-    mcp_insmod_cmd = "sudo insmod " + NRC_PKG_PATH + "/sw/driver/nrc-mcp.ko" + mcp_param
-    print(mcp_insmod_cmd)
+    # Generate per-module conf for MCP (overwritten each run)
+    if load_method == 'modprobe':
+        generate_mcp_modprobe_conf(mcp_param)
+        ret = os.system("sudo modprobe nrc_mcp")
+    else:
+        mcp_ko_path = NRC_PKG_PATH + "/sw/driver/nrc-mcp.ko"
+        ret = load_module("nrc_mcp", mcp_ko_path, mcp_param)
 
-    ret = os.system(mcp_insmod_cmd)
     if ret != 0:
         print("WARNING: Failed to load MCP module (nrc-mcp.ko)")
         print("         WLAN functionality will continue normally")
@@ -1543,6 +1841,15 @@ def run_sta(interface):
             time.sleep(1)
             os.system("sudo wpa_cli wps_pbc")
     time.sleep(3)
+
+    # Ensure dhcpcd is still running after wpa_supplicant started.
+    # dhcpcd may have exited if carrier was briefly acquired/lost during
+    # module init (common after recovery restart where systemd dhcpcd.service
+    # was stopped). Re-launch it now that wpa_supplicant is connecting.
+    ret_dhcp = os.system("pgrep -x dhcpcd > /dev/null 2>&1")
+    if ret_dhcp != 0:
+        print("[*] dhcpcd not running, restarting for " + interface)
+        os.system("sudo dhcpcd -b " + interface)
 
     print("[7] Connect and DHCP")
     if int(use_bridge_setup) > 0:
@@ -1689,7 +1996,84 @@ def run_sniffer():
     # Load MCP module after Sniffer is fully operational
     load_mcp_module()
 
+RECOVERYD_PID_FILE = "/tmp/nrc_recoveryd.pid"
+
+def stop_recovery_daemon():
+    """Stop existing recoveryd.py process if running."""
+    if not os.path.exists(RECOVERYD_PID_FILE):
+        return
+    try:
+        with open(RECOVERYD_PID_FILE, 'r') as f:
+            pid = int(f.read().strip())
+        # Check if process is alive
+        os.kill(pid, 0)
+        print("[*] Stopping recovery daemon (pid=%d)" % pid)
+        os.kill(pid, signal.SIGTERM)
+        # Wait and verify the daemon actually exited
+        for _ in range(10):
+            time.sleep(0.5)
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                break  # process exited
+    except (IOError, OSError, ValueError):
+        pass
+    # Only remove PID file if it still references the daemon we stopped
+    try:
+        with open(RECOVERYD_PID_FILE, 'r') as f:
+            current_pid = int(f.read().strip())
+        if current_pid == pid:
+            os.remove(RECOVERYD_PID_FILE)
+    except (IOError, OSError, ValueError, UnboundLocalError):
+        pass
+
+def start_recovery_daemon(original_argv):
+    """
+    Launch recoveryd.py as a background daemon process.
+    Passes original command line arguments so the daemon can restart
+    start_modular.py with the same parameters on recovery trigger.
+    """
+    import json
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    daemon_path = os.path.join(script_dir, "recoveryd.py")
+
+    if not os.path.exists(daemon_path):
+        print("[!] WARNING: recoveryd.py not found at %s" % daemon_path)
+        print("[!] Recovery daemon will NOT be started")
+        return
+
+    # Pass original argv as JSON for safe transport of quoted/special args
+    argv_json = json.dumps(original_argv)
+
+    # Remove stale log file (may be owned by root from a previous run,
+    # causing "Permission denied" if current shell redirect runs as non-root)
+    os.system("sudo rm -f /tmp/recoveryd.log")
+
+    cmd = 'sudo nohup python %s --script-dir "%s" --start-argv \'%s\' > /tmp/recoveryd.log 2>&1 &' % (
+        daemon_path, script_dir, argv_json)
+
+    print("[*] Starting recovery daemon (recoveryd.py)")
+    print("[*]   Script dir : %s" % script_dir)
+    print("[*]   Start argv : %s" % " ".join(original_argv))
+    os.system(cmd)
+    time.sleep(1)
+
+    # Verify daemon started
+    if os.path.exists("/tmp/nrc_recoveryd.pid"):
+        try:
+            with open("/tmp/nrc_recoveryd.pid", 'r') as f:
+                pid = f.read().strip()
+            print("[*] Recovery daemon running (pid=%s)" % pid)
+        except IOError:
+            print("[!] Recovery daemon PID file exists but unreadable")
+    else:
+        print("[!] WARNING: Recovery daemon may not have started (no PID file)")
+
 if __name__ == '__main__':
+    # Save original argv for recovery daemon (before parse_debug_args filters them)
+    original_argv = sys.argv[1:]
+
     # Parse debug arguments and filter them out from positional arguments
     positional_args = parse_debug_args()
 
@@ -1746,5 +2130,9 @@ if __name__ == '__main__':
             usage_print()
     else:
         usage_print()
+
+    # Launch recovery daemon if recovery=1 was specified
+    if recovery_param > 0:
+        start_recovery_daemon(original_argv)
 
 print("Done.")

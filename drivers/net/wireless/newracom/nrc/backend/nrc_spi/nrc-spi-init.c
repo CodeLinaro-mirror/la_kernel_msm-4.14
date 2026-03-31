@@ -23,6 +23,7 @@
 #include <linux/module.h>
 #include <linux/spi/spi.h>
 #include <linux/gpio.h>
+#include <linux/completion.h>
 #if defined(ANDROID) && defined(CONFIG_PM)
 #include <linux/pm_wakeirq.h>
 #include <linux/pm_runtime.h>
@@ -47,6 +48,8 @@
 #include "nrc-spi-gpio.h"
 
 /* External declarations */
+static DECLARE_COMPLETION(spi_probe_done);
+
 #ifndef CONFIG_SPI_USE_DT
 struct spi_device *nrc_create_spi_device(void);
 #endif
@@ -121,6 +124,7 @@ static int nrc_cspi_probe(struct spi_device *spi)
 	priv = nrc_cspi_alloc(spi);
 	if (IS_ERR(priv)) {
 		ERR_SPI("Failed to nrc_cspi_alloc");
+		complete(&spi_probe_done);
 		return PTR_ERR(priv);
 	}
 
@@ -148,6 +152,7 @@ static int nrc_cspi_probe(struct spi_device *spi)
 	nrc_spi_init_debugfs(spi);
 
 	INFO("NRC SPI device registered successfully for HAL layer");
+	complete(&spi_probe_done);
 	return 0;
 
 err_gpio_free:
@@ -162,6 +167,7 @@ err_cspi_free:
 	device_init_wakeup(&spi->dev, false);
 #endif
 #endif
+	complete(&spi_probe_done);
 	return ret;
 }
 
@@ -303,8 +309,29 @@ static int __init nrc_cspi_init(void)
 		goto unregister_device;
 	}
 
-	// DBG_STATE("NRC SPI driver registered successfully (%s)", nrc_cspi_driver.driver.name);
-	return ret;
+	/* Wait for SPI device probe to complete.
+	 * The SPI core probes devices asynchronously after driver registration.
+	 * Other modules (nrc_core, nrc_wlan) depend on the SPI device being
+	 * fully probed, so we must wait here before returning from module_init.
+	 * This ensures modprobe can load the entire dependency chain
+	 * (nrc_spi → nrc_core → nrc_wlan) in one shot without timing issues.
+	 */
+	if (!wait_for_completion_timeout(&spi_probe_done,
+					 msecs_to_jiffies(5000))) {
+		ERR_SPI("SPI device probe timed out — no matching device found");
+		spi_unregister_driver(&nrc_cspi_driver);
+		ret = -ENODEV;
+		goto unregister_device;
+	}
+
+	if (!g_spi_priv) {
+		ERR_SPI("SPI device probe failed");
+		spi_unregister_driver(&nrc_cspi_driver);
+		ret = -ENODEV;
+		goto unregister_device;
+	}
+
+	return 0;
 
 unregister_device:
 #ifndef CONFIG_SPI_USE_DT

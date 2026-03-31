@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys, os, time, subprocess, re
+import signal
 
 # Auto-detect script path based on script location
 SCRIPT_PATH = os.path.abspath(__file__)
@@ -26,7 +27,10 @@ def stopNAT():
 
 def stopDHCPCD():
     print("[*] Stopping DHCPCD service")
-    os.system("sudo systemctl stop dhcpcd")
+    # Only release wlan interfaces — do NOT stop the global dhcpcd service
+    # which would also kill eth0's DHCP lease and cause SSH disconnection.
+    os.system("sudo dhcpcd -k wlan0 2>/dev/null")
+    os.system("sudo dhcpcd -k wlan1 2>/dev/null")
 
 def stopDNSMASQ():
     print("[*] Stopping DNSMASQ service")
@@ -46,6 +50,38 @@ def stopHostAPD():
 def stopWireshark():
     print("[*] Stopping Wireshark")
     os.system("sudo killall -9 wireshark 2>/dev/null")
+
+RECOVERYD_PID_FILE = "/tmp/nrc_recoveryd.pid"
+
+def stopRecoveryDaemon():
+    """Stop recovery daemon (recoveryd.py) if running."""
+    if not os.path.exists(RECOVERYD_PID_FILE):
+        return
+    pid = None
+    try:
+        with open(RECOVERYD_PID_FILE, 'r') as f:
+            pid = int(f.read().strip())
+        os.kill(pid, 0)
+        print("[*] Stopping recovery daemon (pid=%d)" % pid)
+        os.kill(pid, signal.SIGTERM)
+        # Wait and verify the daemon actually exited
+        for _ in range(10):
+            time.sleep(0.5)
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                break  # process exited
+    except (IOError, OSError, ValueError):
+        pass
+    # Only remove PID file if it still references the daemon we stopped
+    if pid is not None:
+        try:
+            with open(RECOVERYD_PID_FILE, 'r') as f:
+                current_pid = int(f.read().strip())
+            if current_pid == pid:
+                os.remove(RECOVERYD_PID_FILE)
+        except (IOError, OSError, ValueError):
+            pass
 
 def stopBridgeSetup():
     print("[*] Removing bridge configurations")
@@ -131,6 +167,7 @@ def stopModulesOnly():
     Stop only the kernel modules without affecting services
     """
     print("=== NRC Modular Driver - Modules Only Stop ===")
+    stopRecoveryDaemon()
     removeWLANInterfaces()
     unloadNRCModules()
     time.sleep(1)
@@ -141,6 +178,9 @@ def stopAll():
     Stop all services and modules (default behavior)
     """
     print("=== NRC Modular Driver - Full Stop ===")
+    
+    # Stop recovery daemon first (before modules are unloaded)
+    stopRecoveryDaemon()
     
     # Stop all network services
     stopWPASupplicant()
