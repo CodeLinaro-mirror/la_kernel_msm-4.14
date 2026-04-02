@@ -135,6 +135,20 @@ parts:
     prime:
       - -*
 
+  sign-kernel-bin:
+    after:
+      - kernel
+      - test-signing-keys
+    plugin: nil
+    override-build: |
+      sbsign \
+         --key "${CRAFT_STAGE}/signing-key/Canonical-dev.key" \
+         --cert "${CRAFT_STAGE}/signing-key/Canonical-dev.crt" \
+         --output "${CRAFT_PART_INSTALL}/vmlinuz.signed" \
+         "${CRAFT_STAGE}/vmlinuz"
+    prime:
+      - -*
+
 build-packages:
   - bison
   - ccache
