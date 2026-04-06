@@ -221,6 +221,10 @@ int nrc_netlink_rx(struct nrc *nw, struct sk_buff *skb, u8 subtype)
 		return -1;
 
 	data = genlmsg_put(mcast_skb, 0, 0, &nrc_nl_fam, 0, NL_CMD_LOG_EVENT);
+	if (!data) {
+		nlmsg_free(mcast_skb);
+		return -ENOMEM;
+	}
 
 	skb_put(skb, 1);
 	skb->data[skb->len - 1] = 0;
@@ -257,6 +261,10 @@ int nrc_netlink_trigger_recovery(struct nrc *nw)
 		return -1;
 
 	data = genlmsg_put(mcast_skb, 0, 0, &nrc_nl_fam, 0, NL_CMD_RECOVERY);
+	if (!data) {
+		nlmsg_free(mcast_skb);
+		return -ENOMEM;
+	}
 	nla_put_string(mcast_skb, NL_CMD_RECOVERY_MSG, "recovery");
 	genlmsg_end(mcast_skb, data);
 
@@ -277,13 +285,21 @@ static int capi_sta_reply(int id, struct genl_info *info, const char *response)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, id);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, id);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 	nla_put_string(msg, NL_WFA_CAPI_PARAM_RESPONSE, response);
 	genlmsg_end(msg, hdr);
 
@@ -307,13 +323,21 @@ static int halow_reply(int id, struct genl_info *info, const char *response)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, id);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, id);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	nla_put_string(msg, NL_HALOW_RESPONSE, response);
 	genlmsg_end(msg, hdr);
@@ -337,18 +361,20 @@ static int capi_sta_get_info(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
-
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam, 0,
 			  NL_WFA_CAPI_STA_GET_INFO);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
-
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam, 0,
 			  NL_WFA_CAPI_STA_GET_INFO);
 #endif
 
-	if (hdr == NULL) {
-		ERR_WLAN("Failed to generate resp. nlmsg");
+	if (!hdr) {
+		nlmsg_free(msg);
 		return -EMSGSIZE;
 	}
 
@@ -405,6 +431,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 		}
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(
 			skb, WIM_TLV_AMSDU_SUPPORT,
 			sizeof(nrc_nw->hdev->ampdu_supported),
@@ -424,6 +452,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 		}
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_AMSDU_SUPPORT,
 					    sizeof(nrc_nw->amsdu_supported),
 					    &nrc_nw->amsdu_supported);
@@ -436,6 +466,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SGI, sizeof(sgi),
 					    &sgi);
 		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
@@ -450,6 +482,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_1MHZ_CTRL_RSP,
 					    sizeof(val), &val);
 		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
@@ -462,6 +496,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 		color = lcolor;
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_COLOR_IND,
 					    sizeof(color), &color);
 		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
@@ -479,6 +515,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_S1G_TIM_MODE,
 					    sizeof(val), &val);
 		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
@@ -490,6 +528,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SGI, sizeof(sgi),
 					    &sgi);
 		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
@@ -512,6 +552,9 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 #endif
 			struct ieee80211_tx_control control;
 
+			if (!vif)
+				goto halow_not_supported;
+
 			rcu_read_lock();
 			control.sta =
 				ieee80211_find_sta(vif, vif->bss_conf.bssid);
@@ -525,6 +568,13 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 #else
 			b = ieee80211_nullfunc_get(nrc_nw->hw, vif);
 #endif
+			if (!b) {
+				rcu_read_unlock();
+				goto halow_not_supported;
+			}
+			/* Track FRAME SKB allocation (TX path) */
+			NRC_SKB_TRACK_ALLOC(nrc_nw->hdev, b, HIF_TYPE_FRAME, false,
+					   false);
 			skb_set_queue_mapping(b, IEEE80211_AC_VO);
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO
 #ifdef CONFIG_USE_BSS_CHAN_CONF
@@ -533,11 +583,19 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 #else
 			chanctx_conf = rcu_dereference(vif->chanctx_conf);
 #endif /* ifdef CONFIG_USE_BSS_CHAN_CONF */
+			if (!chanctx_conf) {
+				rcu_read_unlock();
+				NRC_SKB_TRACK_FREE(nrc_nw->hdev, b,
+						   HIF_TYPE_FRAME, false, false);
+				goto halow_not_supported;
+			}
 			band = chanctx_conf->def.chan->band;
 
 			if (!ieee80211_tx_prepare_skb(nrc_nw->hw, vif, b, band,
 						      NULL)) {
 				rcu_read_unlock();
+				NRC_SKB_TRACK_FREE(nrc_nw->hdev, b,
+						   HIF_TYPE_FRAME, false, false);
 				goto halow_not_supported;
 			}
 #else
@@ -570,6 +628,8 @@ static int halow_set_dut(struct sk_buff *skb, struct genl_info *info)
 			goto halow_not_supported;
 
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto halow_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_S1G_STA_TYPE,
 					    sizeof(sta), &sta);
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_S1G_PV1,
@@ -709,6 +769,8 @@ static int capi_sta_set_11n(struct sk_buff *skb, struct genl_info *info)
 		if (!nrc_nw)
 			goto wfa_not_supported;
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+		if (!skb)
+			goto wfa_not_supported;
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_MCS, sizeof(mcs),
 					    &mcs);
 		ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
@@ -1093,6 +1155,8 @@ static int capi_bss_max_idle(struct sk_buff *skb, struct genl_info *info)
 
 	max_idle = nla_get_s32(info->attrs[NL_WFA_CAPI_PARAM_BSS_MAX_IDLE]);
 	vif_id = nla_get_s32(info->attrs[NL_WFA_CAPI_PARAM_VIF_ID]);
+	if (vif_id < 0 || vif_id >= NR_NRC_VIF)
+		return capi_sta_reply(NL_WFA_CAPI_BSS_MAX_IDLE, info, NL_WFA_CAPI_RESP_ERR);
 	no_usf_auto_convert =
 		nla_get_s32(info->attrs[NL_WFA_CAPI_PARAM_BSS_MAX_IDLE_OFFSET]);
 
@@ -1200,8 +1264,11 @@ static void generate_mmic_error(void *data, u8 *mac, struct ieee80211_vif *vif)
 #else
 	chan = rcu_dereference(vif->chanctx_conf);
 #endif /* ifdef CONFIG_USE_BSS_CHAN_CONF */
-	if (!chan)
+	if (!chan) {
+		/* Track error path SKB free (RX path - keepalive) */
+		NRC_SKB_TRACK_FREE(nw->hdev, skb, HIF_TYPE_FRAME, true, false);
 		goto out;
+	}
 
 	rx_status->freq = chan->def.chan->center_freq;
 	rx_status->band = chan->def.chan->band;
@@ -1323,7 +1390,7 @@ fail_over:
 				   false, false);
 	}
 
-	return 0;
+	return -EIO;
 }
 
 static int nrc_shell_run_simple(struct sk_buff *skb, struct genl_info *info)
@@ -1368,22 +1435,28 @@ static int nrc_shell_run_simple(struct sk_buff *skb, struct genl_info *info)
 
 enum nrc_shell_run_state { NRC_SHELL_IDLE, NRC_SHELL_RUNNING };
 
-static int nrc_shell_running_state;
+static atomic_t nrc_shell_running_state = ATOMIC_INIT(NRC_SHELL_IDLE);
 
-static void set_shell_run_state(int state)
+/*
+ * Try to transition from IDLE to RUNNING atomically.
+ * Returns true if the caller acquired the "running" slot, false if already busy.
+ */
+static bool nrc_shell_try_acquire(void)
 {
-	nrc_shell_running_state = state;
+	return atomic_cmpxchg(&nrc_shell_running_state,
+			      NRC_SHELL_IDLE, NRC_SHELL_RUNNING) == NRC_SHELL_IDLE;
 }
 
-static int get_shell_run_state(void)
+static void nrc_shell_release(void)
 {
-	return nrc_shell_running_state;
+	WARN_ON(atomic_read(&nrc_shell_running_state) != NRC_SHELL_RUNNING);
+	atomic_set(&nrc_shell_running_state, NRC_SHELL_IDLE);
 }
 
 static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 {
 	char *cmd = NULL;
-	char cmd_resp[512];
+	char cmd_resp[512] = {};
 	struct sk_buff *msg, *wim_skb, *wim_resp;
 	void *hdr;
 	struct nrc_hif_device *hdev;
@@ -1406,32 +1479,46 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_SHELL_RUN_CMD);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_SHELL_RUN_CMD);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	if (info->attrs[NL_SHELL_RUN_CMD])
 		cmd = nla_data(info->attrs[NL_SHELL_RUN_CMD]);
 
-	if (get_shell_run_state() != NRC_SHELL_IDLE) {
+	if (!nrc_shell_try_acquire()) {
+		ERR_WLAN("nrc_shell_run: busy, rejecting concurrent request");
 		strcpy(cmd_resp, "Failed");
 		nla_put_string(msg, NL_SHELL_RUN_CMD_RESP, cmd_resp);
 		genlmsg_end(msg, hdr);
 		return genlmsg_reply(msg, info);
 	}
-	set_shell_run_state(NRC_SHELL_RUNNING);
 
-	if (!cmd)
+	if (!cmd) {
+		nlmsg_free(msg);
+		nrc_shell_release();
 		return -EINVAL;
+	}
 
 	wim_skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SHELL, WIM_MAX_SIZE);
 
-	if (!wim_skb)
+	if (!wim_skb) {
+		nlmsg_free(msg);
+		nrc_shell_release();
 		return -EINVAL;
+	}
 
 	nrc_hal_ops_wim_skb_add_tlv(wim_skb, WIM_TLV_SHELL_CMD, strlen(cmd) + 1,
 				    cmd);
@@ -1453,9 +1540,11 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 
 		if (wim->cmd == WIM_CMD_SHELL) {
 			struct wim_tlv *tlv = (struct wim_tlv *)(wim + 1);
+			size_t copy_len = min_t(size_t, tlv->l,
+						sizeof(cmd_resp) - 1);
 
-			memcpy(cmd_resp, &tlv->v, tlv->l);
-			cmd_resp[tlv->l] = 0;
+			memcpy(cmd_resp, &tlv->v, copy_len);
+			cmd_resp[copy_len] = 0;
 			DBG_CAPI("%s[%s]", __func__, cmd_resp);
 		}
 		/* Track WIM response SKB free with parsed cmd/event */
@@ -1468,7 +1557,7 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 	nla_put_string(msg, NL_SHELL_RUN_CMD_RESP, cmd_resp);
 	genlmsg_end(msg, hdr);
 
-	set_shell_run_state(NRC_SHELL_IDLE);
+	nrc_shell_release();
 
 	return genlmsg_reply(msg, info);
 }
@@ -1476,7 +1565,7 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 {
 	char *cmd = NULL;
-	char cmd_resp[512];
+	char cmd_resp[512] = {};
 	struct sk_buff *msg, *wim_skb, *wim_resp;
 	void *hdr;
 	struct nrc_hif_device *hdev;
@@ -1499,29 +1588,44 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_SHELL_RUN_CMD_RAW);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_SHELL_RUN_CMD);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
+
 	if (info->attrs[NL_SHELL_RUN_CMD_RAW])
 		cmd = nla_data(info->attrs[NL_SHELL_RUN_CMD_RAW]);
 
-	if (get_shell_run_state() != NRC_SHELL_IDLE) {
+	if (!nrc_shell_try_acquire()) {
+		ERR_WLAN("nrc_shell_run_raw: busy, rejecting concurrent request");
 		strcpy(cmd_resp, "Failed");
 		nla_put_string(msg, NL_SHELL_RUN_CMD_RESP_RAW, cmd_resp);
 		genlmsg_end(msg, hdr);
 		return genlmsg_reply(msg, info);
 	}
-	set_shell_run_state(NRC_SHELL_RUNNING);
-	if (!cmd)
+	if (!cmd) {
+		nlmsg_free(msg);
+		nrc_shell_release();
 		return -EINVAL;
+	}
 
 	wim_skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SHELL_RAW, WIM_MAX_SIZE);
-	if (!wim_skb)
+	if (!wim_skb) {
+		nlmsg_free(msg);
+		nrc_shell_release();
 		return -EINVAL;
+	}
 
 	nrc_hal_ops_wim_skb_add_tlv(wim_skb, WIM_TLV_SHELL_CMD, strlen(cmd) + 1,
 				    cmd);
@@ -1532,11 +1636,11 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 		struct wim *wim = (struct wim *)wim_resp->data;
 		if (wim->cmd == WIM_CMD_SHELL_RAW) {
 			struct wim_tlv *tlv = (struct wim_tlv *)(wim + 1);
-			memcpy(cmd_resp, &tlv->v, tlv->l);
-			//cmd_resp[tlv->l] = 0;
-			//DBG_CAPI("%s[%s]", __func__,
-			//		cmd_resp);
-			nla_put(msg, NL_SHELL_RUN_CMD_RESP_RAW, tlv->l,
+			size_t copy_len = min_t(size_t, tlv->l,
+						sizeof(cmd_resp) - 1);
+
+			memcpy(cmd_resp, &tlv->v, copy_len);
+			nla_put(msg, NL_SHELL_RUN_CMD_RESP_RAW, copy_len,
 				cmd_resp);
 		}
 		/* Track WIM response SKB free with parsed cmd/event */
@@ -1544,13 +1648,12 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 				       true, false);
 	} else {
 		strcpy(cmd_resp, "Failed");
+		nla_put_string(msg, NL_SHELL_RUN_CMD_RESP_RAW, cmd_resp);
 	}
-
-	//nla_put_string(msg, NL_SHELL_RUN_CMD_RESP_RAW, cmd_resp);
 
 	genlmsg_end(msg, hdr);
 
-	set_shell_run_state(NRC_SHELL_IDLE);
+	nrc_shell_release();
 
 	return genlmsg_reply(msg, info);
 }
@@ -1589,19 +1692,29 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_SHELL_RUN_CMD);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_SHELL_RUN_CMD);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	if (info->attrs[NL_SHELL_RUN_CMD])
 		cmd = nla_data(info->attrs[NL_SHELL_RUN_CMD]);
 
-	if (!cmd)
+	if (!cmd) {
+		nlmsg_free(msg);
 		return -EINVAL;
+	}
 
 	if (strcmp(cmd, "show signal -sr -num") == 0) {
 		//start monitoring
@@ -1624,6 +1737,10 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 		sprintf(cmd_resp, "okay");
 	} else {
 		str = strrchr(cmd, ' ');
+		if (!str) {
+			nlmsg_free(msg);
+			return -EINVAL;
+		}
 		for (i = 1; str[i] != '\0'; ++i)
 			start_point = start_point * 10 + str[i] - '0';
 
@@ -1653,8 +1770,8 @@ static int cmd_to_argc_argv(const char *str, int *argc, char ***argv)
 			i++;
 	}
 
-	/* allocate space for argv */
-	res = (char **)kmalloc((n + 1) * sizeof(char *), GFP_KERNEL);
+	/* allocate space for argv (extra slot to store base pointer for kfree) */
+	res = (char **)kmalloc((n + 2) * sizeof(char *), GFP_KERNEL);
 	if (!res)
 		return -1;
 
@@ -1675,6 +1792,7 @@ static int cmd_to_argc_argv(const char *str, int *argc, char ***argv)
 			i++;
 	}
 	res[j] = NULL;
+	res[j + 1] = p; /* base pointer of string buffer for kfree */
 
 	/* set argc and argv */
 	*argc = n;
@@ -1785,23 +1903,27 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 			sprintf(cmd_resp, "fail");
 		}
 	} else if (strcmp(argv[0], "show") == 0) {
-		if (strcmp(argv[1], "ps_conf") == 0) {
-			sprintf(cmd_resp, nrc_nw->hdev->ps.enabled ? "ENABLE" :
-								     "DISABLE");
-		}
-		if (strcmp(argv[1], "ps_status") == 0) {
-			sprintf(cmd_resp, nrc_ps_get_state_str(nrc_nw));
-		}
-		if (strcmp(argv[1], "scan_status") == 0) {
-			sprintf(cmd_resp, nrc_mac_get_scan_status_str(nrc_nw));
-		}
-		if (strcmp(argv[1], "idle_mode") == 0) {
-			sprintf(cmd_resp, nrc_idle_mode_get_state_str(nrc_nw));
+		if (argc < 2) {
+			sprintf(cmd_resp, "fail");
+		} else if (strcmp(argv[1], "ps_conf") == 0) {
+			snprintf(cmd_resp, sizeof(cmd_resp), "%s",
+				 nrc_nw->params->power_save > 0 ? "ENABLE" : "DISABLE");
+		} else if (strcmp(argv[1], "ps_status") == 0) {
+			snprintf(cmd_resp, sizeof(cmd_resp), "%s",
+				 nrc_ps_get_state_str(nrc_nw));
+		} else if (strcmp(argv[1], "scan_status") == 0) {
+			snprintf(cmd_resp, sizeof(cmd_resp), "%s",
+				 nrc_mac_get_scan_status_str(nrc_nw));
+		} else if (strcmp(argv[1], "idle_mode") == 0) {
+			snprintf(cmd_resp, sizeof(cmd_resp), "%s",
+				 nrc_idle_mode_get_state_str(nrc_nw));
+		} else {
+			sprintf(cmd_resp, "fail");
 		}
 	} else {
 		sprintf(cmd_resp, "fail");
 	}
-	kfree(argv[0]);
+	kfree(argv[argc + 1]); /* free string buffer stored by cmd_to_argc_argv */
 	kfree(argv);
 
 	nla_put_string(msg, NL_CLI_APP_DRIVER_CMD_RESP, cmd_resp);
@@ -1812,7 +1934,7 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 
 static int nl_apf_set_enable(struct sk_buff *skb, struct genl_info *info)
 {
-	void *param;
+	void *param = NULL;
 	int ret;
 	struct sk_buff *msg;
 	void *hdr;
@@ -1831,19 +1953,29 @@ static int nl_apf_set_enable(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_SET_ENABLE);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_SET_ENABLE);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	if (info->attrs[NL_APF_PARAM_ENABLE])
 		param = nla_data(info->attrs[NL_APF_PARAM_ENABLE]);
 
-	if (!param)
+	if (!param) {
+		nlmsg_free(msg);
 		return -EINVAL;
+	}
 
 	enable = *(int *)param;
 
@@ -1877,13 +2009,21 @@ static int nl_apf_get_enable(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_GET_ENABLE);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_GET_ENABLE);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	ret = nrc_apf_get_enable(nrc_nw, &enable);
 	if (ret < 0) {
@@ -1916,15 +2056,21 @@ static int nl_apf_get_cap(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_GET_CAPABILITIES);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_GET_CAPABILITIES);
 #endif
-
-	DBG_CAPI("%s", __func__);
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	maxlen = nrc_apf_get_maxlen(nrc_nw);
 
@@ -1960,7 +2106,7 @@ struct apf_filter {
 
 static int nl_apf_set_filter(struct sk_buff *skb, struct genl_info *info)
 {
-	void *param;
+	void *param = NULL;
 	int ret;
 	struct sk_buff *msg;
 	void *hdr;
@@ -1979,23 +2125,35 @@ static int nl_apf_set_filter(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_SET_PACKET_FILTER);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_SET_PACKET_FILTER);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	if (info->attrs[NL_APF_PARAM_FILTER])
 		param = nla_data(info->attrs[NL_APF_PARAM_FILTER]);
 
-	if (!param)
+	if (!param) {
+		nlmsg_free(msg);
 		return -EINVAL;
+	}
 
 	filter = kmalloc(sizeof(struct apf_filter), GFP_KERNEL);
-	if (!filter)
+	if (!filter) {
+		nlmsg_free(msg);
 		return -ENOMEM;
+	}
 
 	memcpy(filter, param, sizeof(struct apf_filter));
 
@@ -2019,7 +2177,7 @@ static int nl_apf_get_filter(struct sk_buff *skb, struct genl_info *info)
 	struct sk_buff *msg;
 	void *hdr;
 
-	void *param;
+	void *param = NULL;
 	int ret;
 	struct apf_filter *filter;
 
@@ -2035,25 +2193,37 @@ static int nl_apf_get_filter(struct sk_buff *skb, struct genl_info *info)
 
 #ifdef CONFIG_SUPPORT_GENLMSG_DEFAULT
 	msg = genlmsg_new(GENLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_GET_PACKET_FILTER);
 #else
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_APF_GET_PACKET_FILTER);
 #endif
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	DBG_CAPI("%s", __func__);
 
 	if (info->attrs[NL_APF_PARAM_FILTER])
 		param = nla_data(info->attrs[NL_APF_PARAM_FILTER]);
 
-	if (!param)
+	if (!param) {
+		nlmsg_free(msg);
 		return -EINVAL;
+	}
 
 	filter = kmalloc(sizeof(struct apf_filter), GFP_KERNEL);
-	if (!filter)
+	if (!filter) {
+		nlmsg_free(msg);
 		return -ENOMEM;
+	}
 
 	memcpy(filter, param, sizeof(struct apf_filter));
 
@@ -2077,7 +2247,7 @@ static int nrc_mic_scan(struct sk_buff *skb, struct genl_info *info)
 {
 	struct sk_buff *msg, *wim_skb, *wim_resp;
 	struct wim_channel_1m_param channel;
-	struct wim_channel_1m_param resp;
+	struct wim_channel_1m_param resp = {};
 	struct nrc_hif_device *hdev;
 	void *hdr;
 	int count = 0;
@@ -2111,8 +2281,9 @@ static int nrc_mic_scan(struct sk_buff *skb, struct genl_info *info)
 
 		if (wim->cmd == WIM_CMD_MIC_SCAN) {
 			struct wim_tlv *tlv = (struct wim_tlv *)(wim + 1);
+			size_t copy_len = min_t(size_t, tlv->l, sizeof(resp));
 
-			memcpy(&resp, &tlv->v, tlv->l);
+			memcpy(&resp, &tlv->v, copy_len);
 		}
 		/* Track WIM response SKB free with parsed cmd/event */
 		NRC_SKB_TRACK_WIM_FREE(hdev, wim_resp, wim->cmd, wim->event,
@@ -2120,8 +2291,14 @@ static int nrc_mic_scan(struct sk_buff *skb, struct genl_info *info)
 	}
 
 	msg = genlmsg_new(NLMSG_DEFAULT_SIZE - GENL_HDRLEN, GFP_KERNEL);
+	if (!msg)
+		return -ENOMEM;
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq, &nrc_nl_fam,
 			  0 /*no flags*/, NL_MIC_SCAN);
+	if (!hdr) {
+		nlmsg_free(msg);
+		return -EMSGSIZE;
+	}
 
 	nla_put_u32(msg, NL_MIC_SCAN_CHANNEL_BITMAP, resp.cca_bitmap);
 	genlmsg_end(msg, hdr);
@@ -2249,8 +2426,8 @@ static int nrc_auto_ba_toggle(struct sk_buff *skb, struct genl_info *info)
 	else
 		nw->params->ampdu_mode = NRC_AMPDU_MANUAL;
 
-	pr_info("nrc: Auto BA session feature %s\n",
-		(nw->params->ampdu_mode == NRC_AMPDU_AUTO) ? "ON" : "OFF");
+	INFO_WLAN("Auto BA session feature %s",
+		  (nw->params->ampdu_mode == NRC_AMPDU_AUTO) ? "ON" : "OFF");
 
 	return 0;
 }
