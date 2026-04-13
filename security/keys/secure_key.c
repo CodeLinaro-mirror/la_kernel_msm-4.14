@@ -11,6 +11,7 @@
 #include <linux/rcupdate.h>
 #include <keys/secure-type.h>
 #include <linux/completion.h>
+#include <linux/hex.h>
 
 #include "securekey_desc.h"
 
