@@ -1326,8 +1326,6 @@ static void enetc4_mac_tx_enable(struct enetc_pf *pf)
 	struct enetc_si *si = pf->si;
 	u32 val;
 
-	enetc_port_wr(hw, ENETC4_POR, en ? 0 : POR_TXDIS | POR_RXDIS);
-
 	val = enetc_port_mac_rd(si, ENETC4_PM_CMD_CFG(0));
 	val |= PM_CMD_CFG_TX_EN;
 	enetc_port_mac_wr(si, ENETC4_PM_CMD_CFG(0), val);
