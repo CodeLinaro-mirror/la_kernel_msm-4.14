@@ -1395,6 +1395,21 @@ static void enetc4_mac_rx_enable(struct enetc_pf *pf)
 	enetc_port_mac_wr(si, ENETC4_PM_CMD_CFG(0), val);
 }
 
+static void enetc4_enable_mac(struct enetc_pf *pf, bool en)
+{
+    struct enetc_hw *hw = &pf->si->hw;
+    struct enetc_si *si = pf->si;
+    u32 val;
+
+    enetc_port_wr(hw, ENETC4_POR, en ? 0 : POR_TXDIS | POR_RXDIS);
+
+    val = enetc_port_mac_rd(si, ENETC4_PM_CMD_CFG(0));
+    val &= ~(PM_CMD_CFG_TX_EN | PM_CMD_CFG_RX_EN);
+    val |= en ? (PM_CMD_CFG_TX_EN | PM_CMD_CFG_RX_EN) : 0;
+
+    enetc_port_mac_wr(si, ENETC4_PM_CMD_CFG(0), val);
+}
+
 static void enetc4_mm_link_state_update(struct enetc_pf *pf,
 					bool link)
 {
