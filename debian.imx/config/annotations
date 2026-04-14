@@ -1042,6 +1042,7 @@ CONFIG_VIDEO_ROCKCHIP_RGA                       policy<{'arm64': '-'}>
 CONFIG_VIDEO_ROCKCHIP_VDEC                      policy<{'arm64': '-'}>
 CONFIG_VIDEO_SYNOPSYS_HDMIRX                    policy<{'arm64': '-'}>
 CONFIG_VIDEO_SYNOPSYS_HDMIRX_LOAD_DEFAULT_EDID  policy<{'arm64': '-'}>
+CONFIG_VIDEO_WAVE_VPU                           policy<{'arm64': 'n'}>
 CONFIG_VIRTIO_IVSHMEM                           policy<{'arm64': 'n'}>
 CONFIG_VIRTIO_VIDEO                             policy<{'arm64': 'n'}>
 CONFIG_VLAN_8021Q                               policy<{'arm64': 'y'}>
