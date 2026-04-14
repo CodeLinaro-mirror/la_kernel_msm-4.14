@@ -6861,7 +6861,6 @@ static int stmmac_vlan_rx_kill_vid(struct net_device *ndev, __be16 proto, u16 vi
 		}
 		if (ret)
 			goto del_vlan_error;
-		}
 	}
 
 	priv->num_double_vlans = num_double_vlans;
