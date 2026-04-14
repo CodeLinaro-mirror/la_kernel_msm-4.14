@@ -1331,6 +1331,7 @@ static int pca9450_i2c_probe(struct i2c_client *i2c)
 	struct pca9450 *pca9450;
 	unsigned int device_id, i, val;
 	bool pmic_trim = false;
+	const char *type_name;
 	int ret;
 
 	pca9450 = devm_kzalloc(&i2c->dev, sizeof(struct pca9450), GFP_KERNEL);
