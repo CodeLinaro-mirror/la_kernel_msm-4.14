@@ -754,7 +754,7 @@ CONFIG_IMX91_THERMAL                            policy<{'arm64': 'y'}>
 CONFIG_IMX9_LPM_CTRL                            policy<{'arm64': 'm'}>
 CONFIG_IMX_AIPSTZ                               policy<{'arm64': 'y'}>
 CONFIG_IMX_CM0P_REMOTEPROC                      policy<{'arm64': 'n'}>
-CONFIG_IMX_DISPMU                               policy<{'arm64': 'n'}>
+CONFIG_IMX_DISPMU                               policy<{'arm64': 'y'}>
 CONFIG_IMX_DPU_BLIT                             policy<{'arm64': 'y'}>
 CONFIG_IMX_DPU_CORE                             policy<{'arm64': 'y'}>
 CONFIG_IMX_ELE_TRNG                             policy<{'arm64': 'y'}>
