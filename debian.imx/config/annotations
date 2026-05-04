@@ -1438,7 +1438,7 @@ CONFIG_DVB_ZD1301_DEMOD                         policy<{'arm64': '-', 'armhf': '
 CONFIG_DVB_ZL10036                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DVB_ZL10039                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DVB_ZL10353                              policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_DWC_MIPI_CSI2_HOST                       policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_DWC_MIPI_CSI2_HOST                       policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_DWMAC_IMX8                               policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_DWMAC_IPQ806X                            policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_DWMAC_MEDIATEK                           policy<{'arm64': '-', 'armhf': '-'}>
@@ -1881,7 +1881,7 @@ CONFIG_I2C_HISI                                 policy<{'arm64': 'n'}>
 CONFIG_I2C_HIX5HD2                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_I2C_IMX                                  policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_I2C_IMX_FLEXIO                           policy<{'arm64': 'm', 'armhf': '-'}>
-CONFIG_I2C_IMX_LPI2C                            policy<{'arm64': 'm', 'armhf': 'y'}>
+CONFIG_I2C_IMX_LPI2C                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_I2C_LJCA                                 policy<{'arm64': '-'}>
 CONFIG_I2C_MESON                                policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_I2C_MLXBF                                policy<{'arm64': '-'}>
@@ -4583,7 +4583,7 @@ CONFIG_VIDEOBUF2_DVB                            policy<{'arm64': '-', 'armhf': '
 CONFIG_VIDEOBUF_DMA_CONTIG                      policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEOBUF_DMA_SG                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEO_ALLEGRO_DVT                        policy<{'arm64': '-'}>
-CONFIG_VIDEO_AP1302                             policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_VIDEO_AP1302                             policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_VIDEO_AP130X                             policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_VIDEO_ASPEED                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEO_AU0828                             policy<{'arm64': '-', 'armhf': '-'}>
