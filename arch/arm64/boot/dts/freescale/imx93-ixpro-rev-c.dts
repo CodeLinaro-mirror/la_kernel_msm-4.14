@@ -1,0 +1,7 @@
+/dts-v1/;
+
+#include "imx93-ixpro-rev-b.dts"
+
+&{/} {
+    model = "ithinx iXpro Rev C";
+};
