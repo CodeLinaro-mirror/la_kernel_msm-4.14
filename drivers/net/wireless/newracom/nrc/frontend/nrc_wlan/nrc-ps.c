@@ -86,7 +86,7 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 
 	/* Sleep request - HAL checks if already in same mode */
 
-	if (NRC_DRV_IS_CLOSING(nw->hdev) || NRC_DRV_IS_REBOOT(nw->hdev)) {
+	if (NRC_DRV_IS_STOPPED(nw->hdev) || NRC_DRV_IS_REBOOT(nw->hdev)) {
 		goto done;
 	}
 

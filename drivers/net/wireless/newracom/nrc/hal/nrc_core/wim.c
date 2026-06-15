@@ -196,10 +196,9 @@ static int wim_enqueue_to_tx(struct nrc_hif_device *hdev, struct sk_buff *skb,
 		       16, 1, skb->data, skb->len, false);
 #endif
 
-	/* Check driver state - prevent WIM commands during shutdown/reboot/closing */
+	/* Check driver state - prevent WIM commands during shutdown/reboot/stopping */
 	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_REBOOT ||
-	    NRC_HIF_DRV_STATE(hdev) == NRC_DRV_CLOSING ||
-	    NRC_HIF_DRV_STATE(hdev) == NRC_DRV_CLOSED) {
+	    NRC_HIF_DRV_STATE(hdev) == NRC_DRV_STOP) {
 		ERR_HIF("%s: Driver in invalid state %s, ignore WIM cmd %d(%s)",
 			use_mcp_path ? "MCP" : "WLAN", NRC_DRV_STATE_STR(hdev),
 			cmd, nrc_wim_cmd_str(cmd));
@@ -786,12 +785,14 @@ int nrc_wim_request(struct sk_buff *skb, u16 cmd, int timeout,
 	NRC_SKB_TRACK_ALLOC(hdev, skb_tx, HIF_TYPE_WIM, false, false);
 
 	if (!!wim_enqueue_to_tx(hdev, skb_tx, use_mcp_path)) {
-		/* Enqueue failed - will free skb_tx at free_skb_tx label */
+		/* Enqueue failed - wim_enqueue_to_tx has already freed skb_tx on all failure paths */
 		if (!no_resp) {
 			NRC_WIM_RESP_UNLOCK(hdev, cmd);
 		}
+		/* Ensure we don't try to free it again at free_skb_tx */
+		skb_tx = NULL;
 		ret = -EIO;
-		goto free_skb_tx;
+		goto free_skb;
 	}
 
 	/* Enqueue success - TX thread now owns skb_tx, set to NULL */
@@ -809,6 +810,7 @@ int nrc_wim_request(struct sk_buff *skb, u16 cmd, int timeout,
 	if (wait_for_completion_timeout(&hdev->wim_resp[cmd].work, timeout) ==
 	    0) {
 		ERR_WIM("Timeout cmd %d(%s)", cmd, nrc_wim_cmd_str(cmd));
+		nrc_hif_dump_slot_credit("WIM_TIMEOUT");
 
 		/* Clean up any response that arrived after timeout */
 		NRC_WIM_RESP_LOCK(hdev, cmd);
@@ -884,11 +886,6 @@ int nrc_wim_request(struct sk_buff *skb, u16 cmd, int timeout,
 
 	*skb_resp = resp;
 	return 0;
-
-free_skb_tx:
-	/* Free cloned SKB if enqueue failed */
-	if (skb_tx)
-		NRC_SKB_TRACK_WIM_FREE(hdev, skb_tx, cmd, 0, false, false);
 
 free_skb:
 	/* Free original SKB on all exit paths */

@@ -24,10 +24,9 @@ struct nrc_uart_priv;
 /* HIF Device Management Functions */
 int nrc_hal_fw_init(struct nrc_hif_device *hdev);
 void nrc_hal_fw_cleanup(struct nrc_hif_device *hdev);
-int nrc_nw_start(bool restart);
+int nrc_nw_start(void);
 int nrc_nw_start_fusing(void);
-int nrc_nw_stop(bool restart);
-void nrc_nw_restart(void);
+int nrc_nw_stop(void);
 int country_match(const char *const cc[], const char *const country);
 
 /* Parameters Management Functions */

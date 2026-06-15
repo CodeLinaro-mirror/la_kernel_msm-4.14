@@ -55,9 +55,8 @@ extern void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev, struct nrc *nw)
  */
 struct nrc_hal_ops {
 	/* Network control */
-	int (*nw_start)(bool restart);
-	int (*nw_stop)(bool restart);
-	void (*nw_restart)(void);
+	int (*nw_start)(void);
+	int (*nw_stop)(void);
 
 	/* Frame TX */
 	int (*xmit_wlan_frame)(s8 vif_index, u16 aid, struct sk_buff *skb);
@@ -97,23 +96,22 @@ extern struct nrc_hal_ops *nrc_hal_core_get_ops(void);
  */
 
 /* Network control */
-static inline int nrc_hal_ops_nw_start(bool restart)
+static inline int nrc_hal_ops_nw_start(void)
 {
 	struct nrc_hal_ops *ops = nrc_hal_core_get_ops();
-	return ops && ops->nw_start ? ops->nw_start(restart) : -ENODEV;
+	return ops && ops->nw_start ? ops->nw_start() : -ENODEV;
 }
 
-static inline int nrc_hal_ops_nw_stop(bool restart)
+static inline int nrc_hal_ops_nw_stop(void)
 {
 	struct nrc_hal_ops *ops = nrc_hal_core_get_ops();
-	return ops && ops->nw_stop ? ops->nw_stop(restart) : -ENODEV;
+	return ops && ops->nw_stop ? ops->nw_stop() : -ENODEV;
 }
 
 static inline void nrc_hal_ops_nw_restart(void)
 {
-	struct nrc_hal_ops *ops = nrc_hal_core_get_ops();
-	if (ops && ops->nw_restart)
-		ops->nw_restart();
+	nrc_hal_ops_nw_stop();
+	nrc_hal_ops_nw_start();
 }
 
 /* Frame TX */

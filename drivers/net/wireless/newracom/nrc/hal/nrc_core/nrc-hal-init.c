@@ -121,22 +121,9 @@ static int nrc_hal_hdev_init(struct nrc_hif_device *hdev)
 		return -ENOMEM;
 	}
 
-	hdev->restart_workqueue = create_singlethread_workqueue("nrc_restart");
-	if (!hdev->restart_workqueue) {
-		ERR_HIF("Failed to create restart workqueue");
-		destroy_workqueue(hdev->event_workqueue);
-		destroy_workqueue(hdev->mcp_workqueue);
-		destroy_workqueue(hdev->workqueue);
-		hdev->event_workqueue = NULL;
-		hdev->mcp_workqueue = NULL;
-		hdev->workqueue = NULL;
-		return -ENOMEM;
-	}
-
 	/* Initialize additional hdev components */
 	nrc_backend_set_hal_core_refs(hdev);
 	nrc_core_init_debugfs(hdev);
-	nrc_init_credit_queue(hdev);
 
 	INFO("HIF device resources initialized successfully");
 	return 0;
@@ -154,12 +141,6 @@ static void nrc_hal_hdev_cleanup(struct nrc_hif_device *hdev)
 	}
 
 	/* Flush and destroy workqueues in reverse order */
-	if (hdev->restart_workqueue) {
-		flush_workqueue(hdev->restart_workqueue);
-		destroy_workqueue(hdev->restart_workqueue);
-		hdev->restart_workqueue = NULL;
-	}
-
 	if (hdev->event_workqueue) {
 		flush_workqueue(hdev->event_workqueue);
 		destroy_workqueue(hdev->event_workqueue);
@@ -188,34 +169,6 @@ static void nrc_hal_hdev_cleanup(struct nrc_hif_device *hdev)
 }
 
 /**
- * nrc_hal_probe_hif_device - Probe and initialize HIF device
- * @hdev: HIF device to probe
- *
- * Performs HIF device reset and probe with retry mechanism
- * Returns: 0 on success, negative error code on failure
- */
-static int nrc_hal_probe_hif_device(struct nrc_hif_device *hdev)
-{
-	int ret;
-	int retry = 0;
-
-try:
-	nrc_hif_ops_reset_device();
-	ret = nrc_hif_ops_probe();
-	if (ret && retry < MAX_RETRY_CNT) {
-		retry++;
-		goto try;
-	}
-
-	if (ret) {
-		ERR_HIF("Failed to nrc_hif_probe %d", ret);
-		return -ENODEV;
-	}
-
-	return 0;
-}
-
-/**
  * Platform driver probe function
  * Called when a platform device is matched with this driver
  */
@@ -237,11 +190,8 @@ static int nrc_hal_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	/* Set platform device parent to SPI device for proper device hierarchy */
-	/* Temporarily disable parent setting to isolate runtime PM issue */
 	if (spi_info->dev) {
-		INFO("HIF device found: %s (parent setting disabled for testing)",
-		     dev_name(spi_info->dev));
+		INFO("HIF device found: %s", dev_name(spi_info->dev));
 	} else {
 		ERR_HIF("HIF device is NULL");
 		return -ENODEV;
@@ -263,7 +213,6 @@ static int nrc_hal_probe(struct platform_device *pdev)
 	ret = nrc_hal_callback_init();
 	if (ret) {
 		ERR_HIF("Failed to initialize HAL callback system: %d", ret);
-		g_nw_from_wlan = NULL;
 		return ret;
 	}
 
@@ -273,30 +222,19 @@ static int nrc_hal_probe(struct platform_device *pdev)
 	/* Register default HAL operations */
 	nrc_hal_register_ops(nrc_hal_get_default_ops());
 
-	/* Store HIF device in platform data temporarily until WLAN initialization */
+	/* Store HIF device in platform data */
 	platform_set_drvdata(pdev, hdev);
 
-	/* Probe and initialize HIF device after platform setup */
-	ret = nrc_hal_probe_hif_device(hdev);
-	if (ret) {
-		ERR_HIF("Failed to probe HIF device: %d", ret);
-		platform_set_drvdata(pdev, NULL);
-		nrc_hal_hdev_cleanup(hdev);
-		nrc_hif_free(hdev);
-		return ret;
-	}
-
-	/* Initialize hdev workqueues and core resources after HIF probe */
+	/* Initialize hdev workqueues and core resources (HW probe is delayed until nw_start) */
 	ret = nrc_hal_hdev_init(hdev);
 	if (ret) {
 		ERR_HIF("Failed to initialize hdev resources: %d", ret);
 		platform_set_drvdata(pdev, NULL);
-		nrc_hal_hdev_cleanup(hdev);
 		nrc_hif_free(hdev);
 		return ret;
 	}
 
-	INFO("NRC HAL platform driver probed successfully\n");
+	INFO("NRC HAL platform driver initialized (waiting for frontend)\n");
 	return 0;
 }
 

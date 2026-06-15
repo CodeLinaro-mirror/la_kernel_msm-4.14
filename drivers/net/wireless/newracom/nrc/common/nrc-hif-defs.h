@@ -60,20 +60,28 @@ static inline const char *nrc_fw_state_str(enum NRC_FW_STATE state)
 	}
 }
 
-/*
- * Driver State Management
- * These values track the driver's operational state
+/**
+ * enum NRC_DRV_STATE - Driver Operational States (Capability Progression)
+ *
+ * Ordered by Operational Capability Level:
+ * - 0-2: Inactive/Blocking states (No data/WIM traffic)
+ * - 3:   Transitional state (Starting up, control traffic only)
+ * - 4-5: Active/Operational states (Full capability)
+ *
+ * @NRC_DRV_INIT:   [Level 0] Initial state, hardware not yet initialized.
+ * @NRC_DRV_REBOOT: [Level 1] WDT recovery in progress (blocks new requests).
+ * @NRC_DRV_STOP:   [Level 2] Shutdown in progress (blocks all new requests).
+ * @NRC_DRV_START:  [Level 3] Startup in progress, loading firmware/config.
+ * @NRC_DRV_RUNNING:[Level 4] Normal operation, fully active.
+ * @NRC_DRV_PS:     [Level 5] Hardware in Deep Sleep (fully configured).
  */
 enum NRC_DRV_STATE {
-	NRC_DRV_REBOOT = -2,
-	NRC_DRV_BOOT = -1,
 	NRC_DRV_INIT = 0,
-	NRC_DRV_CLOSED,
-	NRC_DRV_CLOSING,
-	NRC_DRV_STOP,
-	NRC_DRV_START,
-	NRC_DRV_RUNNING,
-	NRC_DRV_PS,
+	NRC_DRV_REBOOT = 1,
+	NRC_DRV_STOP = 2,
+	NRC_DRV_START = 3,
+	NRC_DRV_RUNNING = 4,
+	NRC_DRV_PS = 5,
 };
 
 /* Driver state string conversion */
@@ -82,14 +90,8 @@ static inline const char *nrc_drv_state_str(enum NRC_DRV_STATE state)
 	switch (state) {
 	case NRC_DRV_REBOOT:
 		return "REBOOT";
-	case NRC_DRV_BOOT:
-		return "BOOT";
 	case NRC_DRV_INIT:
 		return "INIT";
-	case NRC_DRV_CLOSED:
-		return "CLOSED";
-	case NRC_DRV_CLOSING:
-		return "CLOSING";
 	case NRC_DRV_STOP:
 		return "STOP";
 	case NRC_DRV_START:

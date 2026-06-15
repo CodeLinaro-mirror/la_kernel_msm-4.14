@@ -1039,7 +1039,6 @@ static int nrc_mac_start(struct ieee80211_hw *hw)
 				NRC_PS_REASON_DRV_BSS_CONFIG);
 	}
 
-	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_RUNNING);
 	nw->aid = 0;
 
 	alloc_size = tlv_len(sizeof(u16)) + tlv_len(ETH_ALEN);
@@ -1069,16 +1068,6 @@ static int nrc_mac_start(struct ieee80211_hw *hw)
 
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 
-	/* Start idle mode timeout as fallback (30s)
-	 * - Cancelled if scan/connection starts (existing logic)
-	 * - Skipped if mac80211 sets IDLE flag first
-	 * - Acts as backup for power saving if no activity */
-	if (hdev->params->idle_mode) {
-		VBS_PS("Idle mode timeout scheduled (30s)");
-		nrc_idle_mode_set_state(nw, true);
-		schedule_delayed_work(&nw->idle_work, msecs_to_jiffies(30000));
-	}
-
 	mutex_unlock(&nw->state_mtx);
 
 	return 0;
@@ -1102,7 +1091,7 @@ void nrc_mac_stop(struct ieee80211_hw *hw)
 	ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
 			      NRC_PS_REASON_DRV_STA_ADD);
 
-	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_CLOSING)
+	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_STOP)
 		goto out;
 
 	/* Note: mac80211 calls nrc_mac_flush() before stop to flush TX queues
@@ -1497,8 +1486,7 @@ static void nrc_mac_remove_interface(struct ieee80211_hw *hw,
 	DBG_MAC("%s:end", __func__);
 }
 
-static u16 total_sta = 0; /* total number of STA  connected */
-static u16 remain_sta = 0; /* number of STA remaining after clearing STA */
+static u16 total_sta; /* total number of STAs connected */
 
 static void prepare_deauth_sta(void *data, struct ieee80211_sta *sta)
 {
@@ -1506,6 +1494,10 @@ static void prepare_deauth_sta(void *data, struct ieee80211_sta *sta)
 	struct ieee80211_hw *hw = i_sta->nw->hw;
 	struct ieee80211_vif *vif = data;
 	struct sk_buff *skb = NULL;
+	struct ieee80211_tx_info *txi;
+#ifdef CONFIG_SUPPORT_TX_CONTROL
+	struct ieee80211_tx_control control = {.sta = sta};
+#endif
 
 	if (!sta || !vif) {
 		WARN_WLAN("Invalid argument");
@@ -1515,42 +1507,47 @@ static void prepare_deauth_sta(void *data, struct ieee80211_sta *sta)
 	if (!ieee80211_find_sta(vif, sta->addr))
 		return;
 
-	/* (AP Recovry) Pretend to receive a deauth from @sta */
-	skb = ieee80211_deauth_get(hw, vif->addr, sta->addr, vif->addr,
-				   WLAN_REASON_DEAUTH_LEAVING, sta, false);
-	if (!skb) {
-		ERR_WLAN("Fail to alloc skb");
-		return;
-	}
 	DBG_STATE("(AP Recovery) Disconnect STA(%pM) by force", sta->addr);
-	ieee80211_rx_irqsafe(hw, skb);
+
+	/*
+	 * TX a deauth TO the STA so it knows the AP has restarted and must
+	 * reconnect.  Without this, the STA never receives a deauth (it only
+	 * loses beacons briefly), keeps its association state, and never
+	 * initiates a new connection after the AP comes back up.
+	 *
+	 * NOTE: We no longer inject a fake RX deauth via ieee80211_rx_irqsafe()
+	 * because in AP mode, mac80211's ieee80211_rx_h_mgmt() drops all
+	 * management frames for AP VIF type, so the fake deauth never gets
+	 * processed.  Instead, ieee80211_restart_hw() handles the mac80211
+	 * internal STA cleanup (sta_state 4→0 transitions) during reconfig.
+	 */
+	skb = ieee80211_deauth_get(hw, sta->addr, vif->addr, vif->addr,
+				   WLAN_REASON_DEAUTH_LEAVING, sta, true);
+	if (skb) {
+		skb_set_queue_mapping(skb, IEEE80211_AC_VO);
+		txi = IEEE80211_SKB_CB(skb);
+		txi->control.vif = vif;
+		DBG_STATE("(AP Recovery) TX deauth to STA(%pM) len=%u",
+			  sta->addr, skb->len);
+#ifdef CONFIG_SUPPORT_NEW_MAC_TX
+		nrc_mac_tx_process(hw, &control, skb, false);
+#else
+		nrc_mac_tx_process(hw, skb, false);
+#endif
+	} else {
+		ERR_WLAN(
+			"(AP Recovery) Failed to create TX deauth for STA(%pM)",
+			sta->addr);
+	}
 
 	++total_sta;
-}
-
-static void get_sta_cnt(void *data, struct ieee80211_sta *sta)
-{
-	struct ieee80211_vif *vif = data;
-
-	if (!sta || !vif) {
-		WARN_WLAN("Invalid argument");
-		return;
-	}
-
-	if (!ieee80211_find_sta(vif, sta->addr))
-		return;
-
-	++remain_sta;
-	DBG_STATE("(AP Recovery) remaining sta_cnt:%d", remain_sta);
 }
 
 int nrc_mac_restart(struct nrc *nw)
 {
 	int is_relay;
 	int i;
-	u16 cleared_sta = 0;
-	int retry_cnt = 0;
-	struct nrc_vif *i_vif;
+
 	DBG_MAC("Restart NRC MAC");
 	is_relay = (nw->vif[0] && nw->vif[1]);
 
@@ -1564,7 +1561,7 @@ int nrc_mac_restart(struct nrc *nw)
 				 */
 				DBG_STATE("STA(%d) : Reconnect to AP", i);
 				mdelay(300);
-				nrc_mac_cancel_hw_scan(nw->hw, nw->vif[i]);
+				nrc_cancel_hw_scan(nw->hw, nw->vif[i]);
 				ieee80211_connection_loss(nw->vif[i]);
 				if (!is_relay) {
 					nrc_vcmd_backup_init_info(i, nw);
@@ -1573,53 +1570,34 @@ int nrc_mac_restart(struct nrc *nw)
 					nrc_free_vif_index(nw, nw->vif[i]);
 				}
 			} else if (nw->vif[i]->type == NL80211_IFTYPE_AP) {
-				i_vif = to_i_vif(nw->vif[i]);
+				struct nrc_vif *i_vif = to_i_vif(nw->vif[i]);
+
 				ap_max_idle_timer_stop(nw, i_vif);
 
 				ieee80211_iterate_stations_atomic(
 					nw->hw, prepare_deauth_sta,
 					(void *)nw->vif[i]);
 				DBG_STATE(
-					"AP(%d) : Now try to clear all STAs(total cnt:%d)",
+					"AP(%d) : TX deauth sent to %d STA(s)",
 					i, total_sta);
-				while (1) {
-					//wait for all the sta are locally deauthenticated by mac80211
-					if (!total_sta)
-						break;
-					msleep(2000);
-					remain_sta = 0;
-					ieee80211_iterate_stations_atomic(
-						nw->hw, get_sta_cnt,
-						(void *)nw->vif[i]);
-					cleared_sta = total_sta - remain_sta;
-					if (!remain_sta) {
-						DBG_STATE(
-							"Completed! (Remaining STA cnt:%d)",
-							remain_sta);
-						remain_sta = 0;
-						break;
-					}
-					retry_cnt++;
-					if (retry_cnt > 10) {
-						DBG_STATE(
-							"10 Trials but fail to clear STAs on mac80211. Reset by Force (Remaining STA cnt:%d)",
-							remain_sta);
-						break;
-					}
-					DBG_STATE(
-						"NOT completed yet. Try again. (cleared STA:%d vs remained STA:%d, retry_cnt:%d)",
-						cleared_sta, remain_sta,
-						retry_cnt);
-					total_sta = 0;
-					ieee80211_iterate_stations_atomic(
-						nw->hw, prepare_deauth_sta,
-						(void *)nw->vif[i]);
-				}
-				DBG_STATE(
-					"All STAs are cleared.(retry_cnt:%d remaining sta cnt:%d)",
-					retry_cnt, nrc_stats_report_count());
+
+				/*
+				 * Brief wait for the TX deauth to be sent out
+				 * over SPI before we shut down the HAL.
+				 * mac80211 STA cleanup is handled later by
+				 * ieee80211_restart_hw() during reconfig
+				 * (sta_state 4→3→2→1→0 transitions).
+				 *
+				 * The old retry loop (10 × 2s = 20s) waiting
+				 * for ieee80211_rx_irqsafe() to remove STAs
+				 * never worked in AP mode because mac80211's
+				 * ieee80211_rx_h_mgmt() drops management
+				 * frames for AP VIF type.
+				 */
+				if (total_sta)
+					msleep(200);
+
 				total_sta = 0;
-				mdelay(5000); //it's for STA's reconnect by CQM
 				nrc_hal_ops_tx_cleanup_queues();
 				nrc_mac_clean_txq(nw);
 				ap_max_idle_timer_stop(
@@ -1643,6 +1621,102 @@ int nrc_mac_restart(struct nrc *nw)
 	}
 
 	return 1;
+}
+
+/**
+ * nrc_nw_restart_wlan - Perform a full, synchronous network restart
+ * @nw: NRC network device structure
+ *
+ * Sequence:
+ * 1. Set WDT flags so vendor command backup is restored after MAC restart.
+ * 2. Cleanup MAC layer state (deauth STAs, trigger reconnection).
+ * 3. Shutdown HAL and hardware.
+ * 4. Re-probe hardware and reload firmware.
+ * 5. Re-send regulatory domain / channel table to freshly loaded FW.
+ * 6. Release state_mtx, then call ieee80211_restart_hw() to re-configure
+ *    MAC address / AID in the freshly loaded FW and restore all VIF state.
+ *    This mirrors the WDT recovery path in nrc_wlan_handle_fw_ready_from_wdt().
+ *
+ * Returns: 0 on success, negative error code on failure.
+ */
+int nrc_nw_restart_wlan(struct nrc *nw)
+{
+	int ret;
+
+	if (!nw || !nw->hw)
+		return -EINVAL;
+
+	INFO("Network restart starting");
+
+	mutex_lock(&nw->state_mtx);
+
+	/*
+	 * 1. Mark all VIFs as WDT-reset so that nrc_mac_restart() triggers
+	 *    vendor command backup restoration (same as the WDT recovery path).
+	 *    Without this flag, nrc_vcmd_backup_init_info() skips restoration.
+	 */
+	nrc_vcmd_backup_set_wdt_flag(0);
+	nrc_vcmd_backup_set_wdt_flag(1);
+
+	/*
+	 * 2. Cleanup MAC layer state.
+	 *    For AP mode this sends a TX deauth to each connected STA
+	 *    (via prepare_deauth_sta) so they know to reconnect.
+	 *    For STA mode this triggers ieee80211_connection_loss().
+	 *    This must happen while the HIF/SPI path is still operational.
+	 */
+	nrc_mac_restart(nw);
+
+	/*
+	 * 3. Shut down HAL.
+	 *    Do NOT call ieee80211_stop_queues() here: it stops queues
+	 *    with DRIVER reason, but ieee80211_restart_hw() only wakes
+	 *    queues for SUSPEND reason during reconfig, leaving the
+	 *    DRIVER stop permanently active.  This blocks all TX after
+	 *    restart (including AUTH responses), preventing STA reconnection.
+	 *    The WDT recovery handler does not stop queues either.
+	 *    The HAL stop itself is sufficient to prevent TX during transition.
+	 */
+	nrc_hal_ops_nw_stop();
+
+	/* 4. Start (Reset → Probe → FW Download → FW Start) */
+	ret = nrc_hal_ops_nw_start();
+	if (ret) {
+		ERR_WLAN("Restart failed at nw_start: %d", ret);
+		mutex_unlock(&nw->state_mtx);
+		return ret;
+	}
+
+	/*
+	 * 5. Re-send country code / board data to the freshly loaded FW.
+	 * ieee80211_restart_hw() does not repeat the cfg80211 regulatory
+	 * notification, so the FW would assert in CheckNUpdateCHTableByVif()
+	 * when nrc_mac_config() tries to configure a channel.
+	 * nrc_restore_reg_domain() mirrors what nrc_wlan_handle_fw_ready_from_wdt()
+	 * already does for WDT recovery.
+	 */
+	nrc_restore_reg_domain(nw);
+
+	/*
+	 * Release the mutex before calling ieee80211_restart_hw().
+	 * ieee80211_restart_hw() schedules a restart_work that eventually
+	 * calls nrc_mac_start(), which also acquires state_mtx.  Holding
+	 * the lock here would cause a deadlock.
+	 */
+	mutex_unlock(&nw->state_mtx);
+
+	/*
+	 * 6. Notify mac80211 that the hardware was restarted.  It calls
+	 *    nrc_mac_start() to re-configure MAC address / AID in the
+	 *    freshly loaded FW, re-adds virtual interfaces, and restores
+	 *    all per-VIF state.  This mirrors nrc_wlan_handle_fw_ready_from_wdt().
+	 */
+	DBG_STATE("Restart hw after FW reload");
+	ieee80211_restart_hw(nw->hw);
+
+	INFO("Network restart completed");
+
+	return 0;
 }
 
 static enum WIM_CHANNEL_PARAM_WIDTH
@@ -3183,7 +3257,7 @@ void nrc_mac_cancel_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	if (atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE)
 		goto out;
 
-	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_CLOSING)
+	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_STOP)
 		goto skip_wake;
 
 	if (NRC_DRV_IS_ASLEEP(hdev)) {
@@ -4078,27 +4152,11 @@ static void nrc_mac_set_wakeup(struct ieee80211_hw *hw, bool enabled)
 static int nrc_mac_resume(struct ieee80211_hw *hw)
 {
 	struct nrc *nw = hw->priv;
-	struct sk_buff *skb;
 
 	DBG_STATE("[%s, L%d]", __func__, __LINE__);
 
-	/* Restore country code after wakeup (for IDLE_MODE) */
-	if (nw->alpha2[0] && nw->alpha2[1] &&
-	    !(nw->alpha2[0] == '0' && nw->alpha2[1] == '0') &&
-	    !(nw->alpha2[0] == '9' && nw->alpha2[1] == '9')) {
-		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
-		if (skb) {
-#ifdef CONFIG_S1G_CHANNEL
-			nrc_set_s1g_country(nw->alpha2);
-#else
-			nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_COUNTRY_CODE,
-						    sizeof(u16), nw->alpha2);
-#endif
-			nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
-			DBG_STATE("[%s] Restored country code: %c%c", __func__,
-				  nw->alpha2[0], nw->alpha2[1]);
-		}
-	}
+	/* Restore country code / board data after idle-mode wakeup */
+	nrc_restore_reg_domain(nw);
 
 	DBG_STATE("[%s, L%d] Resume complete", __func__, __LINE__);
 
@@ -4478,11 +4536,8 @@ static const struct ieee80211_ops nrc_mac80211_ops = {
 	.sched_scan_stop = nrc_mac_sched_scan_stop,
 };
 
-#ifdef CONFIG_NEW_REG_NOTIFIER
-void nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
-#else
-int nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
-#endif
+static void nrc_reg_notifier(struct wiphy *wiphy,
+			     struct regulatory_request *request)
 {
 	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
 	struct nrc *nw = hw->priv;
@@ -4503,20 +4558,12 @@ int nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 	if ((request->alpha2[0] == '0' && request->alpha2[1] == '0') ||
 	    (request->alpha2[0] == '9' && request->alpha2[1] == '9')) {
 		DBG_MAC("CC is 00 or 99, skip loading BD and setting CC");
-#ifdef CONFIG_NEW_REG_NOTIFIER
 		return;
-#else
-		return 0;
-#endif
 	}
 
 	if (NRC_DRV_IS_ASLEEP(hdev)) {
 		/* HSPI is not ready */
-#ifdef CONFIG_NEW_REG_NOTIFIER
 		return;
-#else
-		return 0;
-#endif
 	}
 
 #if defined(CONFIG_SUPPORT_BD)
@@ -4545,11 +4592,7 @@ int nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 		/* Default policy is that if board data is invalid, block loading of FW */
 		DBG_MAC("BD file is invalid! Stop loading FW");
 		g_bd_valid = false;
-#ifdef CONFIG_NEW_REG_NOTIFIER
 		return;
-#else
-		return -1;
-#endif /* CONFIG_NEW_REG_NOTIFIER */
 	}
 #endif /* defined(CONFIG_SUPPORT_BD) */
 
@@ -4595,12 +4638,30 @@ int nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 		(struct s1g_channel_table *)nrc_get_current_s1g_cc_table());
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 #endif /* CONFIG_S1G_CHANNEL */
+}
 
-#ifdef CONFIG_NEW_REG_NOTIFIER
-	return;
-#else
-	return 0;
-#endif
+/**
+ * nrc_restore_reg_domain - Re-send country code (and board data) to FW.
+ *
+ * After a cold FW reboot (restart_wlan, WDT recovery, idle-mode wakeup) the
+ * freshly loaded firmware has no country code or channel table.  This helper
+ * replicates the regulatory notification that cfg80211 sends automatically at
+ * ieee80211_register_hw() time but does NOT repeat on subsequent restarts.
+ *
+ * Call this whenever the FW has been restarted and needs its regulatory state
+ * re-initialized before any channel or VIF configuration WIM commands arrive.
+ */
+void nrc_restore_reg_domain(struct nrc *nw)
+{
+	struct regulatory_request request;
+
+	if (!nw || !nw->hw)
+		return;
+
+	request.alpha2[0] = nw->alpha2[0];
+	request.alpha2[1] = nw->alpha2[1];
+	request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
+	nrc_reg_notifier(nw->hw->wiphy, &request);
 }
 
 static u8 *nrc_vendor_remove(struct nrc *nw, u8 subcmd)
@@ -6117,6 +6178,9 @@ bool nrc_idle_mode_get_state(struct nrc *nw)
 
 void nrc_idle_mode_set_state(struct nrc *nw, bool enable)
 {
+	if (nw->idle_state == enable)
+		return;
+
 	DBG_STATE("%s: enable = %d", __FUNCTION__, enable);
 	nw->idle_state = enable;
 }

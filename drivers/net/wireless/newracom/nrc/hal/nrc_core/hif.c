@@ -59,34 +59,6 @@
 #include "nrc-debug-common.h"
 #endif
 
-static void restart_worker(struct work_struct *work)
-{
-	// struct nrc_hif_device *hdev =
-	// 	container_of(work, struct nrc_hif_device, restart_work);
-
-#if defined(CONFIG_SUPPORT_BD)
-	struct regulatory_request request;
-	request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
-#endif
-
-	INFO("Restart NRC");
-
-	nrc_nw_stop(true); /* restart=true: ignore frontend check */
-	nrc_hif_ops_probe();
-#if defined(CONFIG_SUPPORT_BD)
-	/* Trigger regulatory notifier via HAL callback system */
-	{
-		struct nrc_hal_event_data hal_event = {
-			.frontend_type = NRC_FRONTEND_WLAN,
-			.type = NRC_HAL_EVT_REG_NOTIFIER,
-			.data = &request,
-			.data_len = sizeof(request)};
-		nrc_hal_trigger_event(&hal_event);
-	}
-#endif
-	nrc_nw_start(true);
-}
-
 struct nrc_hif_device *nrc_hif_alloc(struct device *dev, void *priv,
 				     struct nrc_hif_ops *ops)
 {
@@ -118,8 +90,6 @@ struct nrc_hif_device *nrc_hif_alloc(struct device *dev, void *priv,
 	INIT_WORK(&hdev->work, nrc_hif_wlan_work);
 	/* Initialize MCP frontend work */
 	INIT_WORK(&hdev->mcp_work, nrc_hif_mcp_work);
-	/* Initialize common work structures */
-	INIT_WORK(&hdev->restart_work, restart_worker);
 
 	init_completion(&hdev->wake_done);
 #ifdef TEST_BLOCK_TX
@@ -228,6 +198,45 @@ void nrc_hif_reset_slot_credit(void)
 		}
 		CREDIT_UNLOCK(hdev, flags);
 	}
+}
+
+/**
+ * nrc_hif_dump_slot_credit - Dump slot and credit state to kernel log
+ * @tag: Caller context string for identifying the log source
+ *
+ * Prints TX/RX slot head/tail/count and per-AC credit front/rear/max.
+ * Call from error paths (WIM timeout, xmit timeout) to aid diagnosis.
+ */
+void nrc_hif_dump_slot_credit(const char *tag)
+{
+	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
+	unsigned long flags;
+	int i;
+
+	if (!hdev) {
+		ERR_HIF("[%s] dump failed: no hdev", tag);
+		return;
+	}
+
+	ERR_HIF("[%s] SLOT TX(h=%u t=%u avail=%u cnt=%u) "
+		"RX(h=%u t=%u avail=%u cnt=%u) ps=%s drv=%s",
+		tag, hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail,
+		(u16)(hdev->slot[TX_SLOT].head - hdev->slot[TX_SLOT].tail),
+		hdev->slot[TX_SLOT].count, hdev->slot[RX_SLOT].head,
+		hdev->slot[RX_SLOT].tail,
+		(u16)(hdev->slot[RX_SLOT].head - hdev->slot[RX_SLOT].tail),
+		hdev->slot[RX_SLOT].count, NRC_PS_STATE_STR(hdev),
+		NRC_DRV_STATE_STR(hdev));
+
+	CREDIT_LOCK(hdev, flags);
+	for (i = 0; i < CREDIT_QUEUE_MAX; i++) {
+		if (hdev->credit.credit_max[i] > 0) {
+			ERR_HIF("[%s] CREDIT[%d] front=%u rear=%u max=%u", tag,
+				i, hdev->credit.front[i], hdev->credit.rear[i],
+				hdev->credit.credit_max[i]);
+		}
+	}
+	CREDIT_UNLOCK(hdev, flags);
 }
 
 void nrc_hif_free_skb(struct nrc_hif_device *hdev, struct sk_buff *skb)
@@ -940,6 +949,7 @@ int nrc_hal_start(void)
 					hdev->started = false;
 					return ret;
 				}
+				hdev->wakeup_gpio_allocated = true;
 				INFO_HIF(
 					"Wakeup GPIO %d allocated successfully",
 					wakeup_gpio);
@@ -952,8 +962,6 @@ int nrc_hal_start(void)
 
 int nrc_hal_stop(struct nrc_hif_device *hdev)
 {
-	int wakeup_gpio;
-
 	if (!hdev) {
 		ERR_HIF("Invalid HIF device");
 		return -EINVAL;
@@ -962,21 +970,22 @@ int nrc_hal_stop(struct nrc_hif_device *hdev)
 	DBG_HIF("stop()");
 
 	/* Ensure device is awake before stopping (HAL Master responsibility)
-	 * This MUST be done before freeing GPIOs to ensure physical signal can be sent. */
+	 * This MUST be done before stopping operations to ensure physical signal can be sent.
+	 * After this call, PS usage is considered finished. */
 	if (hdev->started && !NRC_PS_IS_AWAKE(hdev)) {
 		DBG_HIF("Device not awake before stop, requesting wake");
 		nrc_ps_request_wake_sync(hdev, 2000,
 					 NRC_PS_REASON_HAL_SHUTDOWN);
 	}
 
-	/* Free wakeup pin GPIO unconditionally if allocated */
-	wakeup_gpio = NRC_PARAM_POWER_SAVE_GPIO(hdev, 0);
-	if (wakeup_gpio > 0) {
-		DBG_HIF("Freeing wakeup GPIO %d (started=%d, ps=%d, idle=%d)",
-			wakeup_gpio, hdev->started, NRC_PARAM_POWER_SAVE(hdev),
-			NRC_PARAM_IDLE_MODE(hdev));
-		nrc_hif_ops_gpio_free(wakeup_gpio);
-		INFO_HIF("Wakeup GPIO %d freed", wakeup_gpio);
+	/* Now PS is finished and device is awake, we can safely free the GPIO */
+	if (hdev->wakeup_gpio_allocated) {
+		int wakeup_gpio = NRC_PARAM_POWER_SAVE_GPIO(hdev, 0);
+		if (wakeup_gpio > 0) {
+			nrc_hif_ops_gpio_free(wakeup_gpio);
+			hdev->wakeup_gpio_allocated = false;
+			INFO_HIF("Wakeup GPIO %d freed", wakeup_gpio);
+		}
 	}
 
 	if (!hdev->started)

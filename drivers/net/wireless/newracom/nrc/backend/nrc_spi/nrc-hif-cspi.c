@@ -1236,7 +1236,7 @@ int spi_read_status(struct spi_device *spi)
  * spi_reset_slots - Reset SPI RX and TX slot pointers to initial state
  * @hdev: NRC HIF device
  */
-static void spi_reset_slots(struct nrc_hif_device *hdev)
+void spi_reset_slots(struct nrc_hif_device *hdev)
 {
 	if (!hdev)
 		return;

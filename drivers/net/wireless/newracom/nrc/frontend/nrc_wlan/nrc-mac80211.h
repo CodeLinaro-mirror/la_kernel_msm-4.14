@@ -133,15 +133,22 @@ bool nrc_access_vif(struct nrc *nw);
 
 void nrc_free_vif_index(struct nrc *nw, struct ieee80211_vif *vif);
 
-#ifdef CONFIG_NEW_REG_NOTIFIER
-void nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request);
-#else
-int nrc_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request);
-#endif
-
 #ifdef CONFIG_S1G_CHANNEL
 void init_s1g_channels(struct nrc *nw);
 #endif /* #ifdef CONFIG_S1G_CHANNEL */
+
+/**
+ * nrc_restore_reg_domain - Re-send country code (and board data) to FW.
+ *
+ * After a cold FW reboot (restart_wlan, WDT recovery, idle-mode wakeup) the
+ * freshly loaded firmware has no country code or channel table.  This helper
+ * replicates the regulatory notification that cfg80211 sends automatically at
+ * ieee80211_register_hw() time but does NOT repeat on subsequent restarts.
+ *
+ * Call this whenever the FW has been restarted and needs its regulatory state
+ * re-initialized before any channel or VIF configuration WIM commands arrive.
+ */
+void nrc_restore_reg_domain(struct nrc *nw);
 
 void nrc_mac_clean_txq(struct nrc *nw);
 void nrc_mac_flush_txq(struct nrc *nw);
@@ -175,6 +182,7 @@ void nrc_cleanup_ba_session_vif(struct nrc *nw, struct ieee80211_vif *vif);
 void nrc_cleanup_ba_session_all(struct nrc *nw);
 
 int nrc_mac_restart(struct nrc *nw);
+int nrc_nw_restart_wlan(struct nrc *nw);
 
 bool nrc_idle_mode_get_state(struct nrc *nw);
 void nrc_idle_mode_set_state(struct nrc *nw, bool enable);

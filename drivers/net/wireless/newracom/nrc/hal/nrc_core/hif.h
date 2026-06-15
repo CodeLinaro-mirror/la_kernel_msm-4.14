@@ -36,6 +36,7 @@ struct nrc_hif_device *nrc_hif_alloc(struct device *dev, void *priv,
 				     struct nrc_hif_ops *ops);
 void nrc_hif_free(struct nrc_hif_device *hdev);
 void nrc_hif_reset_slot_credit(void);
+void nrc_hif_dump_slot_credit(const char *tag);
 void nrc_hif_free_skb(struct nrc_hif_device *hdev, struct sk_buff *skb);
 
 /* HAL Operations Functions (not direct HIF ops) */

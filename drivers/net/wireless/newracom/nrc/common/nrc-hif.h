@@ -224,9 +224,7 @@ struct nrc_hif_device {
 	atomic_t mcp_active; /* MCP is actively transmitting (for priority control) */
 
 	/* Common workqueues and PS state machine */
-	struct work_struct restart_work;
 	struct workqueue_struct *event_workqueue;
-	struct workqueue_struct *restart_workqueue;
 #ifdef CONFIG_DELAY_WAKE_TARGET
 	ktime_t ps_time;
 #endif
@@ -251,6 +249,7 @@ struct nrc_hif_device {
 	int wowlan_pattern_num;
 	bool wowlan_enabled;
 	bool ampdu_supported;
+	bool wakeup_gpio_allocated; /* Track if wakeup GPIO is currently allocated */
 	nrc_ps_t ps;
 	nrc_fw_t fw;
 	struct wim_response *wim_resp;
@@ -278,8 +277,6 @@ struct nrc_hif_device {
 	(atomic_read(&(dev)->drv_state) >= NRC_DRV_START)
 #define NRC_DRV_IS_REBOOT(dev) \
 	(atomic_read(&(dev)->drv_state) == NRC_DRV_REBOOT)
-#define NRC_DRV_IS_CLOSING(dev) \
-	(atomic_read(&(dev)->drv_state) == NRC_DRV_CLOSING)
 #define NRC_DRV_IS_INIT(dev) (atomic_read(&(dev)->drv_state) == NRC_DRV_INIT)
 #define NRC_DRV_IS_STARTING(dev) \
 	(atomic_read(&(dev)->drv_state) == NRC_DRV_START)

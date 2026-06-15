@@ -207,7 +207,7 @@ struct nrc {
 	struct ieee80211_vif *associated_vif;
 	bool is_bcn_timeout;
 
-	/* WLAN module closing state - prevents RX processing during unregister */
+	/* WLAN module stopping state - prevents RX processing during unregister */
 	atomic_t hw_unregistering;
 
 	/* set frag threshold by mac80211 */

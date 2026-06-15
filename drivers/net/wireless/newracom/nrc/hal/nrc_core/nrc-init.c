@@ -153,10 +153,13 @@ int country_match(const char *const cc[], const char *const country)
 	return 0;
 }
 
+#define MAX_RETRY_CNT 3
 #define MAX_FW_RETRY_CNT 30
-int nrc_nw_start(bool restart)
+
+int nrc_nw_start(void)
 {
 	int ret;
+	int retry = 0;
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 	enum NRC_DRV_STATE current_state;
 
@@ -165,21 +168,24 @@ int nrc_nw_start(bool restart)
 		return -EINVAL;
 	}
 
+	/* Ensure firmware structure is initialized (needed for restarts) */
+	if (!hdev->fw.priv) {
+		WARN_HIF("FW private structure missing, re-initializing...");
+		ret = nrc_hal_fw_init(hdev);
+		if (ret) {
+			ERR_FW("Failed to re-initialize HAL firmware: %d", ret);
+			return ret;
+		}
+	}
+
 	current_state = NRC_HIF_DRV_STATE(hdev);
 
-	/* Check if firmware is already loaded by another frontend */
+	/* Check if HAL is already started by another frontend */
 	if (current_state != NRC_DRV_INIT) {
-		/* Firmware already downloaded and started by another frontend */
 		if (current_state >= NRC_DRV_START) {
-			INFO("Firmware already loaded by first frontend (state=%s). Skipping firmware download.",
-			     nrc_drv_state_str(current_state));
-
-			/* Note: fw_name and bd_name are already synchronized by frontend's sync_params
-			 * (nrc_wlan_sync_params or nrc_mcp_sync_params) before calling this function.
-			 * Second frontend will share hdev->params pointer with first frontend,
-			 * so all FW-related parameters are automatically synchronized. */
-
-			return 0; /* Success - firmware already loaded */
+			VBS_HIF("HAL already started (state=%s).",
+				nrc_drv_state_str(current_state));
+			return 0;
 		} else {
 			ERR_HIF("Invalid HIF state for nw_start: %s (%d)",
 				nrc_drv_state_str(current_state),
@@ -188,67 +194,85 @@ int nrc_nw_start(bool restart)
 		}
 	}
 
-	/* First frontend - perform full initialization */
-	INFO("NRC start (first frontend)");
+	/* Perform full initialization */
+	INFO("NRC start");
+
+	/* 1st Phase: Hardware Reset and Probe (Handshake)
+	 * Integrated from former hal_probe_hif_device logic.
+	 * This ensures hardware is alive and chip_id is updated before use. */
+try_probe:
+	nrc_hif_ops_reset_device();
+	ret = nrc_hif_ops_probe();
+	if (ret && retry < MAX_RETRY_CNT) {
+		WARN_HIF("Hardware probe failed (ret=%d), retrying... (%d/%d)",
+			 ret, retry + 1, MAX_RETRY_CNT);
+		retry++;
+		goto try_probe;
+	}
+
+	if (ret) {
+		ERR_HIF("Failed to probe hardware after %d retries: %d",
+			MAX_RETRY_CNT, ret);
+		return ret;
+	}
+
+	/* Initialize/Refresh credit queue based on probed chip_id */
+	nrc_init_credit_queue(hdev);
 
 	/* Check if firmware is already loaded (module reload case) */
 	if (hdev->fw.loaded) {
-		INFO("Firmware already loaded (%s), skipping firmware download",
+		INFO("Firmware already loaded (%s), skipping download",
 		     hdev->params->fw_name);
-
-		/* Update state to START to indicate firmware is ready */
 		NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_START);
-
-		/* Skip BD check and FW download, but continue to HIF/FW start */
 		goto skip_fw_download;
 	}
 
-	/* Check if HW is in bootloader mode (ready for FW download) */
+	/* Check if HW is in bootloader mode */
 	if (hdev->params->fw_name && !nrc_hif_ops_fw_is_boot()) {
 		ERR_HIF("Target not in bootloader mode");
 		return -EINVAL;
 	}
 
-	// 2nd Phase: Read Board file
 #if defined(CONFIG_SUPPORT_BD)
 	ret = nrc_check_bd(hdev);
 	if (ret) {
-		ERR_HIF("Failed to nrc_check_bd");
+		ERR_HIF("Failed to load Board Data: %d", ret);
 		return -EINVAL;
 	}
 #endif
 
-	// 3rd Phase: FW download
 	ret = nrc_fw_load(hdev);
 	if (ret != 0) {
+		ERR_HIF("Firmware loading failed: %d", ret);
 		return ret;
 	}
 
-	/* Mark firmware as loaded */
 	hdev->fw.loaded = true;
-	INFO("First frontend firmware loaded: %s", hdev->params->fw_name);
+	INFO("Firmware loaded: %s", hdev->params->fw_name);
 
 skip_fw_download:
-	// 4th Phase: HAL start(Rx thread and IRQ thread)
 	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_START);
 	ret = nrc_hal_start();
 	if (ret) {
-		ERR_HIF("Failed to start HAL device, err %d", ret);
+		ERR_HIF("Failed to start HAL threads/IRQs: %d", ret);
 		goto err_return;
 	}
 
-	// 5th Phase: FW Start
 	ret = nrc_fw_start(hdev);
 	if (ret) {
-		ERR_HIF("Failed to nrc_fw_start");
+		ERR_HIF("Failed to send WIM_CMD_START: %d", ret);
+		nrc_hif_dump_slot_credit("NW_START_FAIL");
 		goto err_return;
 	}
 
-	/* HAL initialization complete - frontend will handle netlink/hw registration */
+	/* Initialization complete - transition to operational state */
+	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_RUNNING);
+	INFO("HAL started successfully (DRV_RUNNING)");
+
 	return 0;
 
 err_return:
-	/* Cleanup on error */
+	ERR_HIF("HAL start sequence failed, rolling back...");
 	hdev->fw.loaded = false;
 	nrc_hal_stop(hdev);
 	nrc_hif_ops_reset_device();
@@ -283,95 +307,65 @@ int nrc_nw_start_fusing(void)
 }
 
 /**
- * nrc_hal_has_active_frontends - Check if other frontends are still active
- *
- * Returns: true if frontend_count > 0, false otherwise
- */
-static bool nrc_hal_has_active_frontends(void)
-{
-	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
-	int count;
-
-	if (!hdev)
-		return false;
-
-	count = atomic_read(&hdev->frontend_count);
-	return (count > 0);
-}
-
-/**
  * nrc_nw_stop - Stop network operation
- * @restart: If true, ignore frontend check (used by restart)
  *
+ * Performs full HAL and hardware shutdown. Integrated from former cleanup logic.
  * Returns 0 on success.
  */
-int nrc_nw_stop(bool restart)
+int nrc_nw_stop(void)
 {
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
-	bool has_other_frontends = false;
-#ifdef CONFIG_USE_TXQ
-	/* Send callback event to WLAN layer instead of direct function call */
-	struct nrc_hal_event_data event = {
-		.type = NRC_HAL_EVT_CLEANUP_TXQ_ALL,
-	};
-#endif
 
 	if (!hdev) {
-		ERR_HIF("Invalid HIF device or ops");
+		ERR_HIF("Invalid HIF device");
 		return -EINVAL;
 	}
 
-	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_INIT) {
+	/* Prevent redundant stop */
+	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_INIT ||
+	    NRC_HIF_DRV_STATE(hdev) == NRC_DRV_STOP) {
 		return 0;
 	}
 
-	/* Check if other frontends are still active (skip if restart) */
-	if (!restart) {
-		has_other_frontends = nrc_hal_has_active_frontends();
+	INFO("Stopping HAL");
 
-		if (has_other_frontends) {
-			INFO("Other frontends still active, keeping HAL/firmware running");
-			/* Don't reset device or change state if other frontends are active */
-			return 0;
-		}
+	/* 1. Send WIM_CMD_STOP while state is still RUNNING
+	 * This ensures the command is accepted and processed by FW */
+	if (NRC_FW_IS_STARTED(hdev)) {
+		DBG_HIF("Sending WIM_CMD_STOP before HAL stop");
+		nrc_wim_request(NULL, WIM_CMD_STOP, 0, false, NULL);
+		NRC_FW_CLEAR_STARTED(hdev);
 	}
 
-	INFO("Stopping HAL%s", restart ? " (restart)" : "");
+	/* 2. Transition to STOP state - prevents further WIM/Data requests */
+	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_STOP);
 
-	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_CLOSING);
-
-#ifdef CONFIG_USE_TXQ
-	nrc_hal_trigger_event(&event);
-#endif
-
+	/* 3. Stop HAL (Rx thread, IRQ handling, GPIOs) */
 	nrc_hal_stop(hdev);
+
+	/* 4. Reset PS state machine (preserve supports_dynamic_ps/timeout
+	 *    which are set once at hw registration and restored via association) */
+	hdev->ps.state = NRC_PS_STATE_WAKE;
+	hdev->ps.mode = NRC_PS_NONE;
+	hdev->ps.enabled = false;
+	hdev->ps.modem_enabled = false;
+	hdev->ps.wake_pending = false;
+	complete_all(&hdev->wake_done);
+
+	/* 5. Cleanup TX queues and other core resources */
 	nrc_tx_cleanup_queues();
 
+	/* 6. Physical device reset */
 	nrc_hif_ops_reset_device();
 
+	/* 7. Firmware structure cleanup and clear loaded flag */
+	nrc_hal_fw_cleanup(hdev);
+	hdev->fw.loaded = false;
+
+	/* 8. Final state transition */
 	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_INIT);
 
-	/* Clear fw.loaded flag on restart to force FW re-download
-	 * (device reset clears FW from target)
-	 * For normal stop (module unload), keep fw.loaded to allow
-	 * module reload without re-downloading firmware */
-	if (restart) {
-		hdev->fw.loaded = false;
-		INFO("FW loaded flag cleared for restart");
-	}
-
 	return 0;
-}
-
-void nrc_nw_restart(void)
-{
-	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
-	if (!hdev) {
-		ERR_HIF("Invalid HIF device or ops");
-		return;
-	}
-
-	queue_work(hdev->restart_workqueue, &hdev->restart_work);
 }
 
 int nrc_hal_fw_init(struct nrc_hif_device *hdev)
@@ -419,8 +413,6 @@ int nrc_hal_fw_init(struct nrc_hif_device *hdev)
 
 void nrc_hal_fw_cleanup(struct nrc_hif_device *hdev)
 {
-	bool fw_was_loaded;
-
 	if (hdev && hdev->fw.priv) {
 		/* Release firmware if loaded */
 		if (hdev->fw.fw) {
@@ -430,27 +422,16 @@ void nrc_hal_fw_cleanup(struct nrc_hif_device *hdev)
 
 		/* Cleanup recovery watchdog if allocated */
 		if (hdev->fw.recovery_wdt) {
-			/* Note: recovery_wdt cleanup will be handled by its owner */
 			hdev->fw.recovery_wdt = NULL;
 		}
 
 		/* Cleanup firmware private data */
 		nrc_fw_cleanup(hdev->fw.priv);
 
-		/* Save fw.loaded flag before clearing structure
-		 * This flag must be preserved across WLAN module reload */
-		fw_was_loaded = hdev->fw.loaded;
-
-		/* Clear entire firmware structure */
+		/* Clear entire firmware structure except loaded flag (if needed to persist)
+		 * Note: nrc_nw_stop explicitly clears loaded flag when full reset is intended. */
 		memset(&hdev->fw, 0, sizeof(hdev->fw));
-
-		/* Restore fw.loaded flag to allow module reload without re-downloading firmware */
-		hdev->fw.loaded = fw_was_loaded;
 	}
-
-	/* Note: fw.loaded flag is preserved above to allow module reload
-	 * without re-downloading firmware. It will be cleaned up when HAL module
-	 * is unloaded or device is removed. */
 }
 
 /**

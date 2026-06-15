@@ -85,7 +85,7 @@ int nrc_wlan_post_hal_init(bool restart)
 	}
 
 	/* Start network device through HAL ops */
-	ret = nrc_hal_ops_nw_start(restart);
+	ret = nrc_hal_ops_nw_start();
 	if (ret) {
 		ERR_WLAN("WLAN: Failed to start network device: %d", ret);
 		/* GPIO cleanup is now handled in SPI stop function */
@@ -225,10 +225,10 @@ void nrc_wlan_post_hal_cleanup(bool restart)
 		nrc_unregister_hw(nw);
 	}
 
-	/* Cleanup synchronization primitives after unregistering hardware
-	 * to ensure nrc_mac_stop (called by ieee80211_unregister_hw) can
-	 * still use the mutex before it's destroyed */
-	mutex_destroy(&nw->state_mtx);
+	/* Cleanup synchronization primitives only on module unload */
+	if (!restart) {
+		mutex_destroy(&nw->state_mtx);
+	}
 
 	/* Power save GPIO cleanup is now handled in SPI stop function */
 }

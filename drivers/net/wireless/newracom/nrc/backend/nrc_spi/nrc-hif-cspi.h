@@ -199,6 +199,7 @@ int spi_rx_thread(void *data);
 int spi_poll_thread(void *data);
 irqreturn_t spi_irq(int irq, void *data);
 int spi_update_status(struct nrc_hif_device *hdev);
+void spi_reset_slots(struct nrc_hif_device *hdev);
 int spi_read_status(struct spi_device *spi);
 int c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data);
 int _c_spi_write_dummy(struct spi_device *spi);

@@ -178,15 +178,13 @@ void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev, struct nrc *nw)
 {
 	int count;
 
-	// pr_info("HAL: Cleaning up HAL resources\n");
-
 	if (!hdev) {
 		return;
 	}
 
 	/* Clear network device reference if it matches the one being cleaned up */
 	if (nw && hdev->nw == nw) {
-		DBG_HIF("Clearing network device reference (WLAN frontend unloading)");
+		DBG_HIF("Clearing network device reference (frontend unloading)");
 		hdev->nw = NULL;
 
 		mutex_lock(&nw_mutex);
@@ -207,40 +205,9 @@ void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev, struct nrc *nw)
 	}
 
 	if (count == 0) {
-		/* Last frontend unloading - send WIM_CMD_STOP to firmware */
-		/* 
-		 * Send WIM_CMD_STOP before cleanup to gracefully stop firmware.
-		 * Use no-response mode (timeout=0) to avoid blocking during cleanup.
-		 * 
-		 * SAFETY: Check wim_resp validity immediately before use to prevent
-		 * use-after-free during concurrent cleanup operations.
-		 */
-		if (NRC_FW_IS_STARTED(hdev)) {
-			if (hdev->wim_resp && hdev->workqueue) {
-				DBG_HIF("Last frontend exiting, sending WIM_CMD_STOP");
-				/*
-				 * Critical: Send WIM_CMD_STOP BEFORE any cleanup that might
-				 * free wim_resp. The nrc_wim_request internally checks hdev->wim_resp
-				 * again, but we verify here to catch obvious invalid states early.
-				 */
-				nrc_wim_request(NULL, WIM_CMD_STOP, 0, false, NULL);
-			} else {
-				DBG_HIF("Last frontend exiting, skipping WIM_CMD_STOP (HIF resources unavailable)");
-			}
-			NRC_FW_CLEAR_STARTED(hdev);
-		} else if (NRC_FW_IS_STARTED(hdev)) {
-			DBG_HIF("Last frontend exiting, skipping WIM_CMD_STOP (HIF resources already cleaned)");
-			NRC_FW_CLEAR_STARTED(hdev);
-		}
-
-		/* Perform full cleanup */
-		nrc_hal_fw_cleanup(hdev);
-
-		/* Clear remaining cross-references */
-		if (hdev->nw) {
-			hdev->nw->hdev = NULL;
-			hdev->nw = NULL;
-		}
+		/* Last frontend unloading - perform full HAL/HW stop and cleanup */
+		DBG_HIF("Last frontend exiting, stopping HAL and hardware");
+		nrc_nw_stop();
 
 		mutex_lock(&nw_mutex);
 		g_nw_from_wlan = NULL;

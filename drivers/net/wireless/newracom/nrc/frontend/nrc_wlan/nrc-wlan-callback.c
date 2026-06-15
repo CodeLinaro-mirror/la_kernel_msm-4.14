@@ -258,18 +258,8 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 	/* Kick TXQ to process pending TX frames */
 	nrc_kick_txq(nw);
 
-#if defined(CONFIG_SUPPORT_BD)
-	{
-		struct regulatory_request request;
-		request.alpha2[0] = nw->alpha2[0];
-		request.alpha2[1] = nw->alpha2[1];
-		request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
-		nrc_reg_notifier(nw->hw->wiphy, &request);
-	}
-#endif
-#ifdef CONFIG_S1G_CHANNEL
-	init_s1g_channels(nw);
-#endif
+	/* Re-send country code / board data to FW after wakeup */
+	nrc_restore_reg_domain(nw);
 
 	/* Restart dynamic PS timer (function checks supports_dynamic_ps internally) */
 	nrc_ps_dyn_start(nw);
@@ -668,6 +658,13 @@ static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *hal_event)
 		}
 		break;
 
+	case WIM_EVENT_REQ_DEAUTH_BY_FORCE:
+		/* FW detected abnormal TSF and requests forced disconnection */
+		DBG_MAC("WLAN: Processing WIM_EVENT_REQ_DEAUTH_BY_FORCE");
+		if (nw->vif[0])
+			ieee80211_connection_loss(nw->vif[0]);
+		break;
+
 	default:
 		DBG_MAC("WLAN: Unknown WIM event 0x%x forwarded from HAL",
 			event_type);
@@ -693,38 +690,15 @@ static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *hal_event)
  */
 int nrc_wlan_handle_reg_notifier(struct nrc_hal_event_data *event)
 {
-#if defined(CONFIG_SUPPORT_BD)
-	struct regulatory_request *request;
-	struct nrc *nw;
+	struct nrc *nw = nrc_hal_core_get_nw();
 
-	if (!event || !event->data) {
-		ERR_WLAN("Invalid event data for reg notifier");
-		return -EINVAL;
-	}
-
-	request = (struct regulatory_request *)event->data;
-	nw = nrc_hal_core_get_nw();
-
-	if (!nw || !nw->hw || !nw->hw->wiphy) {
+	if (!nw || !nw->hw) {
 		ERR_WLAN("Network device not available for reg notifier");
 		return -ENODEV;
 	}
 
-	request->alpha2[0] = nw->alpha2[0];
-	request->alpha2[1] = nw->alpha2[1];
-
-	DBG_MAC("WLAN: Processing regulatory notifier via callback (alpha2: %c%c)",
-		request->alpha2[0], request->alpha2[1]);
-
-	/* Call the WLAN regulatory notifier function */
-	nrc_reg_notifier(nw->hw->wiphy, request);
-
+	nrc_restore_reg_domain(nw);
 	return 0;
-#else
-	ERR_WLAN(
-		"WLAN: Regulatory notifier not supported (CONFIG_SUPPORT_BD not defined)");
-	return 0;
-#endif
 }
 
 /**
@@ -832,16 +806,8 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 		ieee80211_restart_hw(nw->hw);
 	}
 
-#if defined(CONFIG_SUPPORT_BD)
-	{
-		struct regulatory_request request;
-		DBG_BD("Reload board data after wake");
-		request.alpha2[0] = nw->alpha2[0];
-		request.alpha2[1] = nw->alpha2[1];
-		request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
-		nrc_reg_notifier(nw->hw->wiphy, &request);
-	}
-#endif
+	/* Re-send country code / board data to FW after WDT recovery */
+	nrc_restore_reg_domain(nw);
 	nrc_ps_dyn_start(nw);
 
 	return 0;

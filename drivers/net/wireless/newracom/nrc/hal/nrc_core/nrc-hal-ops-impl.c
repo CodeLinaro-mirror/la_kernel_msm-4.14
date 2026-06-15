@@ -38,7 +38,7 @@
 /**
  * nrc_hal_nw_start_impl - Start network device implementation
  */
-static int nrc_hal_nw_start_impl(bool restart)
+static int nrc_hal_nw_start_impl(void)
 {
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
@@ -48,7 +48,7 @@ static int nrc_hal_nw_start_impl(bool restart)
 	if (NRC_PARAM_FLASH_FW(hdev)) {
 		return nrc_nw_start_fusing();
 	} else {
-		return nrc_nw_start(restart);
+		return nrc_nw_start();
 	}
 }
 
@@ -82,7 +82,6 @@ static struct bd_supp_param *nrc_hal_bd_get_supp_ch_list_impl(void)
 static struct nrc_hal_ops default_hal_ops = {
 	.nw_start = nrc_hal_nw_start_impl,
 	.nw_stop = nrc_nw_stop,
-	.nw_restart = nrc_nw_restart,
 	.xmit_wlan_frame = nrc_xmit_wlan_frame,
 	.xmit_mcp_frame = nrc_xmit_mcp_frame,
 	.xmit_injected_frame = nrc_xmit_injected_frame,

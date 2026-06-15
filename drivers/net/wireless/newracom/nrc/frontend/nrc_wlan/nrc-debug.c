@@ -53,12 +53,33 @@ extern int debug_level;
 struct device *g_dev;
 
 /* Note: Common debugfs entries moved to nrc_core module:
- *   - nrc_credit, nrc_debug, nrc_cspi, nrc_hif, nrc_reset, nrc_restart
+ *   - nrc_credit, nrc_debug, nrc_cspi, nrc_hif, nrc_reset
  */
 
 /* Debugfs */
 
 #ifdef CONFIG_DEBUG_FS
+/* Restart device - Frontend initiated for safety */
+static int nrc_debugfs_restart_device_read(void *data, u64 *val)
+{
+	*val = 0;
+	return 0;
+}
+
+static int nrc_debugfs_restart_device_write(void *data, u64 val)
+{
+	struct nrc *nw = (struct nrc *)data;
+
+	if (!nw)
+		return -EINVAL;
+
+	return nrc_nw_restart_wlan(nw);
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(nrc_debugfs_restart_device_fops,
+			nrc_debugfs_restart_device_read,
+			nrc_debugfs_restart_device_write, "%llu\n");
+
 /* WLAN module-specific debug mask control */
 static int nrc_wlan_debugfs_debug_read(void *data, u64 *val)
 {
@@ -401,13 +422,16 @@ void nrc_init_debugfs(struct nrc *nw)
 
 	nw->debugfs = nw->hw->wiphy->debugfsdir;
 
-	/* Note: Common entries (nrc_credit, nrc_debug, nrc_cspi, nrc_hif, nrc_reset, nrc_restart)
-	 * are now in nrc_core module at /sys/kernel/debug/nrc_core/
+	/* Note: Common entries (credit, slot, debug_mask, debug_level, etc.)
+	 * are in nrc_core module at /sys/kernel/debug/nrc_core/
 	 */
 
 	/* WLAN module-specific debug mask and level */
 	nrc_debugfs_create_file("debug_mask", &nrc_wlan_debugfs_debug_fops);
 	nrc_debugfs_create_file("debug_level", &nrc_wlan_debugfs_level_fops);
+
+	/* Network restart (WLAN initiated) */
+	nrc_debugfs_create_file("restart", &nrc_debugfs_restart_device_fops);
 
 	/* WLAN-specific debugfs entries */
 	nrc_debugfs_create_file("wakeup", &nrc_debugfs_wakeup_device);

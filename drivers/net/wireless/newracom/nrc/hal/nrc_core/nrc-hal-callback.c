@@ -546,7 +546,7 @@ nrc_hal_handle_request_fw_download(struct nrc_spi_event_data *backend_event,
 	}
 
 	/* Check if module is unloading */
-	if (NRC_DRV_IS_CLOSING(hdev)) {
+	if (NRC_DRV_IS_STOPPED(hdev)) {
 		DBG_PS("Module unloading, skip FW download");
 		return false;
 	}
@@ -1020,6 +1020,13 @@ static bool nrc_hal_process_wim_event(struct nrc_hif_device *hdev,
 		break;
 
 	case WIN_EVENT_CLEAN_TXQ_STA:
+		consumed = false;
+		break;
+
+	case WIM_EVENT_REQ_DEAUTH_BY_FORCE:
+		/* FW detected abnormal TSF and requests forced disconnection.
+		 * Forward to WLAN frontend which calls ieee80211_connection_loss().
+		 */
 		consumed = false;
 		break;
 

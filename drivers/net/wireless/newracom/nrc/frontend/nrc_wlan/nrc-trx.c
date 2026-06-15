@@ -314,7 +314,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 			 * Allow NRC_DRV_PS (sleep) to pass through - the HAL
 			 * work handler (nrc_hif_wlan_work) will requeue the
 			 * frame and request wakeup automatically.
-			 * Only drop in truly invalid states (CLOSING, STOP, etc).
+			 * Only drop in truly invalid states (STOP, STOP, etc).
 			 */
 			if (NRC_HIF_DRV_STATE(tx.nw->hdev) != NRC_DRV_RUNNING &&
 			    NRC_HIF_DRV_STATE(tx.nw->hdev) != NRC_DRV_PS) {

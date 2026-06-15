@@ -218,24 +218,6 @@ DEFINE_SIMPLE_ATTRIBUTE(nrc_core_debugfs_debug_fops,
 			nrc_core_debugfs_debug_read,
 			nrc_core_debugfs_debug_write, "%llu\n");
 
-/* Restart device */
-static int nrc_debugfs_restart_device_read(void *data, u64 *val)
-{
-	*val = 0;
-	return 0;
-}
-
-static int nrc_debugfs_restart_device_write(void *data, u64 val)
-{
-	/* Use HAL restart function */
-	nrc_nw_restart();
-	return 0;
-}
-
-DEFINE_SIMPLE_ATTRIBUTE(nrc_debugfs_restart_device_fops,
-			nrc_debugfs_restart_device_read,
-			nrc_debugfs_restart_device_write, "%llu\n");
-
 /* ========================================================================
  * Loopback Test Functions (HIF TX queue testing)
  * ======================================================================== */
@@ -1068,8 +1050,6 @@ void nrc_core_init_debugfs(struct nrc_hif_device *hdev)
 			    &nrc_debugfs_debug_fops);
 	debugfs_create_file("debug_level", 0664, nrc_core_debugfs_root, hdev,
 			    &nrc_debugfs_debug_level_fops);
-	debugfs_create_file("restart", 0664, nrc_core_debugfs_root, hdev,
-			    &nrc_debugfs_restart_device_fops);
 
 	/* Create hdev-specific debugfs entries */
 	debugfs_create_file("skb_stats", 0444, nrc_core_debugfs_root, hdev,
@@ -1182,6 +1162,7 @@ static char *wim_event_str[] = {
 	[WIM_EVENT_MCP_KEEP_ALIVE] = "MCP_KEEP_ALIVE",
 	[WIM_EVENT_MCP_SCHEDULE_REPORT] = "MCP_SCHEDULE_REPORT",
 	[WIM_EVENT_MCP_IMMEDIATE_REPORT] = "MCP_IMMEDIATE_REPORT",
+	[WIM_EVENT_REQ_DEAUTH_BY_FORCE] = "REQ_DEAUTH_BY_FORCE",
 };
 
 const char *nrc_wim_event_str(int event)

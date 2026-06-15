@@ -164,7 +164,7 @@ static int nrc_mcp_module_init(void)
 
 	/* 4. Start network device through HAL ops wrapper */
 	if (!hdev->started) {
-		ret = nrc_hal_ops_nw_start(false);
+		ret = nrc_hal_ops_nw_start();
 		if (ret) {
 			ERR_MCP("Failed to start network device: %d", ret);
 			goto err_cleanup_netlink;

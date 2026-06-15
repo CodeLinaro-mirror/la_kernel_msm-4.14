@@ -152,18 +152,36 @@ static int spi_hif_start(struct nrc_hif_device *hdev)
 {
 	struct nrc_spi_priv *priv = nrc_spi_get_priv();
 	struct spi_device *spi = nrc_spi_get_device();
-	struct spi_status_reg *status = &priv->hw.status;
 	struct task_struct *kthread;
 	int ret = 0;
 
 	/* Power save GPIO allocation moved to HAL layer */
 
+	/*
+	 * Set known-good initial slot values before the first status read.
+	 * After FW download, nrc_hif_reset_slot_credit() zeros all slots.
+	 * If the FW has already set EIRQ_STATUS_DEVICE_READY by the time
+	 * we call spi_update_status() (common during restart — warm boot
+	 * is fast), spi_process_device_status() returns 1 and the slot
+	 * update is SKIPPED, leaving head=0, tail=0 → zero TX slots.
+	 * The old "Restore last state" code made this worse by overwriting
+	 * TX_SLOT.tail with msg[3] (which holds a TARGET_NOTI value, not
+	 * a slot pointer, when DEVICE_READY is set).
+	 * spi_reset_slots() sets the same initial values used by WDT
+	 * recovery (head=32, tail=-1 → 33 available TX slots), ensuring
+	 * the first WIM command can always be sent regardless of EIRQ state.
+	 */
+	spi_reset_slots(hdev);
+
 	ret = spi_update_status(hdev);
 
-	/* Restore last state */
-	hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head;
-	hdev->slot[TX_SLOT].tail = __be32_to_cpu(status->msg[3]) & 0xffff;
-
+	DBG_HIF("spi_hif_start: after init TX(h=%u t=%u avail=%u) "
+		"RX(h=%u t=%u avail=%u) ret=%d",
+		hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail,
+		(u16)(hdev->slot[TX_SLOT].head - hdev->slot[TX_SLOT].tail),
+		hdev->slot[RX_SLOT].head, hdev->slot[RX_SLOT].tail,
+		(u16)(hdev->slot[RX_SLOT].head - hdev->slot[RX_SLOT].tail),
+		ret);
 
 	/* Start rx thread */
 	kthread = kthread_run(spi_rx_thread, hdev, "nrc-spi-rx");
@@ -379,7 +397,7 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 	       nrc_hif_subtype_str(hif->type, hif->subtype), skb->len, nr_slot,
 	       NRC_DRV_STATE_STR(hdev), NRC_PS_STATE_STR(hdev));
 
-	if (NRC_HIF_DRV_STATE(hdev) <= NRC_DRV_CLOSING ||
+	if (NRC_HIF_DRV_STATE(hdev) <= NRC_DRV_STOP ||
 	    hdev->params->loopback) {
 		DBG_TX("Skipping drv_state=%s(%d) loopback=%d",
 		       NRC_DRV_STATE_STR(hdev), NRC_HIF_DRV_STATE(hdev),
@@ -538,7 +556,10 @@ static int spi_hif_wait_for_xmit(struct nrc_hif_device *hdev,
 			kthread_should_stop(),
 		5 * HZ);
 	if (ret == 0) { /* Timeout */
-		DBG(CAT(HIF) | CAT(TX), "xmit timeout waiting for slot");
+		ERR_HIF("xmit timeout: TX(h=%u t=%u avail=%u) need=%d ps=%s drv=%s",
+			hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail,
+			(u16)(hdev->slot[TX_SLOT].head - hdev->slot[TX_SLOT].tail),
+			nr_slot, NRC_PS_STATE_STR(hdev), NRC_DRV_STATE_STR(hdev));
 		return -1;
 	}
 	if (ret < 0)
