@@ -277,8 +277,7 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 	if (!ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
 		/* PS not supported - handle beacon loss */
 		if (hdev->params->power_save >= NRC_PS_DEEPSLEEP_NONTIM) {
-			if (!atomic_read(&nw->d_deauth.delayed_deauth))
-				nrc_send_beacon_loss(nw);
+			nrc_send_beacon_loss(nw);
 		} else
 			nw->invoke_beacon_loss = true;
 	}
@@ -288,86 +287,7 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 			  jiffies + msecs_to_jiffies(nw->beacon_timeout));
 	}
 
-	/* Send pending deauth frame if allocated (regardless of delayed_deauth flag) */
-	if (nw->d_deauth.deauth_frm) {
-		DBG_PS("Sending pending deauth frame (vif=%d, aid=%d)",
-		       nw->d_deauth.vif_index, nw->d_deauth.aid);
-		nrc_hal_ops_xmit_wlan_frame(nw->d_deauth.vif_index,
-					    nw->d_deauth.aid,
-					    nw->d_deauth.deauth_frm);
-		nw->d_deauth.deauth_frm = NULL;
-		msleep(50);
-	}
-
-	/* Process delayed deauth cleanup if flag is set */
-	if (atomic_read(&nw->d_deauth.delayed_deauth)) {
-		struct ieee80211_tx_info *txi;
-		struct ieee80211_key_conf *key = NULL;
-		struct sk_buff *skb;
-		int i;
-
-		/* Get key info if deauth frame was sent */
-		if (nw->d_deauth.deauth_frm) {
-			txi = IEEE80211_SKB_CB(nw->d_deauth.deauth_frm);
-			key = txi->control.hw_key;
-		}
-
-		/* Finalize data : Common routine */
-		if (nw->d_deauth.p.flags & IEEE80211_KEY_FLAG_PAIRWISE)
-			nrc_wim_wlan_install_key(DISABLE_KEY, &nw->d_deauth.v,
-						 &nw->d_deauth.s,
-						 &nw->d_deauth.p);
-		else if (key)
-			nrc_wim_wlan_install_key(DISABLE_KEY, &nw->d_deauth.v,
-						 &nw->d_deauth.s,
-						 &nw->d_deauth.g);
-		nrc_mac_sta_remove(nw->hw, &nw->d_deauth.v, &nw->d_deauth.s);
-		nrc_mac_bss_info_changed(nw->hw, &nw->d_deauth.v,
-					 &nw->d_deauth.b, 0x80309f);
-		for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-#ifdef CONFIG_SUPPORT_CHANNEL_INFO
-#ifdef CONFIG_USE_LINK_ID
-			nrc_mac_conf_tx(nw->hw, &nw->d_deauth.v,
-					nw->vif[nw->d_deauth.vif_index]
-						->bss_conf.link_id,
-					i, &nw->d_deauth.tqp[i]);
-#else
-			nrc_mac_conf_tx(nw->hw, &nw->d_deauth.v, i,
-					&nw->d_deauth.tqp[i]);
-#endif /* ifdef CONFIG_USE_LINK_ID */
-#else
-			nrc_mac_conf_tx(nw->hw, i, &nw->d_deauth.tqp[i]);
-#endif
-		}
-		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
-#ifdef CONFIG_SUPPORT_CHANNEL_INFO
-		nrc_mac_add_tlv_channel(skb, &nw->d_deauth.c);
-#else
-		nrc_mac_add_tlv_channel(skb, &nw->d_deauth.c);
-#endif
-		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
-		if (nw->d_deauth.p.flags & IEEE80211_KEY_FLAG_PAIRWISE && key)
-			nrc_wim_wlan_install_key(DISABLE_KEY, &nw->d_deauth.v,
-						 &nw->d_deauth.s,
-						 &nw->d_deauth.g);
-
-		/* Remove interface : when 'ifconfig wlan0 down' or 'rmmod' */
-		if (nw->d_deauth.removed) {
-			nrc_wim_wlan_unset_sta_type(&nw->d_deauth.v);
-			nw->vif[nw->d_deauth.vif_index] = NULL;
-			nw->enable_vif[nw->d_deauth.vif_index] = false;
-			atomic_set(&nw->d_deauth.delayed_deauth, 0);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 9, 0)
-			nrc_mac_stop(nw->hw, false);
-#else
-			nrc_mac_stop(nw->hw);
-#endif
-		}
-		atomic_set(&nw->d_deauth.delayed_deauth, 0);
-	}
-
-	DBG_PS("WLAN: Wake done processing complete");
-	nrc_ps_dyn_start(nw);
+	VBS_PS("WLAN: Wake done processing complete");
 
 	return 0;
 }
@@ -510,7 +430,7 @@ static int nrc_wlan_handle_free_skb(struct nrc_hal_event_data *event)
 	}
 
 	if (!event || !event->data) {
-		ERR_WLAN("Invalid %s() event data", __func__);
+		ERR_WLAN("Invalid event data");
 		return -EINVAL;
 	}
 

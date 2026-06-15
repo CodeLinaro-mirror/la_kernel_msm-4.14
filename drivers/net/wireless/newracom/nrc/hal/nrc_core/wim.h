@@ -84,8 +84,6 @@ bool nrc_wim_reset_hif_rx(struct nrc_hif_device *hdev);
 /* PS management */
 int nrc_wim_set_ps(struct nrc_hif_device *hdev, enum NRC_PS_MODE mode,
 		   u64 timeout, struct cfg80211_wowlan *wowlan);
-int nrc_wim_set_ps_sync(struct nrc_hif_device *hdev, enum NRC_PS_MODE mode,
-			u64 timeout, struct cfg80211_wowlan *wowlan);
 
 /* WIM response handling */
 int nrc_wim_response_handler(struct sk_buff *skb);

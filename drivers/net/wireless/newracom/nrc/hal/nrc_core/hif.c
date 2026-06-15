@@ -29,11 +29,6 @@
 /* Common directory headers - Debug & Trace */
 #include "nrc-debug-common.h"
 
-/* HAL module trace system */
-#if defined(CONFIG_NRC_TRACING)
-#include "nrc-trace.h"
-#endif
-
 /* Common directory headers - Interfaces */
 #include "nrc-hal-core-callback.h"
 #include "nrc-hal-core-interface.h"
@@ -566,7 +561,7 @@ static u32 nrc_skb_append_tx_info(struct nrc_hif_device *hdev, u16 aid,
 	p->aid = aid;
 
 #if defined(CONFIG_NRC_HIF_PRINT_TX_INFO)
-	DBG_HIF("rts:%d cts_prot:%d sp:%d amdpu:%d noack:%d eosp:%d",
+	VBS_HIF("rts:%d cts_prot:%d sp:%d amdpu:%d noack:%d eosp:%d",
 		p->use_rts, p->use_cts_prot, p->short_preamble, p->ampdu,
 		p->no_ack, p->eosp);
 #endif
@@ -664,12 +659,6 @@ int nrc_xmit_wlan_frame(s8 vif_index, u16 aid, struct sk_buff *skb)
 	if (!hdev->nw) {
 		nrc_hif_free_skb(hdev, skb);
 		return -EINVAL;
-	}
-
-	if (atomic_read(&hdev->nw->d_deauth.delayed_deauth)) {
-		if (key) {
-			key = &hdev->nw->d_deauth.p;
-		}
 	}
 
 #if defined(CONFIG_SUPPORT_KEY_RESERVE_TAILROOM)
@@ -972,6 +961,14 @@ int nrc_hal_stop(struct nrc_hif_device *hdev)
 
 	DBG_HIF("stop()");
 
+	/* Ensure device is awake before stopping (HAL Master responsibility)
+	 * This MUST be done before freeing GPIOs to ensure physical signal can be sent. */
+	if (hdev->started && !NRC_PS_IS_AWAKE(hdev)) {
+		DBG_HIF("Device not awake before stop, requesting wake");
+		nrc_ps_request_wake_sync(hdev, 2000,
+					 NRC_PS_REASON_HAL_SHUTDOWN);
+	}
+
 	/* Free wakeup pin GPIO unconditionally if allocated */
 	wakeup_gpio = NRC_PARAM_POWER_SAVE_GPIO(hdev, 0);
 	if (wakeup_gpio > 0) {
@@ -984,13 +981,6 @@ int nrc_hal_stop(struct nrc_hif_device *hdev)
 
 	if (!hdev->started)
 		return 0;
-
-	/* Ensure device is awake before stopping (HAL Master responsibility) */
-	if (!NRC_PS_IS_AWAKE(hdev)) {
-		DBG_HIF("Device not awake before stop, requesting wake");
-		nrc_ps_request_wake_sync(hdev, 2000,
-					 NRC_PS_REASON_HAL_SHUTDOWN);
-	}
 
 	/* Flush TX work queue before stopping */
 	nrc_tx_flush_wq(hdev);

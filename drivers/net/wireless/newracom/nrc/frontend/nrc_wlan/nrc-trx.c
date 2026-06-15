@@ -45,14 +45,6 @@
 #include "nrc-debug.h"
 
 /* WLAN module trace system (declarations only) */
-#if defined(CONFIG_NRC_TRACING)
-#define CREATE_TRACE_POINTS
-#include "nrc-trace.h"
-// #ifdef TRACE_INCLUDE_FILE
-// #undef TRACE_INCLUDE_FILE
-// #define TRACE_INCLUDE_FILE wlan
-// #endif
-#endif
 
 /* Local module headers */
 #include "compat.h"
@@ -100,6 +92,22 @@ static int rx_h_mesh(struct nrc_trx_data *rx);
 static int is_eapol(struct sk_buff *skb, struct nrc *nw);
 static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 			     struct sk_buff *skb);
+
+/* Management frame subtype name lookup */
+static const char * const mgmt_str[] = {
+	"ASSOC REQ", "ASSOC RESP", "REASSOC REQ", "REASSOC RESP",
+	"PROBE REQ", "PROBE RESP", "???", "???",
+	"BEACON", "ATIM", "DISASSOC", "AUTH", "DEAUTH", "ACTION",
+};
+
+static inline const char *get_mgmt_str(u8 subtype)
+{
+	u8 index = subtype >> 4;
+
+	if (index >= ARRAY_SIZE(mgmt_str))
+		return "Unknown";
+	return mgmt_str[index];
+}
 
 /* TX */
 #define USF2SF(usf) \
@@ -188,19 +196,19 @@ static void nrc_debug_print_frame(struct ieee80211_hdr *hdr,
 	if (fc_type == cpu_to_le16(IEEE80211_FTYPE_DATA)) {
 		/* DATA frames use DBG_TX/DBG_RX */
 		if (direction) {
-			DBG_RX("%s %s %s, DA: %pM, SA: %pM", type_str,
-			       subtype_str, "RX", addr1, addr2);
+			DBG_RX("%s %s, DA: %pM, SA: %pM", type_str,
+			       subtype_str, addr1, addr2);
 		} else {
-			DBG_TX("%s %s %s, DA: %pM, SA: %pM", type_str,
-			       subtype_str, "TX", addr1, addr2);
+			DBG_TX("%s %s, DA: %pM, SA: %pM", type_str,
+			       subtype_str, addr1, addr2);
 		}
 	} else {
 		if (direction) {
-			DBG(CAT(MAC) | CAT(RX), "%s %s %s, DA: %pM, SA: %pM",
-			    type_str, subtype_str, "RX", addr1, addr2);
+			DBG(CAT(MAC) | CAT(RX), "%s %s, DA: %pM, SA: %pM",
+			    type_str, subtype_str, addr1, addr2);
 		} else {
-			DBG(CAT(MAC) | CAT(TX), "%s %s %s, DA: %pM, SA: %pM",
-			    type_str, subtype_str, "TX", addr1, addr2);
+			DBG(CAT(MAC) | CAT(TX), "%s %s, DA: %pM, SA: %pM",
+			    type_str, subtype_str, addr1, addr2);
 		}
 	}
 }
@@ -244,6 +252,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 
 	s8 vif_id = 0;
 	int eapol_msg;
+	const char *drop_reason = NULL;
 
 	/* Track SKB allocation if from mac80211 (indirect allocation) */
 	if (from_mac80211) {
@@ -255,7 +264,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 #endif /* CONFIG_USE_TXQ */
 
 	if (!nrc_is_valid_vif(tx.nw, tx.vif)) {
-		ERR_WLAN("WLAN TX: Invalid VIF, dropping packet");
+		drop_reason = "invalid VIF";
 		goto txh_out;
 	}
 
@@ -272,17 +281,6 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 
 	/* Only for PS STA */
 	if (tx.nw->vif[vif_id]->type == NL80211_IFTYPE_STATION) {
-#ifndef CONFIG_USE_TXQ
-		if (NRC_DRV_IS_ASLEEP(tx.nw->hdev) &&
-		    !(tx.nw->twt_sched && tx.nw->params->twt_force_sleep)) {
-			/* Request wake using state machine (atomic context safe) */
-			DBG_TX("TX wakeup: Device asleep, frame type=0x%04x subtype=0x%04x",
-			       WLAN_FC_GET_TYPE(mh->frame_control),
-			       WLAN_FC_GET_STYPE(mh->frame_control));
-			nrc_hal_ops_ps_request_wake(
-				0, NRC_PS_REASON_DRV_TX_WAKEUP);
-		}
-#endif
 		if (tx.nw->params->power_save == NRC_PS_MODEMSLEEP) {
 			if (tx.nw->hdev->ps.modem_enabled) {
 				struct sk_buff *skb1;
@@ -295,7 +293,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 				 * driver has to wake-up the target silently before sending frames.
 				 */
 
-				DBG_PS("[%s] Wakeup MODEMSLEEP...", __func__);
+				VBS_PS("Wakeup MODEMSLEEP");
 				skb1 = nrc_hal_ops_wim_alloc_skb(
 					WIM_CMD_SET,
 					tlv_len(sizeof(struct wim_pm_param)));
@@ -312,57 +310,15 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 		}
 
 		if (tx.nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
-			if (NRC_DRV_IS_ASLEEP(tx.nw->hdev)) {
-				memset(&tx.nw->d_deauth, 0,
-				       sizeof(struct nrc_delayed_deauth));
-				if (ieee80211_is_deauth(mh->frame_control)) {
-					INFO("[%s,L%d][deauth] drv_state:%s(%d)",
-					     __func__, __LINE__,
-					     nrc_drv_state_str(
-						     NRC_HIF_DRV_STATE(
-							     tx.nw->hdev)),
-					     NRC_HIF_DRV_STATE(tx.nw->hdev));
-					memcpy(&tx.nw->d_deauth.v, tx.vif,
-					       sizeof(struct ieee80211_vif));
-					memcpy(&tx.nw->d_deauth.s, tx.sta,
-					       sizeof(struct ieee80211_sta));
-					/* Request wake using state machine (atomic context safe) */
-					nrc_hal_ops_ps_request_wake(
-						0, NRC_PS_REASON_DRV_TX_WAKEUP);
-					nrc_hal_ops_tx_cleanup_queues();
-					tx.nw->d_deauth.deauth_frm =
-						skb_copy(skb, GFP_ATOMIC);
-#ifdef REMOVE_DELAYED_DEAUTH
-					atomic_set(
-						&tx.nw->d_deauth.delayed_deauth,
-						1);
-#endif
-					tx.nw->d_deauth.vif_index =
-						hw_vifindex(tx.vif);
-					tx.nw->d_deauth.aid = tx.sta->aid;
-					goto txh_out;
-				}
-				if (ieee80211_is_qos_nullfunc(
-					    mh->frame_control)) {
-					DBG_PS("[%s,L%d][qos_null] make target wake for keep-alive",
-					       __func__, __LINE__);
-					/* Request wake using state machine (atomic context safe) */
-					nrc_hal_ops_ps_request_wake(
-						0, NRC_PS_REASON_DRV_TX_WAKEUP);
-					goto txh_out;
-				}
-			} else if (NRC_HIF_DRV_STATE(tx.nw->hdev) !=
-				   NRC_DRV_RUNNING) {
-				/*
-				 * Sometimes a deauth frame is transferred while nrc_unregister_hw() is
-				 * in processing(NRC_DRV_CLOSING) at the result of 'ifconfig down'.
-				 * We don't need to handle this.
-				 */
-				if (ieee80211_is_deauth(mh->frame_control)) {
-					DBG_PS("[%s,L%d][deauth] drv_state:%d ===> discard!!!",
-					       __func__, __LINE__,
-					       NRC_HIF_DRV_STATE(tx.nw->hdev));
-				}
+			/*
+			 * Allow NRC_DRV_PS (sleep) to pass through - the HAL
+			 * work handler (nrc_hif_wlan_work) will requeue the
+			 * frame and request wakeup automatically.
+			 * Only drop in truly invalid states (CLOSING, STOP, etc).
+			 */
+			if (NRC_HIF_DRV_STATE(tx.nw->hdev) != NRC_DRV_RUNNING &&
+			    NRC_HIF_DRV_STATE(tx.nw->hdev) != NRC_DRV_PS) {
+				drop_reason = "deep sleep (drv_state not running/ps)";
 				goto txh_out;
 			}
 		}
@@ -381,12 +337,12 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 			continue;
 
 		res = h->handler(&tx);
-		if (res < 0)
+		if (res < 0) {
+			drop_reason = "tx handler rejected";
 			goto txh_out;
+		}
 	}
 
-	trace_nrc_tx_hdr(tx.nw, skb->data, skb->len, 0, 0);
-	trace_nrc_tx_payload(tx.nw, skb->data, skb->len);
 
 	eapol_msg = is_eapol(tx.skb, tx.nw);
 	if (eapol_msg) {
@@ -394,19 +350,19 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 			mh->addr1, mh->addr2);
 	}
 
-	if (!atomic_read(&tx.nw->d_deauth.delayed_deauth)) {
-		DBG_TX("WLAN TX: Calling xmit_frame vif=%d aid=%d len=%u",
-		       vif_id, (!!tx.sta ? tx.sta->aid : 0), tx.skb->len);
-		nrc_hal_ops_xmit_wlan_frame(
-			vif_id, (!!tx.sta ? tx.sta->aid : 0), tx.skb);
-	} else {
-		DBG_TX("WLAN TX: Delayed deauth active, skipping xmit");
-	}
+	VBS_TX("xmit_frame vif=%d aid=%d len=%u",
+	       vif_id, (!!tx.sta ? tx.sta->aid : 0), tx.skb->len);
+	nrc_hal_ops_xmit_wlan_frame(
+		vif_id, (!!tx.sta ? tx.sta->aid : 0), tx.skb);
 
 	return;
 
 txh_out:
-	ERR_WLAN("TX:dropping packet");
+	ERR_WLAN("TX:dropping packet - reason:%s fc:0x%04x addr1:%pM addr2:%pM len:%u drv_state:%d",
+		 drop_reason ? drop_reason : "unknown",
+		 le16_to_cpu(mh->frame_control),
+		 mh->addr1, mh->addr2, tx.skb ? tx.skb->len : 0,
+		 NRC_HIF_DRV_STATE(tx.nw->hdev));
 	if (tx.skb) {
 		/* Track FRAME SKB free (TX path failure) */
 		NRC_SKB_TRACK_FREE(tx.nw->hdev, tx.skb, HIF_TYPE_FRAME, false,
@@ -571,7 +527,7 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 	struct ieee80211_hdr *qmh = (struct ieee80211_hdr *)skb->data;
 	int tid = *ieee80211_get_qos_ctl(qmh) & IEEE80211_QOS_CTL_TID_MASK;
 
-	DBG_AMPDU("Start BA session (%pM, %d)", qmh->addr1, tid);
+	VBS_AMPDU("Start BA %pM TID:%d", qmh->addr1, tid);
 
 	if (nw->frag_threshold != -1) { /* Fragmentation enabled by iwconfig */
 		ERR_WLAN(
@@ -1175,10 +1131,16 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 	u64 now = 0, diff = 0;
 	int eapol_msg;
 
-	if (!NRC_DRV_IS_READY(nw->hdev) || atomic_read(&nw->hw_unregistering) ||
-	    atomic_read(&nw->d_deauth.delayed_deauth)) {
-		DBG_MAC("Target not ready or unregistering, discarding frame");
+	if (!NRC_DRV_IS_READY(nw->hdev)) {
+		WARN_MAC("Target not ready (drv=%s ps=%s), discarding RX frame",
+			 NRC_DRV_STATE_STR(nw->hdev), NRC_PS_STATE_STR(nw->hdev));
 		/* Track FRAME SKB free (RX path from SPI) */
+		NRC_SKB_TRACK_FREE(nw->hdev, skb, HIF_TYPE_FRAME, true, false);
+		return 0;
+	}
+
+	if (atomic_read(&nw->hw_unregistering)) {
+		DBG_MAC("hw_unregistering, discarding RX frame");
 		NRC_SKB_TRACK_FREE(nw->hdev, skb, HIF_TYPE_FRAME, true, false);
 		return 0;
 	}
@@ -1280,6 +1242,10 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 				DBG_MAC("%s: %pM connected, but auth received. send to kernel after convert auth -> deauth.",
 					__func__, mgmt->sa);
 				ieee80211_rx_irqsafe(nw->hw, skb_deauth);
+				/* Track FRAME SKB free (RX path - passed to kernel) */
+				NRC_SKB_TRACK_FREE(nw->hdev, NULL,
+						   HIF_TYPE_FRAME, true, true);
+
 				/* Track FRAME SKB free (RX path from SPI) */
 				NRC_SKB_TRACK_FREE(nw->hdev, skb,
 						   HIF_TYPE_FRAME, true, false);
@@ -1309,9 +1275,6 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 		}
 #endif
 
-		trace_nrc_rx_hdr(nw, rx.skb->data, rx.skb->len,
-				 fh->flags.rx.snr, fh->flags.rx.rssi);
-		trace_nrc_rx_payload(nw, rx.skb->data, rx.skb->len);
 
 		eapol_msg = is_eapol(rx.skb, nw);
 		if (eapol_msg) {
@@ -1504,9 +1467,11 @@ static int rx_h_check_sn(struct nrc_trx_data *rx)
 				ieee80211_mark_rx_ba_filtered_frames(
 					rx->sta, tid, sn, 0,
 					IEEE80211_SN_MODULO >> 1);
-				DBG_MAC("BA session[%d] SN inversion! last_sn:%d, sn:%d",
-					tid, i_sta->rx_ba_session[tid].sn, sn);
+				WARN_AMPDU("BA[%d] RX SN inversion detected: expected>%d, got %d (buf_size=%d)",
+					tid, i_sta->rx_ba_session[tid].sn, sn,
+					i_sta->rx_ba_session[tid].buf_size);
 			}
+			VBS_AMPDU("BA[%d] SN %d -> %d", tid, i_sta->rx_ba_session[tid].sn, sn);
 			i_sta->rx_ba_session[tid].sn = sn;
 		}
 	}
@@ -1854,7 +1819,7 @@ void nrc_ampdu_mon_init(void)
 		INIT_LIST_HEAD(&m_sta_head[i]);
 	}
 	m_ampdu_refnum = 0;
-	DBG_AMPDU("Init AMPDU monitor");
+	DBG_AMPDU("Init monitor");
 }
 
 void nrc_ampdu_mon_deinit(void)
@@ -1866,13 +1831,12 @@ void nrc_ampdu_mon_deinit(void)
 		list_for_each_entry_safe(cur, next, &m_sta_head[i], list)
 		{
 			list_del(&cur->list);
-			DBG_AMPDU("%s, Del m_sta: " MACSTR "", __func__,
-				  MAC2STR(cur->addr));
+			DBG_AMPDU("Del m_sta: %pM", cur->addr);
 			kfree(cur);
 		}
 	}
 	m_ampdu_refnum = 0;
-	DBG_AMPDU("%s, Done deinit AMPDU monitor ", __func__);
+	DBG_AMPDU("Done deinit monitor");
 }
 
 static MON_STA_T *nrc_ampdu_mon_find_sta(uint8_t *addr)
@@ -1881,7 +1845,8 @@ static MON_STA_T *nrc_ampdu_mon_find_sta(uint8_t *addr)
 
 	if (list_empty(&m_sta_head[addr[ETH_ALEN - 1] % MON_STA_LIST_NUM]) !=
 	    0) {
-		DBG_AMPDU("%s, No m_sta added", __func__);
+		VBS_AMPDU("No m_sta found for addr[%d]",
+			  addr[ETH_ALEN - 1] % MON_STA_LIST_NUM);
 		return 0;
 	}
 
@@ -1900,13 +1865,13 @@ static MON_STA_T *nrc_ampdu_mon_add_sta(uint8_t *addr)
 {
 	MON_STA_T *m_sta = kzalloc(sizeof(MON_STA_T), GFP_KERNEL);
 	if (!m_sta) {
-		DBG_AMPDU("%s, Failure: kzalloc ", __func__);
+		ERR_AMPDU("kzalloc failed for monitor STA entry");
 		return NULL;
 	}
 	memcpy(m_sta->addr, addr, 6);
 	list_add_tail(&m_sta->list,
 		      &m_sta_head[addr[ETH_ALEN - 1] % MON_STA_LIST_NUM]);
-	DBG_AMPDU("%s, Success m_sta alloc " MACSTR " ", __func__,
+	DBG_AMPDU("Monitor STA allocated: " MACSTR,
 		  MAC2STR(addr));
 	return m_sta;
 }
@@ -1938,8 +1903,8 @@ static uint32_t nrc_ampdu_mon_get_ref_id(struct nrc *nw, struct sk_buff *skb)
 	if (!m_sta) {
 		m_sta = nrc_ampdu_mon_add_sta(mh->addr2);
 		if (!m_sta) {
-			DBG_AMPDU("%s, Failure: alloc monitor sta:" MACSTR "",
-				  __func__, MAC2STR(mh->addr2));
+			ERR_AMPDU("Failed to allocate monitor STA: " MACSTR,
+				  MAC2STR(mh->addr2));
 			return 0;
 		}
 		m_sta->scrambler = rxi->scrambler_or_crc;
@@ -1947,7 +1912,7 @@ static uint32_t nrc_ampdu_mon_get_ref_id(struct nrc *nw, struct sk_buff *skb)
 		m_sta->first_ts = rxi->timestamp;
 		m_sta->last_ts = rxi->timestamp;
 		nrc_ampdu_mon_inc_refnum();
-		DBG_AMPDU("" MACSTR " scramble#:%d, refnum:%d",
+		VBS_AMPDU("New STA " MACSTR " scrambler=0x%02x refnum=%d",
 			  MAC2STR(m_sta->addr), m_sta->scrambler,
 			  m_ampdu_refnum);
 		return m_ampdu_refnum;
@@ -1957,16 +1922,15 @@ static uint32_t nrc_ampdu_mon_get_ref_id(struct nrc *nw, struct sk_buff *skb)
 		uint32_t ts_diff = rxi->timestamp - m_sta->last_ts;
 		if (ts_diff < 5000) { /* 5ms */
 			m_sta->last_ts = rxi->timestamp;
-			DBG_AMPDU("" MACSTR
-				  " Same scramble#:%d, use same refnum:%d\n",
+			VBS_AMPDU("" MACSTR " same scrambler=0x%02x refnum=%d (ts_diff=%uus)",
 				  MAC2STR(m_sta->addr), m_sta->scrambler,
-				  m_ampdu_refnum);
+				  m_ampdu_refnum, ts_diff);
 			return m_ampdu_refnum;
 		} else {
 			m_sta->first_ts = rxi->timestamp;
 			m_sta->last_ts = rxi->timestamp;
 			nrc_ampdu_mon_inc_refnum();
-			DBG_AMPDU("" MACSTR " scramble:%d, new refnum:%d  ",
+			VBS_AMPDU("" MACSTR " scrambler=0x%02x timeout, new refnum=%d",
 				  MAC2STR(m_sta->addr), m_sta->scrambler,
 				  m_ampdu_refnum);
 			return m_ampdu_refnum;
@@ -1977,7 +1941,7 @@ static uint32_t nrc_ampdu_mon_get_ref_id(struct nrc *nw, struct sk_buff *skb)
 		m_sta->first_ts = rxi->timestamp;
 		m_sta->last_ts = rxi->timestamp;
 		nrc_ampdu_mon_inc_refnum();
-		DBG_AMPDU("" MACSTR " different scramble:%d, new refnum:%d",
+		VBS_AMPDU("" MACSTR " scrambler changed to 0x%02x, new refnum=%d",
 			  MAC2STR(m_sta->addr), m_sta->scrambler,
 			  m_ampdu_refnum);
 		return m_ampdu_refnum;

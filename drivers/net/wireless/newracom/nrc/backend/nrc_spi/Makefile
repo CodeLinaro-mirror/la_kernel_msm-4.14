@@ -61,7 +61,7 @@ ifdef SPI_FEATURES
     ccflags-y += $(SPI_FEATURES)
 else
     # Default SPI features for built-in compilation
-    ccflags-y += -DCONFIG_NRC_SPI_TRACE -DENABLE_HW_RESET
+    ccflags-y += -DENABLE_HW_RESET
 endif
 
 # Debug support from Kconfig or make variable
@@ -70,11 +70,6 @@ ifdef CONFIG_NRC7394_DEBUG
 endif
 ifdef DEBUG
     ccflags-y += -DDEBUG -g
-endif
-
-# Tracing support from Kconfig
-ifdef CONFIG_NRC7394_TRACING
-    ccflags-y += -DCONFIG_NRC_TRACING
 endif
 
 all: modules

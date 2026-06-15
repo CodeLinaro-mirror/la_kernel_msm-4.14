@@ -132,13 +132,31 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 	struct nrc *nw = container_of(work, struct nrc, dynamic_ps_work);
 	struct nrc_hif_device *hdev = nw->hdev;
 
-	DBG_PS("Dynamic PS work: enabled=%d timeout=%dms extra=%dms custom=%dms state=%s",
-	       nw->hdev->ps.enabled, nw->hw->conf.dynamic_ps_timeout,
+	VBS_PS("PS timer start: to=%dms ex=%dms cu=%dms st=%s",
+	       nw->hw->conf.dynamic_ps_timeout,
 	       nw->params->extra_ps_timeout, g_custom_timeout,
 	       NRC_DRV_STATE_STR(hdev));
 
 	if (g_custom_timeout) {
 		g_custom_timeout = 0;
+		nrc_ps_dyn_start(nw);
+		return;
+	}
+
+	/*
+	 * Defer sleep if TX is active.
+	 * Check both queue data and work-in-progress flags to avoid
+	 * sleeping while TX work handlers are still processing frames.
+	 * This replaces the old per-packet PS delay logic in nrc-tx.c.
+	 */
+	if (NRC_QUEUE_HAS_DATA(hdev) || NRC_MCP_QUEUE_HAS_DATA(hdev) ||
+	    atomic_read(&hdev->queue_pending) ||
+	    atomic_read(&hdev->mcp_queue_pending)) {
+		DBG_PS("TX active, defer PS (wlan_q=%d/%d mcp_q=%d/%d pending=%d/%d)",
+		       NRC_FRAME_QUEUE_LEN(hdev), NRC_WIM_QUEUE_LEN(hdev),
+		       NRC_MCP_FRAME_QUEUE_LEN(hdev), NRC_MCP_WIM_QUEUE_LEN(hdev),
+		       atomic_read(&hdev->queue_pending),
+		       atomic_read(&hdev->mcp_queue_pending));
 		nrc_ps_dyn_start(nw);
 		return;
 	}

@@ -569,7 +569,7 @@ struct wim_channel_param {
 	uint8_t width;
 } __packed;
 
-#define WIM_MAX_BD_DATA_LEN (540)
+#define WIM_MAX_BD_DATA_LEN (544)
 struct wim_bd_param {
 	uint16_t type;
 	uint16_t length;

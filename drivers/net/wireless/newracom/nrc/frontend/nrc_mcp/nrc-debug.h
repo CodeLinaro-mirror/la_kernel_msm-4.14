@@ -32,6 +32,8 @@ extern unsigned long nrc_debug_mask;
 extern struct device *g_dev;
 
 /* MCP-specific debug macros */
+#define DBG_MCP(fmt, ...) DBG(CAT(BASIC), fmt, ##__VA_ARGS__)
+#define VBS_MCP(fmt, ...) VBS(CAT(BASIC), fmt, ##__VA_ARGS__)
 #define INFO_MCP(fmt, ...) INFo("Mcp", fmt, ##__VA_ARGS__)
 #define WARN_MCP(fmt, ...) WARn("Mcp", fmt, ##__VA_ARGS__)
 #define ERR_MCP(fmt, ...) ERR("Mcp", fmt, ##__VA_ARGS__)

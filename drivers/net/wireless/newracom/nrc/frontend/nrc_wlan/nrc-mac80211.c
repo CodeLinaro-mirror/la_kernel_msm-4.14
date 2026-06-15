@@ -654,9 +654,17 @@ void nrc_kick_txq(struct nrc *nw)
 {
 	struct nrc_hif_device *hdev = nw->hdev;
 
-	if (NRC_DRV_IS_NOT_RUNNING(hdev))
+	/* Block only when HAL is not initialized or shutting down.
+	 * PS state (NRC_DRV_PS) passes through so frames reach the HAL queue,
+	 * which handles PS wakeup internally (see nrc-tx.c). */
+	if (NRC_HIF_DRV_STATE(hdev) < NRC_DRV_RUNNING) {
+		WARN_MAC("kick_txq skipped: drv=%s ps=%s",
+			 NRC_DRV_STATE_STR(hdev), NRC_PS_STATE_STR(hdev));
 		return;
+	}
 
+	VBS_TX("kick_txq: schedule tasklet (drv=%s ps=%s)",
+	       NRC_DRV_STATE_STR(hdev), NRC_PS_STATE_STR(hdev));
 	tasklet_schedule(&nw->tx_tasklet);
 }
 
@@ -1066,7 +1074,7 @@ static int nrc_mac_start(struct ieee80211_hw *hw)
 	 * - Skipped if mac80211 sets IDLE flag first
 	 * - Acts as backup for power saving if no activity */
 	if (hdev->params->idle_mode) {
-		DBG_PS("Idle mode timeout scheduled (30s fallback)");
+		VBS_PS("Idle mode timeout scheduled (30s)");
 		nrc_idle_mode_set_state(nw, true);
 		schedule_delayed_work(&nw->idle_work, msecs_to_jiffies(30000));
 	}
@@ -1094,8 +1102,7 @@ void nrc_mac_stop(struct ieee80211_hw *hw)
 	ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
 			      NRC_PS_REASON_DRV_STA_ADD);
 
-	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_CLOSING ||
-	    atomic_read(&nw->d_deauth.delayed_deauth))
+	if (NRC_HIF_DRV_STATE(hdev) == NRC_DRV_CLOSING)
 		goto out;
 
 	/* Note: mac80211 calls nrc_mac_flush() before stop to flush TX queues
@@ -1477,16 +1484,12 @@ static void nrc_mac_remove_interface(struct ieee80211_hw *hw,
 #ifdef CONFIG_USE_SCAN_TIMEOUT
 	cancel_delayed_work_sync(&i_vif->scan_timeout);
 #endif
-	if (!atomic_read(&nw->d_deauth.delayed_deauth)) {
-		/* PS is now synchronous - chip is awake after nrc_ps_set_mode returns */
-		nrc_wim_wlan_unset_sta_type(vif);
-		nrc_free_vif_index(hw->priv, vif);
+	/* PS is now synchronous - chip is awake after nrc_ps_set_mode returns */
+	nrc_wim_wlan_unset_sta_type(vif);
+	nrc_free_vif_index(hw->priv, vif);
 #ifndef CONFIG_SUPPORT_CHANNEL_INFO
-		i_vif->dev = NULL;
+	i_vif->dev = NULL;
 #endif
-	} else {
-		nw->d_deauth.removed = true;
-	}
 
 	if (vif->type == NL80211_IFTYPE_AP) {
 		nrc_twt_sched_stop(nw, vif);
@@ -1938,24 +1941,11 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 		nw->center_freq = hw->conf.channel->center_freq;
 #endif
 
-		if (!atomic_read(&nw->d_deauth.delayed_deauth)) {
 #ifdef CONFIG_S1G_CHANNEL
-			init_s1g_channels(nw);
+		init_s1g_channels(nw);
 #endif /* #ifdef CONFIG_S1G_CHANNEL */
-			nrc_mac_add_tlv_channel(skb, &chandef);
-			ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
-		} else {
-#ifdef CONFIG_SUPPORT_CHANNEL_INFO
-			memcpy(&nw->d_deauth.c, &hw->conf.chandef,
-			       sizeof(struct cfg80211_chan_def));
-			memcpy(&nw->d_deauth.ch, hw->conf.chandef.chan,
-			       sizeof(struct ieee80211_channel));
-			nw->d_deauth.c.chan = &nw->d_deauth.ch;
-#else
-			memcpy(&nw->d_deauth.c, &hw->conf,
-			       sizeof(struct ieee80211_conf));
-#endif
-		}
+		nrc_mac_add_tlv_channel(skb, &chandef);
+		ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 		/* TODO: band (2G, 5G, etc) and bandwidth (20MHz, 40MHz, etc) */
 	}
 
@@ -1979,7 +1969,7 @@ skip_channel_config:
 			    NRC_SCAN_MODE_ACTIVE_SCANNING ||
 		    atomic_read(&nw->scan_mode) ==
 			    NRC_SCAN_MODE_PASSIVE_SCANNING) {
-			DBG_PS("Skip PS processing during scan");
+			VBS_PS("Skip PS during scan");
 			goto ps_skip;
 		}
 
@@ -1996,7 +1986,7 @@ skip_channel_config:
 			 * (when driver receives a data frame.)
 			 */
 			if (nw->hdev->ps.enabled || nrc_idle_mode_get_state(nw))
-				DBG_PS("Target is already in deepsleep...");
+				VBS_PS("Already in PS...");
 			else {
 				nrc_ps_set_mode(
 					nw, NRC_PS_NONE, 2000, NULL,
@@ -2147,27 +2137,7 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 
 	//DBG_MAC("%s: changed=0x%x", __func__, changed);
 
-	/*
-	 * When sending deauth frame while the target is on deep sleep mode,
-	 * mac80211 operates as follows.
-	 * After transferring deauth frame through ieee80211_send_deauth_disassoc,
-	 * change assoc to false, and notify disassoc through bss_info_changed.
-	 *
-	 * In this case, since the assoc information is set to true
-	 * in the delayed deauth frame, the information of the delayed deauth frame
-	 * is also should be updated through the processing below.
-	 */
 	if (NRC_DRV_IS_ASLEEP(hdev)) {
-		if (changed == 0x80309f &&
-		    atomic_read(&nw->d_deauth.delayed_deauth)) {
-#ifdef CONFIG_USE_VIF_CFG
-			memcpy(&nw->d_deauth.v, vif,
-			       sizeof(struct ieee80211_vif));
-#endif
-			memcpy(&nw->d_deauth.b, info,
-			       sizeof(struct ieee80211_bss_conf));
-		}
-
 		return;
 	}
 
@@ -2482,22 +2452,31 @@ static void nrc_tx_ba_session_work(struct work_struct *work)
 	switch (ba_session->state) {
 	case IEEE80211_BA_NONE:
 	case IEEE80211_BA_CLOSE:
-		DBG_STATE(
-			"%s: Setting up BA session for Tx TID %d with peer (%pM)",
-			__func__, ba_session->tid, peer_sta->addr);
+		DBG_AMPDU("Setup TX BA TID:%d %pM", ba_session->tid,
+			  peer_sta->addr);
 		i_sta->nw->hdev->ampdu_supported = true;
 		i_sta->nw->ampdu_reject = false;
 		if ((ret = ieee80211_start_tx_ba_session(
 			     peer_sta, ba_session->tid, 0)) != 0) {
 			if (ret == -EBUSY) {
-				DBG_STATE(
-					"%s: receiver does not want A-MPDU so disable BA session (TID:%d)",
-					__func__, ba_session->tid);
+				DBG_AMPDU("RX rejected BA TID:%d",
+					  ba_session->tid);
 				ba_session->state = IEEE80211_BA_DISABLE;
-			}
-			if (ret == -EAGAIN) {
-				DBG_STATE("%s: session is not idle (TID:%d)",
-					  __func__, ba_session->tid);
+			} else if (ret == -EAGAIN) {
+				DBG_AMPDU("BA busy TID:%d", ba_session->tid);
+				ieee80211_stop_tx_ba_session(peer_sta,
+							     ba_session->tid);
+				ba_session->state = IEEE80211_BA_NONE;
+				ba_session->ba_req_last_jiffies = 0;
+			} else if (ret == -EINVAL) {
+				DBG_AMPDU("Invalid BA TID:%d", ba_session->tid);
+				ieee80211_stop_tx_ba_session(peer_sta,
+							     ba_session->tid);
+				ba_session->state = IEEE80211_BA_NONE;
+				ba_session->ba_req_last_jiffies = 0;
+			} else if (ret == -ENOMEM) {
+				DBG_AMPDU("BA alloc fail TID:%d",
+					  ba_session->tid);
 				ieee80211_stop_tx_ba_session(peer_sta,
 							     ba_session->tid);
 				ba_session->state = IEEE80211_BA_NONE;
@@ -2510,8 +2489,15 @@ static void nrc_tx_ba_session_work(struct work_struct *work)
 				     ba_session->ba_req_last_jiffies) > 5000) {
 			ba_session->state = IEEE80211_BA_NONE;
 			ba_session->ba_req_last_jiffies = 0;
-			DBG_STATE("%s: reset ba status(TID:%d)", __func__,
-				  ba_session->tid);
+			DBG_AMPDU("Reset BA TID:%d", ba_session->tid);
+		}
+		break;
+	case IEEE80211_BA_REQUEST:
+		if (jiffies_to_msecs(jiffies -
+				     ba_session->ba_req_last_jiffies) > 5000) {
+			ba_session->state = IEEE80211_BA_NONE;
+			ba_session->ba_req_last_jiffies = 0;
+			DBG_AMPDU("Timeout BA TID:%d", ba_session->tid);
 		}
 		break;
 	default:
@@ -2588,13 +2574,12 @@ static int nrc_wim_change_sta_state(struct nrc *nw, struct ieee80211_vif *vif,
 		state = WIM_STA_CMD_STATE_AUTHORIZED;
 
 		if (nw->params->ampdu_mode == NRC_AMPDU_DISABLE) {
-			DBG_STATE("%s: AMPDU is disabled", __func__);
+			DBG_AMPDU("disabled");
 			nw->hdev->ampdu_supported = false;
 			nw->ampdu_reject = true;
 			nw->ampdu_started = false;
 		} else {
-			DBG_STATE("%s: AMPDU is ready with peer (%pM)",
-				  __func__, sta->addr);
+			DBG_AMPDU("ready %pM", sta->addr);
 			nrc_init_sta_ba_session(sta);
 #ifdef CONFIG_S1G_CHANNEL
 			sta->ht_cap.ht_supported = true;
@@ -2709,13 +2694,10 @@ static int nrc_mac_sta_state(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			nrc_cleanup_txq(nw, sta->txq[i]);
 		}
 #endif
-		if (!atomic_read(&nw->d_deauth.delayed_deauth)) {
-			nrc_mac_sta_remove(hw, vif, sta);
-		}
+		nrc_mac_sta_remove(hw, vif, sta);
 	}
 
-	if (!atomic_read(&nw->d_deauth.delayed_deauth))
-		nrc_wim_change_sta_state(nw, vif, sta, new_state);
+	nrc_wim_change_sta_state(nw, vif, sta, new_state);
 
 	for (i = 0; i < nrc_sta_handlers_count; i++) {
 		h = &nrc_sta_handlers[i];
@@ -2819,10 +2801,6 @@ int nrc_mac_conf_tx(struct ieee80211_hw *hw, u16 ac,
 	ac = mac80211_to_nrc_aci_map[ac];
 #endif
 
-	if (atomic_read(&nw->d_deauth.delayed_deauth))
-		memcpy(&nw->d_deauth.tqp[ac], params,
-		       sizeof(struct ieee80211_tx_queue_params));
-
 	if (NRC_HIF_DRV_STATE(hdev) >= NRC_DRV_RUNNING) {
 		if (tqp[ac].txop != params->txop ||
 		    tqp[ac].cw_min != params->cw_min ||
@@ -2920,7 +2898,7 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 
 	if (nw->hdev->ampdu_supported && !nw->ampdu_started) {
 		if (ieee80211_start_tx_ba_session(sta, 0, 0) < 0) {
-			ERR_WLAN("%s: can't start ampdu", __func__);
+			ERR_WLAN("can't start ampdu");
 			ret = -EOPNOTSUPP;
 			goto out;
 		} else {
@@ -2929,19 +2907,19 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 	}
 
 	if (!sta || tid >= NRC_MAX_TID) {
-		ERR_WLAN("%s: sta is NULL", __func__);
+		ERR_WLAN("sta is NULL");
 		ret = -EOPNOTSUPP;
 		goto out;
 	}
 
 	i_sta = to_i_sta(sta);
-	DBG_AMPDU("%s: peer MAC(%pM) TID(%d)", __func__, sta->addr, tid);
+	DBG_AMPDU("action: %pM TID(%d)", sta->addr, tid);
 
 	nrc_ps_dyn_start_custom_timeout(nw, 2000); /* addBA timeout is 1sec */
 
 	switch (action) {
 	case IEEE80211_AMPDU_TX_START:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_TX_START", __func__);
+		DBG_AMPDU("action: TX_START");
 #ifdef CONFIG_SUPPORT_LINK_STA
 		if (!nw->hdev->ampdu_supported ||
 		    !sta->deflink.ht_cap.ht_supported) {
@@ -2959,19 +2937,20 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		}
 
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_REQUEST;
+		i_sta->tx_ba_session[tid].ba_req_last_jiffies = jiffies;
 		ieee80211_start_tx_ba_cb_irqsafe(vif, sta->addr, tid);
 		break;
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
 	case IEEE80211_AMPDU_TX_STOP_FLUSH:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_TX_STOP_FLUSH", __func__);
+		DBG_AMPDU("action: TX_STOP_FLUSH");
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_CLOSE;
 		break;
 	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_TX_STOP_FLUSH_CONT", __func__);
+		DBG_AMPDU("action: TX_STOP_FLUSH_CONT");
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_CLOSE;
 		break;
 	case IEEE80211_AMPDU_TX_STOP_CONT:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_TX_STOP_CONT", __func__);
+		DBG_AMPDU("action: TX_STOP_CONT");
 		if (nrc_wim_wlan_ampdu_action(vif, WIM_AMPDU_TX_STOP, sta,
 					      tid)) {
 			ret = -EOPNOTSUPP;
@@ -2984,7 +2963,7 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		break;
 #endif
 	case IEEE80211_AMPDU_TX_OPERATIONAL:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_TX_OPERATIONAL", __func__);
+		DBG_AMPDU("action: TX_OPERATIONAL");
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_ACCEPT;
 		if (nrc_wim_wlan_ampdu_action(vif, WIM_AMPDU_TX_OPERATIONAL,
 					      sta, tid)) {
@@ -2996,22 +2975,22 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		ret = 0;
 		goto out;
 	case IEEE80211_AMPDU_RX_START:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_RX_START", __func__);
+		DBG_AMPDU("action: RX_START");
 		i_sta->rx_ba_session[tid].sn = *ssn;
 		i_sta->rx_ba_session[tid].buf_size = buf_size;
 		i_sta->rx_ba_session[tid].started = true;
 		if (nw->ampdu_reject) {
-			ERR_WLAN("%s: Reject AMPDU", __func__);
+			ERR_WLAN("Reject AMPDU");
 			ret = -EOPNOTSUPP;
 			goto out;
 		}
 		ret = 0;
 		goto out;
 	case IEEE80211_AMPDU_RX_STOP:
-		DBG_AMPDU("%s: IEEE80211_AMPDU_RX_STOP", __func__);
+		DBG_AMPDU("action: RX_STOP");
 		i_sta->rx_ba_session[tid].started = false;
 		if (nw->ampdu_reject) {
-			ERR_WLAN("%s: Reject AMPDU", __func__);
+			ERR_WLAN("Reject AMPDU");
 			ret = -EOPNOTSUPP;
 			goto out;
 		}
@@ -3574,16 +3553,6 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	DBG_MAC("[%s_2] key (flag:%u, cipher:%u)", __func__, key->flags,
 		key->cipher);
 	DBG_MAC("[%s_3] sw_enc (%d)", __func__, nw->params->sw_enc);
-
-	if (atomic_read(&nw->d_deauth.delayed_deauth)) {
-		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
-			memcpy(&nw->d_deauth.p, key,
-			       sizeof(struct ieee80211_key_conf));
-		else
-			memcpy(&nw->d_deauth.g, key,
-			       sizeof(struct ieee80211_key_conf));
-		return 0;
-	}
 
 	/* if use SW SECURITY, return 1 */
 	if (nw->params->sw_enc == WIM_ENCDEC_SW) {
@@ -4322,7 +4291,7 @@ static int nrc_mac_sched_scan_start(struct ieee80211_hw *hw,
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(nw->hdev)) {
-		ERR_WLAN("%s Not running state", __func__);
+		ERR_WLAN("Not running state");
 		ret = -EBUSY;
 		goto out;
 	}

@@ -83,7 +83,7 @@ void nrc_init_credit_queue(struct nrc_hif_device *hdev)
 	if (hdev && hdev->chip_id != 0) {
 		chip_id = hdev->chip_id;
 	} else {
-		ERR_HIF("%s: Warning - chip ID not available", __func__);
+		ERR_HIF("Warning - chip ID not available");
 		return;
 	}
 
@@ -120,16 +120,22 @@ void nrc_init_credit_queue(struct nrc_hif_device *hdev)
 
 	default:
 		ERR_HIF("Unknown chip ID 0x%04x, using default credit values",
-			 chip_id);
+			chip_id);
 		break;
 	}
 
-	/* Debug output */
-	for (i = 0; i < CREDIT_QUEUE_MAX; i++) {
-		if (hdev->credit.credit_max[i] > 0) {
-			DBG_HIF("%s: credit[%2d] :%3d", __func__, i,
-				hdev->credit.credit_max[i]);
+	/* Debug output: single line summary */
+	{
+		char buf[128];
+		int len = 0;
+
+		for (i = 0; i < CREDIT_QUEUE_MAX; i++) {
+			if (hdev->credit.credit_max[i] > 0)
+				len += scnprintf(buf + len, sizeof(buf) - len,
+						 "[%d]=%d ", i,
+						 hdev->credit.credit_max[i]);
 		}
+		DBG(CAT(CREDIT), "credit: %s", buf);
 	}
 }
 
@@ -176,8 +182,8 @@ int nrc_nw_start(bool restart)
 			return 0; /* Success - firmware already loaded */
 		} else {
 			ERR_HIF("Invalid HIF state for nw_start: %s (%d)",
-				 nrc_drv_state_str(current_state),
-				 current_state);
+				nrc_drv_state_str(current_state),
+				current_state);
 			return -EINVAL;
 		}
 	}
@@ -301,7 +307,6 @@ static bool nrc_hal_has_active_frontends(void)
  */
 int nrc_nw_stop(bool restart)
 {
-	int counter = 0;
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 	bool has_other_frontends = false;
 #ifdef CONFIG_USE_TXQ
@@ -332,17 +337,6 @@ int nrc_nw_stop(bool restart)
 	}
 
 	INFO("Stopping HAL%s", restart ? " (restart)" : "");
-
-	if (!!hdev->nw) {
-		while (atomic_read(&hdev->nw->d_deauth.delayed_deauth)) {
-			msleep(100);
-			if (counter++ > 10) {
-				atomic_set(&hdev->nw->d_deauth.delayed_deauth,
-					   0);
-				break;
-			}
-		}
-	}
 
 	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_CLOSING);
 

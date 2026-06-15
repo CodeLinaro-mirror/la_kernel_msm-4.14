@@ -393,16 +393,37 @@ static bool fw_check_next_frag(struct nrc_hif_device *hdev,
 	struct fw_frag_hdr *frag_hdr = &priv->frag_hdr;
 	u8 index;
 	int ret;
+	int retry = 0;
+	const int max_retry = 3;
 
 	if (priv->cur_chunk == (priv->num_chunks - 1)) {
 		return false;
 	}
 
 	if (priv->ack) {
-		ret = nrc_hif_ops_wait_rxq_slot(&index, 1);
-		if (ret != 0) {
-			ERR_FW("Failed to wait ack");
-			return true; /* dont' update next info */
+		while (retry < max_retry) {
+			ret = nrc_hif_ops_wait_rxq_slot(&index, 1);
+			if (ret == 0)
+				break;
+
+			if (ret == -EIO) {
+				retry++;
+				ERR_FW("Failed to wait ack, resending frag (retry %d/%d)",
+				       retry, max_retry);
+				msleep(5); /* Give some time for stability */
+				fw_send_frag(hdev, priv, to_xip);
+				continue;
+			}
+
+			ERR_FW("Failed to wait ack with fatal error (ret=%d)",
+			       ret);
+			return true; /* don't update next info, let outer loop handle */
+		}
+
+		if (retry == max_retry) {
+			ERR_FW("Failed to wait ack after %d retries",
+			       max_retry);
+			return true; /* Return true to trigger outer protection stuck check */
 		}
 	}
 

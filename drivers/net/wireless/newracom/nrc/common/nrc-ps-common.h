@@ -177,54 +177,21 @@ static inline void nrc_ps_lock_init(nrc_ps_t *ps)
 	}
 }
 
-static inline void nrc_ps_lock(nrc_ps_t *ps)
-{
-	if (ps) {
-		spin_lock_bh(&ps->lock);
-	}
-}
-
-static inline void nrc_ps_unlock(nrc_ps_t *ps)
-{
-	if (ps) {
-		spin_unlock_bh(&ps->lock);
-	}
-}
-
-static inline int nrc_ps_is_locked(nrc_ps_t *ps)
-{
-	if (ps) {
-		return spin_is_locked(&ps->lock);
-	}
-	return 0;
-}
-
-static inline int nrc_ps_trylock(nrc_ps_t *ps)
-{
-	if (ps) {
-		return spin_trylock_bh(&ps->lock);
-	}
-	return 0;
-}
-
-static inline int nrc_ps_lock_interruptible(nrc_ps_t *ps)
-{
-	if (ps) {
-		spin_lock_bh(&ps->lock);
-		return 0;
-	}
-	return 0;
-}
-
-#define NRC_PS_LOCK_GUARD(ps, code)                                   \
-	do {                                                          \
-		if (ps) {                                             \
-			unsigned long __flags;                        \
-			spin_lock_irqsave(&(ps)->lock, __flags);      \
-			code;                                         \
-			spin_unlock_irqrestore(&(ps)->lock, __flags); \
-		}                                                     \
-	} while (0)
+/*
+ * Locking rules for ps->lock:
+ *
+ * ALL acquisitions of ps->lock MUST use spin_lock_irqsave() /
+ * spin_unlock_irqrestore(). Do NOT use spin_lock_bh() on this lock.
+ *
+ * nrc_ps_handle_event() and nrc_ps_record_event() can be called from
+ * softirq (BH) context. If spin_lock_bh() were used on the same lock
+ * object while spin_lock_irqsave() is also used, a deadlock results
+ * when one CPU holds the lock with spin_lock_bh() and a (soft)IRQ fires
+ * on that same CPU trying to acquire with spin_lock_irqsave().
+ *
+ * For read-only state queries use READ_ONCE(ps->state) directly; the
+ * state field is word-sized and naturally atomic on all supported arches.
+ */
 
 /* String conversion functions */
 static inline const char *nrc_ps_mode_str(enum NRC_PS_MODE mode)
@@ -308,38 +275,38 @@ static inline const char *nrc_ps_reason_str(enum NRC_PS_REASON reason)
 }
 
 /**
- * nrc_ps_get_state - Get current power save state (thread-safe)
+ * nrc_ps_get_state - Get current power save state (lockless)
  * @ps: Power save structure pointer
  *
- * Returns: Current power save state
- *
- * This function safely returns the current power save state by acquiring
- * the PS lock internally. Use this when you need thread-safe access.
+ * Returns the current PS state using READ_ONCE() for a safe, lockless
+ * snapshot. The state field is word-sized and naturally atomic on all
+ * supported architectures.  Callers must not assume the value remains
+ * stable after return; they should re-check inside the lock if they need
+ * to act on an exact state.
  */
 static inline enum NRC_PS_STATE nrc_ps_get_state(nrc_ps_t *ps)
 {
-	enum NRC_PS_STATE state = NRC_PS_STATE_WAKE;
-
-	if (ps) {
-		nrc_ps_lock(ps);
-		state = ps->state;
-		nrc_ps_unlock(ps);
-	}
-	return state;
+	if (ps)
+		return READ_ONCE(ps->state);
+	return NRC_PS_STATE_WAKE;
 }
 
 /**
- * nrc_ps_set_state - Set power save state (thread-safe)
+ * nrc_ps_set_state - Set power save state (IRQ-safe)
  * @ps: Power save structure pointer
  * @state: New power save state
  *
- * This function safely sets the power save state by acquiring
- * the PS lock internally. Use this when you need thread-safe access.
+ * Acquires ps->lock with spin_lock_irqsave() to be safe for call sites
+ * that may run in softirq or process context.  Must NOT be called while
+ * ps->lock is already held — use WRITE_ONCE(ps->state, ...) directly
+ * inside the already-locked region instead.
  */
 static inline void nrc_ps_set_state(nrc_ps_t *ps, enum NRC_PS_STATE state)
 {
+	unsigned long flags;
+
 	if (ps) {
-		nrc_ps_lock(ps);
+		spin_lock_irqsave(&ps->lock, flags);
 		ps->state = state;
 		if (state == NRC_PS_STATE_WAKE) {
 			/* from interrupt wake up, not gpio */
@@ -348,7 +315,7 @@ static inline void nrc_ps_set_state(nrc_ps_t *ps, enum NRC_PS_STATE state)
 			/* Record timestamp when entering SLEEPING state */
 			ps->sleeping_start_jiffies = jiffies;
 		}
-		nrc_ps_unlock(ps);
+		spin_unlock_irqrestore(&ps->lock, flags);
 	}
 }
 
@@ -359,16 +326,17 @@ static inline void nrc_ps_set_state(nrc_ps_t *ps, enum NRC_PS_STATE state)
  *
  * Returns: true if timeout occurred and state was reset, false otherwise
  *
- * This function checks if the device has been stuck in SLEEPING state for too long.
- * If timeout is detected, it forces the state back to WAKE to prevent infinite loops.
+ * Acquires ps->lock with spin_lock_irqsave() — consistent with
+ * nrc_ps_handle_event() — so it is safe to call from any context.
  */
 static inline bool nrc_ps_check_sleeping_timeout(nrc_ps_t *ps,
 						 unsigned int timeout_ms)
 {
+	unsigned long flags;
 	bool timeout_occurred = false;
 
 	if (ps) {
-		nrc_ps_lock(ps);
+		spin_lock_irqsave(&ps->lock, flags);
 		if (ps->state == NRC_PS_STATE_SLEEPING) {
 			unsigned long elapsed_ms = jiffies_to_msecs(
 				jiffies - ps->sleeping_start_jiffies);
@@ -380,7 +348,7 @@ static inline bool nrc_ps_check_sleeping_timeout(nrc_ps_t *ps,
 				timeout_occurred = true;
 			}
 		}
-		nrc_ps_unlock(ps);
+		spin_unlock_irqrestore(&ps->lock, flags);
 	}
 
 	return timeout_occurred;

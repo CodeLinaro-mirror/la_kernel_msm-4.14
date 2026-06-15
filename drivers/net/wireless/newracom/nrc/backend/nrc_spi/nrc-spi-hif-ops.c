@@ -41,20 +41,6 @@
 /* Local module headers - Debug */
 #include "nrc-debug.h"
 
-/* SPI module trace system - disabled due to module loading order */
-/* Trace symbols are created by frontend module, but SPI loads first */
-#if defined(CONFIG_NRC_TRACING) && 0
-#include "nrc-trace.h"
-#else
-/* Provide empty trace function stubs for SPI module - using void* to avoid forward declaration issues */
-static inline void trace_nrc_hif_rx_slot(void *priv, int dir, const char *msg)
-{
-}
-static inline void trace_nrc_hif_tx_slot(void *priv, int dir, const char *msg)
-{
-}
-#endif
-
 /* Common directory headers - Interfaces */
 #include "nrc-backend-hif-callback.h"
 #include "nrc-wim-types.h"
@@ -64,6 +50,9 @@ static inline void trace_nrc_hif_tx_slot(void *priv, int dir, const char *msg)
 #include "nrc-spi-hif-ops.h"
 #include "nrc-spi-params.h"
 #include "nrc-spi-gpio.h"
+
+/* IRQ debug macro with multi-category mask for better visibility across contexts */
+#define VBS_IRQ(fmt, ...) VBS(CAT(TX) | CAT(RX) | CAT(BUS), fmt, ##__VA_ARGS__)
 
 /* Forward declaration */
 static void spi_host_irq_disable(struct nrc_hif_device *hdev);
@@ -175,8 +164,6 @@ static int spi_hif_start(struct nrc_hif_device *hdev)
 	hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head;
 	hdev->slot[TX_SLOT].tail = __be32_to_cpu(status->msg[3]) & 0xffff;
 
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "init");
-	trace_nrc_hif_tx_slot(priv, TX_SLOT, "init");
 
 	/* Start rx thread */
 	kthread = kthread_run(spi_rx_thread, hdev, "nrc-spi-rx");
@@ -257,16 +244,20 @@ static int spi_hif_stop(struct nrc_hif_device *hdev)
 	/* Note: Wake state check is now handled by HAL in nrc_hif_stop() */
 
 	hdev->slot[TX_SLOT].count = 999;
-	if (priv->polling_kthread)
+	if (priv->polling_kthread) {
 		kthread_stop(priv->polling_kthread);
+		priv->polling_kthread = NULL;
+	}
 
 	/* Unpark kthread before stopping to avoid issues */
 	if (priv->kthread && atomic_read(&priv->rx_thread_parked)) {
 		kthread_unpark(priv->kthread);
 		atomic_set(&priv->rx_thread_parked, 0);
 	}
-	if (priv->kthread)
+	if (priv->kthread) {
 		kthread_stop(priv->kthread);
+		priv->kthread = NULL; /* prevent false "leaked" warning in nrc_cspi_remove() */
+	}
 
 	/* Wake up both TX and RX threads for cleanup */
 	wake_up_interruptible(&priv->tx_wait);
@@ -309,7 +300,7 @@ static int spi_hif_rx_thread_suspend(struct nrc_hif_device *hdev)
 		ret = kthread_park(priv->kthread);
 		if (ret == 0) {
 			atomic_set(&priv->rx_thread_parked, 1);
-			DBG_PS("%s: RX thread parked", __func__);
+			VBS_PS("%s: RX thread parked", __func__);
 		} else {
 			ERR_PS("kthread_park failed: %d", ret);
 			return ret;
@@ -336,7 +327,7 @@ int spi_hif_rx_thread_resume(struct nrc_hif_device *hdev)
 	if (priv->kthread && atomic_read(&priv->rx_thread_parked)) {
 		kthread_unpark(priv->kthread);
 		atomic_set(&priv->rx_thread_parked, 0);
-		DBG_PS("%s: RX thread unparked", __func__);
+		VBS_PS("%s: RX thread unparked", __func__);
 	}
 
 	return 0;
@@ -377,7 +368,6 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 		return 0;
 	}
 
-	trace_nrc_hif_tx_slot(priv, TX_SLOT, "before tx");
 
 #ifdef CONFIG_TRX_BACKOFF
 	if (!hdev->ampdu_supported) {
@@ -420,7 +410,7 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 
 			if (avail < nr_slot) {
 				SLOT_SYNC_UNLOCK();
-				DBG_HIF("TX Credit Shortage: ac=%d need=%d avail=%d front=%d rear=%d max=%d",
+				VBS_HIF("TX Credit Shortage: ac=%d need=%d avail=%d front=%d rear=%d max=%d",
 					ac, nr_slot, avail, f, r, max);
 				return HIF_TX_FAILED;
 			}
@@ -446,15 +436,26 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 		 hdev->slot[TX_SLOT].count);
 	hdev->slot[TX_SLOT].tail += nr_slot;
 
-	ret = c_spi_write(priv->spi, skb->data,
-			  (nr_slot * hdev->slot[TX_SLOT].size));
+	ret = c_spi_xmit(priv->spi, skb->data, skb->len);
 
-	if (ret != nr_slot * hdev->slot[TX_SLOT].size) {
+	if (ret != skb->len) {
 		/* SPI write failed - rollback tail to allow requeue */
 		hdev->slot[TX_SLOT].tail -= nr_slot;
 		SLOT_SYNC_UNLOCK();
-		ERR_SPI("SPI write failed - expected %u bytes, wrote %d",
-			nr_slot * hdev->slot[TX_SLOT].size, ret);
+
+		/* 
+		 * If failure is -EIO in Non-TIM mode, it's a known PS transition race
+		 * where the target enters sleep autonomously.
+		 * High-level log is suppressed to Verbose level.
+		 */
+		if (ret == -EIO && NRC_PS_IS_NONTIM(hdev)) {
+			VBS_SPI("SPI xmit desync (-EIO) during Non-TIM transition (ps=%s)",
+				NRC_PS_STATE_STR(hdev));
+		} else {
+			ERR_SPI("SPI xmit failed - expected %u bytes, wrote %zd (ps=%s, drv=%s)",
+				skb->len, ret, NRC_PS_STATE_STR(hdev),
+				NRC_DRV_STATE_STR(hdev));
+		}
 		return HIF_TX_FAILED;
 	}
 
@@ -481,7 +482,6 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 		       hdev->credit.rear[fh->flags.tx.ac],
 		       skb_queue_len(&hdev->queue[0]));
 	}
-	trace_nrc_hif_tx_slot(priv, TX_SLOT, "after tx");
 
 	return HIF_TX_COMPLETE;
 }
@@ -504,8 +504,7 @@ static int spi_hif_wait_for_xmit(struct nrc_hif_device *hdev,
 	}
 
 	if (c_spi_num_slots(hdev, TX_SLOT) < hdev->max_slot_num) {
-		trace_nrc_hif_tx_slot(priv, TX_SLOT, "enable irq");
-		c_spi_enable_irq(priv->spi, true, CSPI_EIRQ_S_ENABLE);
+		spi_enable_data_interrupt(priv->spi, priv, "TX slot available");
 	}
 
 	if (c_spi_num_slots(hdev, TX_SLOT) >= nr_slot) {
@@ -513,7 +512,6 @@ static int spi_hif_wait_for_xmit(struct nrc_hif_device *hdev,
 		return 0;
 	}
 
-	trace_nrc_hif_tx_slot(priv, TX_SLOT, "wait tx");
 
 	ret = wait_event_interruptible_timeout(
 		priv->tx_wait,
@@ -547,7 +545,9 @@ static int spi_hif_raw_read(struct nrc_hif_device *hdev, const u8 *data,
 {
 	struct nrc_spi_priv *priv = hdev->priv;
 
+	SLOT_SYNC_LOCK();
 	c_spi_read(priv->spi, (u8 *)data, (u32)len);
+	SLOT_SYNC_UNLOCK();
 	return 0;
 }
 
@@ -558,8 +558,10 @@ static int spi_hif_wait_rxq_slot(struct nrc_hif_device *hdev, u8 *data, u32 len)
 	int ret;
 
 	do {
+		SLOT_SYNC_LOCK();
 		ret = c_spi_read_regs(priv->spi, C_SPI_EIRQ_MODE,
 				      (void *)&status, sizeof(status));
+		SLOT_SYNC_UNLOCK();
 		if (ret < 0) {
 			ERR_SPI("wait_rxq_slot: read regs failed");
 			return ret;
@@ -588,7 +590,6 @@ static void spi_hif_reset_device(struct nrc_hif_device *hdev)
 
 void spi_hif_reset_rx(struct nrc_hif_device *hdev)
 {
-	struct nrc_spi_priv *priv = nrc_spi_get_priv();
 	struct spi_device *spi = nrc_spi_get_device();
 	struct nrc_spi_event_data event_data;
 
@@ -598,7 +599,6 @@ void spi_hif_reset_rx(struct nrc_hif_device *hdev)
 	c_spi_enable_irq(spi, false, CSPI_EIRQ_A_ENABLE);
 	hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head = 0;
 
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "reset");
 
 	/* Trigger HAL callback event for TX reset instead of direct function call */
 	memset(&event_data, 0, sizeof(event_data));
@@ -611,7 +611,6 @@ void spi_hif_reset_rx(struct nrc_hif_device *hdev)
 
 void spi_hif_reset_tx(struct nrc_hif_device *hdev)
 {
-	struct nrc_spi_priv *priv = nrc_spi_get_priv();
 	struct spi_device *spi = nrc_spi_get_device();
 	struct nrc_spi_event_data event_data;
 
@@ -620,7 +619,6 @@ void spi_hif_reset_tx(struct nrc_hif_device *hdev)
 	spi_host_irq_disable(hdev);
 	c_spi_enable_irq(spi, false, CSPI_EIRQ_A_ENABLE);
 
-	trace_nrc_hif_tx_slot(priv, TX_SLOT, "reset");
 
 	/* Trigger HAL callback event for RX reset instead of direct function call */
 	memset(&event_data, 0, sizeof(event_data));
@@ -681,8 +679,7 @@ static void spi_host_irq_disable(struct nrc_hif_device *hdev)
 		return;
 
 	if (priv->polling_interval <= 0)
-		disable_irq_nosync(
-			spi->irq); /* nosync to avoid deadlock in IRQ context */
+		disable_irq(spi->irq); /* sync to avoid race in PS/reset path */
 }
 
 static void spi_host_irq_enable(struct nrc_hif_device *hdev)
@@ -703,7 +700,7 @@ int spi_hif_status_irq(struct nrc_hif_device *hdev)
 	//struct spi_device *spi = nrc_spi_get_device();
 	int irq = gpio_get_value(spi_gpio_irq);
 
-	DBG_BUS("[%s] gpio_value=%d ps_state=%s", __func__, irq,
+	VBS_IRQ("[%s] gpio_value=%d ps_state=%s", __func__, irq,
 		NRC_PS_STATE_STR(hdev));
 
 	return irq;
@@ -714,7 +711,7 @@ void spi_hif_clear_irq(struct nrc_hif_device *hdev)
 	// struct nrc_spi_priv *priv = nrc_spi_get_priv();
 	struct spi_device *spi = nrc_spi_get_device();
 
-	DBG_BUS("[%s] ps_state=%s", __func__, NRC_PS_STATE_STR(hdev));
+	VBS_IRQ("[%s] ps_state=%s", __func__, NRC_PS_STATE_STR(hdev));
 
 	spi_read_status(spi);
 }
@@ -730,8 +727,10 @@ static int spi_hif_check_target(struct nrc_hif_device *hdev, u8 reg)
 	struct spi_status_reg *status = &priv->hw.status;
 	int ret;
 
+	SLOT_SYNC_LOCK();
 	ret = c_spi_read_regs(spi, C_SPI_EIRQ_MODE, (void *)status,
 			      sizeof(*status));
+	SLOT_SYNC_UNLOCK();
 
 	if (ret < 0)
 		return ret;
@@ -754,7 +753,10 @@ static bool spi_hif_fw_is_boot(struct nrc_hif_device *hdev)
 	struct spi_sys_reg sys;
 	int ret;
 
+	SLOT_SYNC_LOCK();
 	ret = spi_read_sys_reg(priv->spi, &sys);
+	SLOT_SYNC_UNLOCK();
+
 	if (ret < 0) {
 		ERR_SPI("failed to read register 0x0");
 		return false;
@@ -781,7 +783,9 @@ static bool spi_hif_fw_is_loaded(struct nrc_hif_device *hdev)
 	struct spi_sys_reg sys;
 	int ret = 0;
 
+	SLOT_SYNC_LOCK();
 	ret = spi_read_sys_reg(spi, &sys);
+	SLOT_SYNC_UNLOCK();
 
 	if (ret < 0)
 		return false;
@@ -804,42 +808,61 @@ static bool spi_hif_fw_is_loaded(struct nrc_hif_device *hdev)
 }
 
 /**
- * spi_hif_ps_status - Get power save status from target
+ * spi_hif_check_sleep - Check if target has entered sleep mode
  * @hdev: HIF device structure
  *
+ * This function polls the device status register to confirm sleep entry.
+ *
  * Returns:
- *   0: PS not ready yet
- *   1: PS ready (TARGET_NOTI_PS_READY)
- *   2: ACK fail (already in PS)
- *   3: FW download request (device not ready)
- *   4: FW download request (device ready)
+ *   0: PS not ready yet (device still awake and responsive)
+ *   1: PS ready (TARGET_NOTI_PS_READY detected) - sleep confirmed
+ *   ret < 0: SPI read failure - typical for deep sleep entry (sleep confirmed)
+ *   3, 4: FW download request detected (unexpected during sleep entry)
  */
-static int spi_hif_ps_status(struct nrc_hif_device *hdev)
+static int spi_hif_check_sleep(struct nrc_hif_device *hdev)
 {
 	struct spi_device *spi = nrc_spi_get_device();
-	int ret;
-
 	struct spi_status_reg status;
+	int ret;
+	u32 target_noti;
 
+	/* Read status with lock held (minimal lock duration) */
+	SLOT_SYNC_LOCK();
 	memset(&status, 0x00, sizeof(status));
 	ret = c_spi_read_regs(spi, C_SPI_EIRQ_MODE, (void *)&status,
 			      sizeof(status));
-	if (ret != 0) { /* ACK Fail, PS has been done already */
-		return 2;
+	SLOT_SYNC_UNLOCK();
+
+	if (ret != 0) {
+		/*
+		 * SPI read failure during deep sleep entry means the firmware has
+		 * shut down the SPI bus — this IS the sleep confirmation signal.
+		 */
+		DBG_PS("check_sleep: SPI read failed (ret=%d), assuming device asleep",
+		       ret);
+		return ret;
 	}
 
-	if ((status.msg[3] & 0xffff) ==
-	    TARGET_NOTI_PS_READY) { /* wim and qos null success */
+	target_noti = status.msg[3] & 0xffff;
+
+	/*
+	 * On newer chips and updated firmware libraries, firmware uses 
+	 * nrc_ps_force_eirq_and_wait() during deep sleep entry.
+	 */
+	if (status.eirq.status == EIRQ_STATUS_DEVICE_ROM) {
+		c_spi_enable_irq(spi, false,
+				 CSPI_EIRQ_A_ENABLE); /* cleanup shadow reg */
+		c_spi_enable_irq(spi, true, CSPI_EIRQ_A_ENABLE);
+	}
+
+	if (target_noti == TARGET_NOTI_PS_READY)
 		return 1;
-	}
 
-	if ((status.msg[3] & 0xffff) ==
-	    TARGET_NOTI_REQUEST_FW_DOWNLOAD) { /* already ps and waking up by BW */
-		if (status.eirq.status & EIRQ_STATUS_DEVICE_READY) {
+	if (target_noti == TARGET_NOTI_REQUEST_FW_DOWNLOAD) {
+		if (status.eirq.status & EIRQ_STATUS_DEVICE_READY)
 			return 4;
-		} else {
+		else
 			return 3;
-		}
 	}
 
 	return 0;
@@ -858,8 +881,10 @@ static enum NRC_FW_STATE spi_hif_fw_state(struct nrc_hif_device *hdev)
 	int ret;
 
 	memset(&status, 0, sizeof(status));
+	SLOT_SYNC_LOCK();
 	ret = c_spi_read_regs(spi, C_SPI_EIRQ_MODE, (void *)&status,
 			      sizeof(status));
+	SLOT_SYNC_UNLOCK();
 	if (ret < 0)
 		return NRC_FW_STATE_ROM;
 
@@ -986,7 +1011,7 @@ struct nrc_hif_ops spi_ops = {
 	.reset_device = spi_hif_reset_device,
 	.update = spi_update_status,
 	.check_target = spi_hif_check_target,
-	.ps_status = spi_hif_ps_status,
+	.check_sleep = spi_hif_check_sleep,
 	.fw_is_boot = spi_hif_fw_is_boot,
 	.fw_is_loaded = spi_hif_fw_is_loaded,
 	.fw_state = spi_hif_fw_state,

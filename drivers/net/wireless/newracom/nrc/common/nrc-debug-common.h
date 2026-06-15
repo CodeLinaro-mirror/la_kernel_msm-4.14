@@ -21,6 +21,7 @@ enum NRC_DEBUG_LEVEL {
 	NRC_DBG_LEVEL_WARN = 1, /* Warning messages */
 	NRC_DBG_LEVEL_INFO = 2, /* Information messages */
 	NRC_DBG_LEVEL_DBG = 3, /* Debug messages - only in DEBUG builds */
+	NRC_DBG_LEVEL_VBS = 4, /* Verbose/trace messages - very high frequency paths */
 	NRC_DBG_LEVEL_MAX
 };
 
@@ -83,9 +84,23 @@ static const char *const nrc_debug_category_names[] = {
 /* Category token to bitmask converter helper */
 #define CAT(c) BIT(NRC_DBG_##c)
 
-/* General debug macro - multi-mask support */
-#define DBG(masks, fmt, ...) \
-	nrc_dbg_level_multi(NRC_DBG_LEVEL_DBG, masks, fmt, ##__VA_ARGS__)
+/* Optimized debug macros - filter at call site to avoid function overhead */
+#define DBG(masks, fmt, ...)                                               \
+	do {                                                               \
+		if (unlikely(debug_level >= NRC_DBG_LEVEL_DBG &&           \
+			     ((masks) & debug_mask)))                      \
+			nrc_dbg_level_multi(NRC_DBG_LEVEL_DBG, masks, fmt, \
+					    ##__VA_ARGS__);                \
+	} while (0)
+
+/* Verbose/trace macro - very high frequency paths */
+#define VBS(masks, fmt, ...)                                               \
+	do {                                                               \
+		if (unlikely(debug_level >= NRC_DBG_LEVEL_VBS &&           \
+			     ((masks) & debug_mask)))                      \
+			nrc_dbg_level_multi(NRC_DBG_LEVEL_VBS, masks, fmt, \
+					    ##__VA_ARGS__);                \
+	} while (0)
 
 /* Level-based debug macros with category prefix */
 /* DBG level macros - detailed debug information (only in DEBUG builds) */
@@ -105,6 +120,23 @@ static const char *const nrc_debug_category_names[] = {
 #define DBG_CREDIT(fmt, ...) DBG(CAT(CREDIT), fmt, ##__VA_ARGS__)
 #define DBG_SLOT(fmt, ...) DBG(CAT(SLOT), fmt, ##__VA_ARGS__)
 #define DBG_BUS(fmt, ...) DBG(CAT(BUS), fmt, ##__VA_ARGS__)
+
+/* VBS level macros - verbose/trace for very high frequency paths (level 4) */
+#define VBS_HIF(fmt, ...) VBS(CAT(HIF), fmt, ##__VA_ARGS__)
+#define VBS_WIM(fmt, ...) VBS(CAT(WIM), fmt, ##__VA_ARGS__)
+#define VBS_TX(fmt, ...) VBS(CAT(TX), fmt, ##__VA_ARGS__)
+#define VBS_RX(fmt, ...) VBS(CAT(RX), fmt, ##__VA_ARGS__)
+#define VBS_MAC(fmt, ...) VBS(CAT(MAC), fmt, ##__VA_ARGS__)
+#define VBS_CAPI(fmt, ...) VBS(CAT(CAPI), fmt, ##__VA_ARGS__)
+#define VBS_PS(fmt, ...) VBS(CAT(PS), fmt, ##__VA_ARGS__)
+#define VBS_STATS(fmt, ...) VBS(CAT(STATS), fmt, ##__VA_ARGS__)
+#define VBS_STATE(fmt, ...) VBS(CAT(STATE), fmt, ##__VA_ARGS__)
+#define VBS_BD(fmt, ...) VBS(CAT(BD), fmt, ##__VA_ARGS__)
+#define VBS_FW(fmt, ...) VBS(CAT(FW), fmt, ##__VA_ARGS__)
+#define VBS_AMPDU(fmt, ...) VBS(CAT(AMPDU), fmt, ##__VA_ARGS__)
+#define VBS_CREDIT(fmt, ...) VBS(CAT(CREDIT), fmt, ##__VA_ARGS__)
+#define VBS_SLOT(fmt, ...) VBS(CAT(SLOT), fmt, ##__VA_ARGS__)
+#define VBS_BUS(fmt, ...) VBS(CAT(BUS), fmt, ##__VA_ARGS__)
 
 /* INFO level macros - informational messages (shown by default) */
 #define INFO(fmt, ...)                                                \
@@ -261,9 +293,10 @@ static inline void nrc_dbg_warn(const char *fmt, ...)
 	va_end(args);
 
 	if (g_dev == NULL)
-		pr_warn("%s\n", buf); /* Use pr_warn for warnings */
+		pr_warn_ratelimited("%s\n", buf); /* Use pr_warn_ratelimited */
 	else
-		dev_warn(g_dev, "%s\n", buf); /* Use dev_warn for warnings */
+		dev_warn_ratelimited(g_dev, "%s\n",
+				     buf); /* Use dev_warn_ratelimited */
 }
 
 /* Info function - shown based on level, no mask check */
@@ -291,9 +324,10 @@ static inline void nrc_dbg_info(const char *fmt, ...)
 	va_end(args);
 
 	if (g_dev == NULL)
-		pr_info("%s\n", buf); /* Use pr_info for info */
+		pr_info_ratelimited("%s\n", buf); /* Use pr_info_ratelimited */
 	else
-		dev_info(g_dev, "%s\n", buf); /* Use dev_info for info */
+		dev_info_ratelimited(g_dev, "%s\n",
+				     buf); /* Use dev_info_ratelimited */
 }
 
 /* Error function - always shown, no mask check (only level check) */
@@ -321,9 +355,10 @@ static inline void nrc_dbg_err(const char *fmt, ...)
 	va_end(args);
 
 	if (g_dev == NULL)
-		pr_err("%s\n", buf); /* Use pr_err for errors */
+		pr_err_ratelimited("%s\n", buf); /* Use pr_err_ratelimited */
 	else
-		dev_err(g_dev, "%s\n", buf); /* Use dev_err for errors */
+		dev_err_ratelimited(g_dev, "%s\n",
+				    buf); /* Use dev_err_ratelimited */
 }
 
 /* Main nrc_dbg_level function - with level and category filtering */
@@ -332,16 +367,10 @@ static inline void nrc_dbg_level(enum NRC_DEBUG_LEVEL level,
 {
 	va_list args;
 	int i;
-	static char buf[512] = {
-		0,
-	};
+	static char buf[512];
 
-	/* Check debug level first - skip if message level is higher than current level */
-	if (level > debug_level)
-		return;
-
-	/* Then check category mask */
-	if (!test_bit(mk, &debug_mask))
+	/* Check debug level and category mask using fast bitwise check */
+	if (unlikely(level > debug_level || !((BIT(mk)) & debug_mask)))
 		return;
 
 	va_start(args, fmt);
@@ -354,9 +383,9 @@ static inline void nrc_dbg_level(enum NRC_DEBUG_LEVEL level,
 	va_end(args);
 
 	if (g_dev == NULL)
-		pr_info("%s\n", buf);
+		pr_info_ratelimited("%s\n", buf);
 	else
-		dev_info(g_dev, "%s\n", buf);
+		dev_info_ratelimited(g_dev, "%s\n", buf);
 }
 
 /* Multi-mask debug function - allows multiple category masks */
@@ -366,29 +395,15 @@ static inline void nrc_dbg_level_multi(enum NRC_DEBUG_LEVEL level,
 {
 	va_list args;
 	int i, pos = 0;
-	static char buf[512] = {
-		0,
-	};
+	static char buf[512];
 	char prefix[64] = {0};
-	bool matched = false;
 	int count = 0;
 
-	/* Check debug level first */
-	if (level > debug_level)
+	/* 1. Fast mask check - remove the redundant loop */
+	if (unlikely(level > debug_level || !(masks & debug_mask)))
 		return;
 
-	/* Check if ANY of the provided masks are enabled */
-	for (i = 0; i < 32; i++) {
-		if ((masks & BIT(i)) && test_bit(i, &debug_mask)) {
-			matched = true;
-			break;
-		}
-	}
-
-	if (!matched)
-		return;
-
-	/* Build prefix from all masks in the combination - loop-based approach */
+	/* 2. Build prefix from all masks in the combination - only when printing */
 	for (i = 0; i < ARRAY_SIZE(nrc_debug_category_names); i++) {
 		if (masks & BIT(i)) {
 			pos += snprintf(prefix + pos, sizeof(prefix) - pos,
@@ -413,9 +428,9 @@ static inline void nrc_dbg_level_multi(enum NRC_DEBUG_LEVEL level,
 	va_end(args);
 
 	if (g_dev == NULL)
-		pr_info("%s\n", buf);
+		pr_info_ratelimited("%s\n", buf);
 	else
-		dev_info(g_dev, "%s\n", buf);
+		dev_info_ratelimited(g_dev, "%s\n", buf);
 }
 
 /* Loopback debug */

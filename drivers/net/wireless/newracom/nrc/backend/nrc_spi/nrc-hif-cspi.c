@@ -44,20 +44,6 @@
 /* Common directory headers - Debug & Trace */
 #include "nrc-debug-common.h"
 
-/* SPI module trace system - disabled due to module loading order */
-/* Trace symbols are created by frontend module, but SPI loads first */
-#if defined(CONFIG_NRC_TRACING) && 0
-#include "nrc-trace.h"
-#else
-/* Provide empty trace function stubs for SPI module - using void* to avoid forward declaration issues */
-static inline void trace_nrc_hif_rx_slot(void *priv, int dir, const char *msg)
-{
-}
-static inline void trace_nrc_hif_tx_slot(void *priv, int dir, const char *msg)
-{
-}
-#endif
-
 /* Common directory headers - Interfaces */
 #include "nrc-backend-hif-callback.h"
 #include "nrc-backend-hif-interface.h"
@@ -74,6 +60,9 @@ static DEFINE_SPINLOCK(g_spi_priv_lock);
 #include "nrc-spi-params.h"
 #include "nrc-spi-gpio.h"
 #include "nrc-debug.h"
+
+/* IRQ debug macro with multi-category mask for better visibility across contexts */
+#define VBS_IRQ(fmt, ...) VBS(CAT(TX) | CAT(RX) | CAT(BUS), fmt, ##__VA_ARGS__)
 
 /* Forward declarations */
 static inline void spi_forward_rx_packet(struct nrc_hif_device *hdev,
@@ -268,7 +257,12 @@ static int _c_spi_read_regs(struct spi_device *spi, u8 addr, u8 *buf,
 	arr_len = (size > 1) ? ARRAY_SIZE(xfer) : 2;
 	status = spi_sync_transfer(spi, xfer, arr_len);
 	if (status < 0) {
-		ERR_SPI("[%s] reading spi failed(%zd).", __func__, status);
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			ERR_SPI("reading spi failed(%zd) (ps=%s, drv=%s).",
+				status, NRC_PS_STATE_STR(priv->hdev),
+				NRC_DRV_STATE_STR(priv->hdev));
+		}
 		return status;
 	}
 
@@ -322,7 +316,12 @@ static int _c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data)
 
 	status = spi_sync_transfer(spi, xfer, 2);
 	if (status < 0) {
-		ERR_SPI("[%s] writing spi failed(%zd).", __func__, status);
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			ERR_SPI("writing spi failed(%zd) (ps=%s, drv=%s).",
+				status, NRC_PS_STATE_STR(priv->hdev),
+				NRC_DRV_STATE_STR(priv->hdev));
+		}
 		return status;
 	}
 
@@ -330,12 +329,23 @@ static int _c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data)
 	/* In case of spi reset, skip a process for confirming spi ack */
 	if (C_SPI_WDATA(data) != 0xC8) {
 		if (rx[7] != C_SPI_ACK) {
-			WARN_ON_ONCE(1);
-			if (priv && priv->hdev) {
-				ERR_SPI("SPI ACK is invalid (PS state: %s)",
-					NRC_PS_STATE_STR(priv->hdev));
-			} else {
-				ERR_SPI("SPI ACK is invalid");
+			if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+			    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+				/*
+				 * [Non-TIM Autonomous Sleep Race]
+				 * In Non-TIM mode, the chip may enter sleep autonomously even if the 
+				 * driver thinks it's AWAKE. This results in a missing SPI ACK (-EIO).
+				 * Since the driver will recover by requeueing and waking the chip,
+				 * we log this as Verbose to avoid console spam in Non-TIM mode.
+				 */
+				if (NRC_PS_IS_NONTIM(priv->hdev)) {
+					VBS_SPI("SPI ACK missing (rx[7]=0x%02x, PS state: %s) - likely autonomous sleep",
+						rx[7], NRC_PS_STATE_STR(priv->hdev));
+				} else {
+					WARN_ON_ONCE(1);
+					ERR_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s)",
+						rx[7], NRC_PS_STATE_STR(priv->hdev));
+				}
 			}
 			return -EIO;
 		}
@@ -359,6 +369,7 @@ static ssize_t _c_spi_read(struct spi_device *spi, u8 *buf, ssize_t size)
 	u8 *aligned_buf = NULL;
 	u8 *original_buf = buf;
 	u8 *aligned_buf_start = NULL;
+	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
 
 	if (size == 0 || buf == NULL || size > (1024 * 1024)) /* Max 1MB */
 		return -EINVAL;
@@ -400,14 +411,21 @@ static ssize_t _c_spi_read(struct spi_device *spi, u8 *buf, ssize_t size)
 	spi_set_transfer(&xfer[3], &dummy, NULL, sizeof(dummy));
 	status = spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
 	if (status < 0) {
-		ERR_SPI("[%s] reading spi failed(%zd).", __func__, status);
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			ERR_SPI("reading spi failed(%zd).", status);
+		}
 		goto error_cleanup;
 	}
 
 #ifndef CONFIG_SPI_HALF_DUPLEX
 	if (rx[7] != C_SPI_ACK) {
-		WARN_ON_ONCE(1);
-		ERR_SPI("SPI ACK is invalid");
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			WARN_ON_ONCE(1);
+			ERR_SPI("SPI ACK is invalid (PS state: %s)",
+				NRC_PS_STATE_STR(priv->hdev));
+		}
 		status = -EIO;
 		goto error_cleanup;
 	}
@@ -442,6 +460,7 @@ static ssize_t _c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 	ssize_t status;
 	u8 *aligned_buf = NULL; // Declare aligned buffer pointer
 	u8 *aligned_buf_start = NULL;
+	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
 
 	if (size == 0 || buf == NULL || size > (1024 * 1024)) /* Max 1MB */
 		return -EINVAL;
@@ -484,13 +503,21 @@ static ssize_t _c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 
 	status = spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
 	if (status < 0) {
-		ERR_SPI("[%s] writing spi failed(%zd).", __func__, status);
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			ERR_SPI("writing spi failed(%zd).", status);
+		}
 		goto error_cleanup;
 	}
 
 #ifndef CONFIG_SPI_HALF_DUPLEX
-	if (WARN_ON_ONCE(rx[7] != C_SPI_ACK)) {
-		// INFO("[%s] try to read register but SPI ACK is invalid", __func__);
+	if (rx[7] != C_SPI_ACK) {
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			WARN_ON_ONCE(1);
+			ERR_SPI("SPI ACK is invalid (PS state: %s)",
+				NRC_PS_STATE_STR(priv->hdev));
+		}
 		status = -EIO;
 		goto error_cleanup;
 	}
@@ -534,6 +561,91 @@ ssize_t c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 }
 
 /**
+ * c_spi_xmit - SPI write for TX data with dummy padding
+ *
+ * Unlike c_spi_write(), this function only sends @size bytes of actual data
+ * from @buf, then pads the remainder to slot boundary with dummy (0xFF) bytes.
+ * This prevents OOB memory access when skb->len < nr_slot * slot_size,
+ * which can cause panic on DMA page boundaries.
+ *
+ * Must NOT be used for FW download (ROM doesn't understand dummy padding).
+ */
+ssize_t c_spi_xmit(struct spi_device *spi, u8 *buf, ssize_t size)
+{
+	struct nrc_spi_priv *priv = dev_get_platdata(&spi->dev);
+	struct spi_transfer xfer[5] = {
+		{0},
+	};
+	u32 cmd, dummy = 0xffffffff;
+	u8 tx[8];
+#ifndef CONFIG_SPI_HALF_DUPLEX
+	u8 rx[8];
+#endif
+	ssize_t status;
+	ssize_t slot_size, remained;
+
+	if (size == 0 || buf == NULL)
+		return -EINVAL;
+
+	slot_size = priv->hdev->slot[TX_SLOT].size;
+	remained = slot_size - (size % slot_size);
+	if (remained == slot_size)
+		remained = 0;
+
+	cmd = C_SPI_WRITE | C_SPI_BURST | C_SPI_FIXED;
+	cmd |= C_SPI_ADDR(C_SPI_RXQ_WINDOW) | C_SPI_LEN(size + remained);
+	put_unaligned_be32(cmd, (u32 *)tx);
+	tx[4] = (compute_crc7(tx, 4) << 1) | 0x1;
+	tx[5] = 0xff;
+
+#ifndef CONFIG_SPI_HALF_DUPLEX
+	spi_set_transfer(&xfer[0], tx, rx, 8);
+#else
+	spi_set_transfer(&xfer[0], tx, NULL, 8);
+#endif
+	spi_set_transfer(&xfer[1], buf, NULL, size);
+	spi_set_transfer(&xfer[2], priv->dummy_slot, NULL, remained);
+	spi_set_transfer(&xfer[3], &dummy, NULL, sizeof(dummy));
+	spi_set_transfer(&xfer[4], &dummy, NULL, sizeof(dummy));
+
+	status = spi_sync_transfer(spi, xfer, ARRAY_SIZE(xfer));
+	if (status < 0) {
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			ERR_SPI("writing spi failed(%zd).", status);
+		}
+		return status;
+	}
+
+#ifndef CONFIG_SPI_HALF_DUPLEX
+	if (rx[7] != C_SPI_ACK) {
+		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
+			/*
+			 * SPI ACK desync is a known behavior during power state transitions
+			 * in Non-TIM mode, where the host and target may briefly lose sync
+			 * as the target enters sleep.
+			 *
+			 * For Non-TIM mode: Log as verbose to avoid console spam.
+			 * For other modes: Log as error with stack trace for investigation.
+			 */
+			if (NRC_PS_IS_NONTIM(priv->hdev)) {
+				VBS_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s) - Non-TIM transition",
+					rx[7], NRC_PS_STATE_STR(priv->hdev));
+			} else {
+				WARN_ON_ONCE(1);
+				ERR_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s)",
+					rx[7], NRC_PS_STATE_STR(priv->hdev));
+			}
+		}
+		return -EIO;
+	}
+#endif
+
+	return size;
+}
+
+/**
  * spi_rx_skb - fetch a single hif packet from the target
  */
 
@@ -562,7 +674,7 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 
 	/* During SLEEP or WAKING, RX thread is parked - abort RX processing */
 	if (atomic_read(&priv->rx_thread_parked)) {
-		DBG_PS("RX thread parked (ps_state=%s), abort RX",
+		VBS_PS("RX thread parked (ps_state=%s), abort RX",
 		       NRC_PS_STATE_STR(hdev));
 		goto fail;
 	}
@@ -572,11 +684,8 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 		spi_update_status(hdev);
 
 	if (c_spi_num_slots(hdev, RX_SLOT) < hdev->max_slot_num) {
-		trace_nrc_hif_rx_slot(priv, RX_SLOT, "enable irq");
-		c_spi_enable_irq(spi, true, CSPI_EIRQ_S_ENABLE);
+		spi_enable_data_interrupt(spi, priv, "RX slot available");
 	}
-
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "wait rx header");
 
 	/* Wait until at least one rx slot is non-empty */
 	ret = wait_event_interruptible(priv->rx_wait,
@@ -610,8 +719,6 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	}
 #endif
 	SLOT_SYNC_LOCK();
-
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "before rx");
 
 	if (c_spi_num_slots(hdev, RX_SLOT) > 32) {
 		SLOT_SYNC_UNLOCK();
@@ -647,7 +754,8 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	SLOT_SYNC_UNLOCK();
 	if (size < 0) {
 		hdev->slot[RX_SLOT].tail--;
-		ERR_SPI("Failed to read first slot");
+		ERR_SPI("Failed to read first slot (ps=%s, drv=%s)",
+			NRC_PS_STATE_STR(hdev), NRC_DRV_STATE_STR(hdev));
 		goto fail;
 	}
 
@@ -699,7 +807,6 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	 * Wait until priv->nr_rx_slot >= nr_slot or 100ms.
 	 * If nr_cnt is too large, it could be a hif error.
 	 */
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "wait rx body");
 
 	ret = wait_event_interruptible_timeout(
 		priv->rx_wait,
@@ -761,13 +868,11 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	}
 
 out:
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "after rx out");
 
 	skb_put(skb, sizeof(*hif) + hif->len);
 	return skb;
 
 fail:
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "after rx fail");
 	/* count_only=true to suppress NULL SKB warning, but still count error */
 	NRC_SKB_TRACK_FREE(hdev, skb, hif_type, true, false);
 	return NULL;
@@ -795,95 +900,6 @@ int spi_read_sys_reg(struct spi_device *spi, struct spi_sys_reg *sys)
 }
 
 /* Credit queue management moved to HAL module */
-
-static void spi_credit_skb(struct spi_device *spi, struct nrc_hif_device *hdev)
-{
-	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
-	struct sk_buff *skb;
-	struct hif *hif;
-	struct wim *wim;
-	struct wim_credit_report *cr;
-	u8 *p;
-	int i;
-	int size = sizeof(*hif) + sizeof(*wim) + sizeof(*cr);
-
-	/* Check if core module references are valid */
-	if (!spi_check_core_refs(priv, __func__)) {
-		ERR_SPI("Invalid core module references");
-		return;
-	}
-
-	if (!once) {
-		DBG_CREDIT("Credit skb not sent yet");
-		once = true;
-		return;
-	}
-
-	skb = dev_alloc_skb(size);
-	if (!skb) {
-		ERR_SPI("Failed to allocate credit skb");
-		return;
-	}
-	NRC_SKB_TRACK_ALLOC(hdev, skb, HIF_TYPE_WIM, true, false);
-
-	p = skb->data;
-	hif = (void *)p;
-	hif->type = HIF_TYPE_WIM;
-	hif->subtype = HIF_WIM_SUB_EVENT;
-	hif->vifindex = 0;
-	hif->len = sizeof(*wim) + sizeof(*cr);
-
-	p += sizeof(*hif);
-	wim = (void *)p;
-	wim->event = WIM_EVENT_CREDIT_REPORT;
-
-	p += sizeof(*wim);
-	cr = (void *)p;
-	cr->h.type = WIM_TLV_AC_CREDIT_REPORT;
-	cr->h.len = sizeof(struct wim_credit_report_param);
-
-	cr->v.change_index = 0;
-
-	/* Protect credit front/rear array access */
-	{
-		unsigned long flags;
-		CREDIT_LOCK(hdev, flags);
-
-		for (i = 0; i < CREDIT_QUEUE_MAX && i < ARRAY_SIZE(cr->v.ac);
-		     i++) {
-			u8 room = 0;
-
-			/* Validate array bounds before access */
-			if (i >= ARRAY_SIZE(hdev->credit.front) ||
-			    i >= ARRAY_SIZE(hdev->credit.rear) ||
-			    i >= ARRAY_SIZE(hdev->credit.credit_max)) {
-				ERR_SPI("Credit index %d out of bounds", i);
-				break;
-			}
-
-			if (hdev->credit.front[i] >= hdev->credit.rear[i]) {
-				room = hdev->credit.front[i] -
-				       hdev->credit.rear[i];
-			} else {
-				room = (255 - hdev->credit.rear[i]) +
-				       hdev->credit.front[i];
-			}
-
-			room = min(hdev->credit.credit_max[i], room);
-			cr->v.ac[i] = hdev->credit.credit_max[i] - room;
-
-			DBG_CREDIT("credit[%d]=%d f=%d r=%d", i, cr->v.ac[i],
-				   hdev->credit.front[i], hdev->credit.rear[i]);
-		}
-
-		CREDIT_UNLOCK(hdev, flags);
-	}
-
-	skb_put(skb, hif->len + sizeof(*hif));
-
-	/* Forward credit packet to HAL using unified function */
-	spi_forward_rx_packet(hdev, skb, __func__);
-}
 
 /**
  * spi_loopback - fetch a single hif packet from the target
@@ -988,8 +1004,7 @@ loopback_tx:
 	cancel_delayed_work_sync(&priv->work);
 	hdev->slot[TX_SLOT].tail += lb_cnt;
 
-	ret = c_spi_write(priv->spi, skb->data,
-			  (hdev->slot[TX_SLOT].size * lb_cnt));
+	ret = c_spi_xmit(priv->spi, skb->data, skb->len);
 	if (ret < 0)
 		goto end;
 
@@ -1210,13 +1225,29 @@ int spi_read_status(struct spi_device *spi)
 	ret = c_spi_read_regs(spi, C_SPI_EIRQ_MODE, (void *)&status,
 			      sizeof(status));
 	if (ret == 0) {
-		DBG_BUS("[spi_read_status] status:0x%02x mode:0x%02x enable:0x%02x msg[3]:0x%08X",
-			status.eirq.status, status.eirq.mode,
-			status.eirq.enable, status.msg[3]);
+		VBS_BUS("st:%02x md:%02x en:%02x msg3:%08X", status.eirq.status,
+			status.eirq.mode, status.eirq.enable, status.msg[3]);
 	}
 	//spi_print_status(priv);
 
 	return ret;
+}
+
+/**
+ * spi_reset_slots - Reset SPI RX and TX slot pointers to initial state
+ * @hdev: NRC HIF device
+ */
+static void spi_reset_slots(struct nrc_hif_device *hdev)
+{
+	if (!hdev)
+		return;
+
+	/* Reset SPI pointers as target HW pointers are reset after sleep/reset */
+	hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head = 0;
+	hdev->slot[TX_SLOT].tail = -1; /* WIM is first TX */
+	hdev->slot[TX_SLOT].head = 32;
+
+	VBS_PS("SPI slots reset to initial state");
 }
 
 /**
@@ -1228,12 +1259,19 @@ int spi_read_status(struct spi_device *spi)
  * @debug: Debug structure
  *
  * Returns: 0 to continue with normal processing, 1 to skip slot/credit updates
+ *
+ * NOTE: This function must NOT call nrc_spi_trigger_event() directly while
+ * SLOT_SYNC_LOCK is held by the caller (spi_update_status). Doing so causes
+ * a recursive deadlock: the callback chain (fw_reload → fw_download →
+ * spi_hif_wait_rxq_slot) tries to re-acquire the same mutex.
+ * Use @pending_event to defer event delivery until after the lock is released.
  */
 static int spi_process_device_status(struct nrc_hif_device *hdev,
 				     struct spi_device *spi,
 				     struct nrc_spi_priv *priv,
 				     struct spi_status_reg *status,
-				     struct nrc_debug *debug)
+				     struct nrc_debug *debug,
+				     struct nrc_spi_event_data *pending_event)
 {
 	u32 target_noti;
 	struct nrc_spi_event_data event;
@@ -1258,13 +1296,11 @@ static int spi_process_device_status(struct nrc_hif_device *hdev,
 			if (NRC_PS_IS_WAKING(hdev)) {
 				ERR_PS("FW DOWNLOAD during wakeup - treating as firmware recovery (SPI is working)");
 
-				/* Trigger FW_READY_FROM_WDT event to complete wakeup */
-				{
-					struct nrc_spi_event_data event = {
-						.type = NRC_BACKEND_EVT_TARGET_NOTI_FW_READY_FROM_WDT,
-					};
-					nrc_spi_trigger_event(&event);
-				}
+				/* Defer: caller triggers after SLOT_SYNC_UNLOCK to avoid
+				 * recursive deadlock (fw_reload → spi_hif_wait_rxq_slot
+				 * would try to re-acquire slot_sync_lock). */
+				pending_event->type =
+					NRC_BACKEND_EVT_TARGET_NOTI_FW_READY_FROM_WDT;
 			} else {
 				/* Normal SLEEP state - FW download request */
 				ERR_PS("FW DOWNLOAD request during SLEEP drv=%s ps=%s status:0x%02x msg[3]=0x%08X",
@@ -1277,33 +1313,31 @@ static int spi_process_device_status(struct nrc_hif_device *hdev,
 		}
 	}
 
-	/* 7292 : update, 7393/7394 : check WDT/FWDW and update */
+	/* Handle WDT/FWDW handshake in ROM mode for all supported chips */
 	if (status->eirq.status == EIRQ_STATUS_DEVICE_ROM) {
-		if (priv->hw.sys.chip_id == 0x7394) {
-			/*
-			 * Device is in ROM mode - need to enable IRQ for target
-			 * to proceed with WDT notification sequence.
-			 *
-			 * WDT sequence on target (nrc_ps_force_eirq_and_wait):
-			 * 1. Target raises GPIO30 (EIRQ) to wake host
-			 * 2. Target waits for host to set RegHIF_DEVICE_HST_STATS & BIT1
-			 * 3. Host must call c_spi_enable_irq to set this bit
-			 * 4. Then target calls system_notify_host_msg(WDT_EXPIRED)
-			 *
-			 * If we don't enable IRQ here, target keeps retrying ("RETRY EIRQ")
-			 * and never sends the WDT_EXPIRED notification.
-			 */
-			c_spi_enable_irq(
-				spi, false,
-				CSPI_EIRQ_A_ENABLE); /* cleanup shadow reg */
-			c_spi_enable_irq(spi, true, CSPI_EIRQ_A_ENABLE);
+		/*
+		 * Device is in ROM mode - need to enable IRQ for target
+		 * to proceed with WDT notification sequence.
+		 *
+		 * WDT sequence on target (nrc_ps_force_eirq_and_wait):
+		 * 1. Target raises GPIO30 (EIRQ) to wake host
+		 * 2. Target waits for host to set RegHIF_DEVICE_HST_STATS & BIT1
+		 * 3. Host must call c_spi_enable_irq to set this bit
+		 * 4. Then target calls system_notify_host_msg(WDT_EXPIRED)
+		 *
+		 * If we don't enable IRQ here, target keeps retrying ("RETRY EIRQ")
+		 * and never sends the WDT_EXPIRED notification.
+		 */
+		c_spi_enable_irq(spi, false,
+				 CSPI_EIRQ_A_ENABLE); /* cleanup shadow reg */
+		c_spi_enable_irq(spi, true, CSPI_EIRQ_A_ENABLE);
+		/* A_ENABLE includes S_ENABLE bit — sync throttle flag */
+		priv->data_irq_disabled = false;
 
-			if ((status->msg[3] & 0xFFFF) ==
-			    TARGET_NOTI_WDT_EXPIRED) {
-				WARN_HIF("WDT expired: msg=0x%X status=0x%X",
-					 status->msg[3], status->eirq.status);
-				return 1; /* skip updates */
-			}
+		if ((status->msg[3] & 0xFFFF) == TARGET_NOTI_WDT_EXPIRED) {
+			WARN_HIF("WDT expired: msg=0x%X status=0x%X",
+				 status->msg[3], status->eirq.status);
+			return 1; /* skip updates */
 		}
 
 		/*
@@ -1312,12 +1346,11 @@ static int spi_process_device_status(struct nrc_hif_device *hdev,
 		*/
 		if ((status->msg[3] & 0xFFFF) ==
 		    TARGET_NOTI_REQUEST_FW_DOWNLOAD) {
-			{
-				struct nrc_spi_event_data event = {
-					.type = NRC_BACKEND_EVT_TARGET_NOTI_REQUEST_FW_DOWNLOAD,
-				};
-				nrc_spi_trigger_event(&event);
-			}
+			/* Defer: caller triggers after SLOT_SYNC_UNLOCK to avoid
+			 * recursive deadlock (fw_reload → spi_hif_wait_rxq_slot
+			 * would try to re-acquire slot_sync_lock). */
+			pending_event->type =
+				NRC_BACKEND_EVT_TARGET_NOTI_REQUEST_FW_DOWNLOAD;
 			/* don't update slot and credit */
 			return 1; /* skip updates */
 		}
@@ -1341,15 +1374,18 @@ DEVICE_READY:
 			    atomic_read(&priv->rx_thread_parked)) {
 				kthread_unpark(priv->kthread);
 				atomic_set(&priv->rx_thread_parked, 0);
-				DBG_PS("RX thread unparked on DEVICE_READY (noti=0x%04X)",
+				VBS_PS("RX thread unparked on DEVICE_READY (noti=0x%04X)",
 				       target_noti);
 			}
 		} else {
-			DBG_PS("DEVICE_READY with REQUEST_FW_DOWNLOAD (0xDC)");
+			VBS_PS("DEVICE_READY with REQUEST_FW_DOWNLOAD (0xDC)");
 		}
 
 		if (nrc_spi_target_noti_to_event(target_noti, &event.type)) {
-			spi_trigger_hal_event(priv, &event, __func__);
+			/* Defer: caller triggers after SLOT_SYNC_UNLOCK to avoid
+			 * recursive deadlock (some callbacks call fw_reload →
+			 * spi_hif_wait_rxq_slot → re-acquire slot_sync_lock). */
+			*pending_event = event;
 		} else if (target_noti != 0) {
 			/* Unknown non-zero target notification - log error */
 			ERR_HIF("Unknown TARGET_NOTI: 0x%04X", target_noti);
@@ -1374,6 +1410,7 @@ DEVICE_READY:
 			WARN_HIF("TARGET_NOTI_WDT_EXPIRED - target rebooting");
 			break;
 		case TARGET_NOTI_FW_READY_FROM_PS:
+			spi_reset_slots(hdev);
 			spi_hif_rx_thread_resume(hdev);
 			/* IRQ handler already logged FW_READY_FROM_PS */
 			return 0; /* continue with normal update */
@@ -1388,8 +1425,10 @@ DEVICE_READY:
 			 * 3. Set drv_state = RUNNING
 			 * 4. Forward to frontend for ieee80211_restart_hw
 			 */
+			spi_reset_slots(hdev);
 			spi_hif_rx_thread_resume(hdev);
-			DBG_STATE("FW ready from WDT - RX thread resumed");
+			DBG_STATE(
+				"FW ready from WDT - RX thread resumed and pointers reset");
 			return 0; /* continue with normal update */
 		case TARGET_NOTI_FW_ENTER_TO_PS:
 			/*
@@ -1400,6 +1439,8 @@ DEVICE_READY:
 				spi, true,
 				CSPI_EIRQ_A_ENABLE); /* cleanup shadow reg */
 			c_spi_enable_irq(spi, false, CSPI_EIRQ_A_ENABLE);
+			/* A_ENABLE includes S_ENABLE bit — sync throttle flag */
+			priv->data_irq_disabled = true;
 			/* FW entered PS - keep fw.state as ACTIVE (FW still running) */
 			/* Note: Android PM (pm_relax) is handled in core module PS state machine */
 			DBG_PS("Wake-up by FW_ENTER_TO_PS");
@@ -1412,6 +1453,229 @@ DEVICE_READY:
 	return 0; /* continue with normal update */
 }
 
+/**
+ * This function updates the credit rear pointers from the status register
+ * messages and then allocates/sends a WIM_EVENT_CREDIT_REPORT back to the HAL
+ * to notify it of available TX credits.
+ */
+static void spi_update_credits(struct spi_device *spi,
+			       struct nrc_hif_device *hdev,
+			       struct spi_status_reg *status)
+{
+	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
+	struct sk_buff *skb;
+	struct hif *hif;
+	struct wim *wim;
+	struct wim_credit_report *cr;
+	unsigned long flags;
+	u32 rear;
+	int ac, i;
+	int size = sizeof(*hif) + sizeof(*wim) + sizeof(*cr);
+
+	/* 1. Update internal credit rear pointers */
+	rear = __be32_to_cpu(status->msg[1]);
+
+	CREDIT_LOCK(hdev, flags);
+
+	for (ac = 0; ac < 4 && ac < ARRAY_SIZE(hdev->credit.rear); ac++) {
+		hdev->credit.rear[ac] = (rear >> (8 * ac)) & 0xff;
+	}
+
+	rear = __be32_to_cpu(status->msg[2]);
+
+	if (hdev->hw_queues == 6) {
+		for (ac = 0; ac < 4 && (4 + ac) < ARRAY_SIZE(hdev->credit.rear);
+		     ac++) {
+			hdev->credit.rear[4 + ac] = (rear >> (8 * ac)) & 0xff;
+		}
+	} else if (hdev->hw_queues == 11) {
+		for (ac = 0; ac < 4 && (6 + ac) < ARRAY_SIZE(hdev->credit.rear);
+		     ac++) {
+			hdev->credit.rear[6 + ac] = (rear >> (8 * ac)) & 0xff;
+		}
+	} else {
+		VBS_BUS("transient queue config: %d", hdev->hw_queues);
+	}
+
+	CREDIT_UNLOCK(hdev, flags);
+
+	/* 2. Prepare and send credit report SKB back to HAL */
+	if (!spi_check_core_refs(priv, __func__)) {
+		ERR_SPI("Invalid core module references");
+		return;
+	}
+
+	if (!once) {
+		DBG_CREDIT("Credit skb not sent yet");
+		once = true;
+		return;
+	}
+
+	skb = dev_alloc_skb(size);
+	if (!skb) {
+		ERR_SPI("Failed to allocate credit skb");
+		return;
+	}
+	NRC_SKB_TRACK_ALLOC(hdev, skb, HIF_TYPE_WIM, true, false);
+
+	hif = (void *)skb->data;
+	hif->type = HIF_TYPE_WIM;
+	hif->subtype = HIF_WIM_SUB_EVENT;
+	hif->vifindex = 0;
+	hif->len = sizeof(*wim) + sizeof(*cr);
+
+	wim = (void *)((u8 *)hif + sizeof(*hif));
+	wim->event = WIM_EVENT_CREDIT_REPORT;
+
+	cr = (void *)((u8 *)wim + sizeof(*wim));
+	cr->h.type = WIM_TLV_AC_CREDIT_REPORT;
+	cr->h.len = sizeof(struct wim_credit_report_param);
+	cr->v.change_index = 0;
+
+	CREDIT_LOCK(hdev, flags);
+	for (i = 0; i < CREDIT_QUEUE_MAX && i < ARRAY_SIZE(cr->v.ac); i++) {
+		u8 room = 0;
+
+		if (i >= ARRAY_SIZE(hdev->credit.front) ||
+		    i >= ARRAY_SIZE(hdev->credit.rear) ||
+		    i >= ARRAY_SIZE(hdev->credit.credit_max)) {
+			ERR_SPI("Credit index %d out of bounds", i);
+			break;
+		}
+
+		if (hdev->credit.front[i] >= hdev->credit.rear[i]) {
+			room = hdev->credit.front[i] - hdev->credit.rear[i];
+		} else {
+			room = (255 - hdev->credit.rear[i]) +
+			       hdev->credit.front[i];
+		}
+
+		room = min(hdev->credit.credit_max[i], room);
+		cr->v.ac[i] = hdev->credit.credit_max[i] - room;
+
+		DBG_CREDIT("credit[%d]=%d f=%d r=%d", i, cr->v.ac[i],
+			   hdev->credit.front[i], hdev->credit.rear[i]);
+	}
+	CREDIT_UNLOCK(hdev, flags);
+
+	skb_put(skb, hif->len + sizeof(*hif));
+
+	/* Forward credit packet to HAL using unified function */
+	spi_forward_rx_packet(hdev, skb, __func__);
+}
+
+/**
+ * spi_enable_data_interrupt - Enable SPI data-ready interrupts
+ * @spi: SPI device
+ * @priv: SPI private data
+ * @reason: Reason for enabling (for logging)
+ *
+ * Always re-asserts the S IRQ enable bit in HW (actual SPI write is
+ * deduplicated by the shadow register inside c_spi_enable_irq).
+ * Log is emitted only on state transitions (disabled→enabled) to
+ * avoid spam. Repeated calls act as a safety net in case HW state
+ * drifts out of sync with the flag.
+ */
+void spi_enable_data_interrupt(struct spi_device *spi,
+			       struct nrc_spi_priv *priv, const char *reason)
+{
+	if (!spi || !priv)
+		return;
+
+	/* Always re-assert HW bit; shadow register deduplicates the SPI write */
+	c_spi_enable_irq(spi, true, CSPI_EIRQ_S_ENABLE);
+
+	if (priv->data_irq_disabled) {
+		VBS_IRQ("IRQ: Enable data interrupt (reason: %s)", reason);
+		priv->data_irq_disabled = false;
+	}
+}
+
+/**
+ * spi_disable_data_interrupt - Disable SPI data-ready interrupts
+ * @spi: SPI device
+ * @priv: SPI private data
+ * @reason: Reason for disabling (for logging)
+ *
+ * Always writes to HW. Log emitted only on state transitions.
+ */
+void spi_disable_data_interrupt(struct spi_device *spi,
+				struct nrc_spi_priv *priv, const char *reason)
+{
+	if (!spi || !priv)
+		return;
+
+	/* Always write HW bit; shadow register deduplicates the SPI write */
+	c_spi_enable_irq(spi, false, CSPI_EIRQ_S_ENABLE);
+
+	if (!priv->data_irq_disabled) {
+		VBS_IRQ("IRQ: Disable data interrupt (reason: %s)", reason);
+		priv->data_irq_disabled = true;
+	}
+}
+
+/**
+ * spi_optimize_irq_frequency - Throttles IRQ frequency on low-spec CPUs
+ * @spi: SPI device
+ * @priv: SPI private data
+ * @hdev: NRC HIF device
+ *
+ * If RX/TX slots are sufficiently full, temporarily disable the secondary
+ * interrupt (CSPI_EIRQ_S_ENABLE) to give the rx_thread priority to process
+ * existing data before the next hardware interrupt fires.
+ * When slots drain below threshold, re-enable the interrupt so the rx_thread
+ * can be woken again — without this, IRQ stays off and rx_thread stalls.
+ *
+ * Guards against redundant calls using data_irq_disabled flag to prevent log
+ * spam. The flag is always kept in sync by spi_enable/disable_data_interrupt,
+ * even when those functions are called directly from other code paths (e.g.
+ * the rx_thread loop at line 638), so the guard here is always accurate.
+ */
+static void spi_optimize_irq_frequency(struct spi_device *spi,
+				       struct nrc_spi_priv *priv,
+				       struct nrc_hif_device *hdev)
+{
+#define EXTRA_SLOT 1
+	bool throttle = (c_spi_num_slots(hdev, RX_SLOT) >=
+				 (hdev->max_slot_num + EXTRA_SLOT) &&
+			 c_spi_num_slots(hdev, TX_SLOT) >= hdev->max_slot_num);
+#undef EXTRA_SLOT
+
+	if (throttle && !priv->data_irq_disabled)
+		spi_disable_data_interrupt(spi, priv,
+					   "slots full (throttling)");
+	else if (!throttle && priv->data_irq_disabled)
+		spi_enable_data_interrupt(spi, priv,
+					  "slots drained (re-enable)");
+}
+
+/**
+ * spi_debug_flow_control - Log slot and credit state when flow control debug is enabled
+ * @hdev: NRC HIF device
+ */
+static void spi_debug_flow_control(struct nrc_hif_device *hdev)
+{
+	int ac;
+
+	if (!hdev->params->dbg_flow_control)
+		return;
+
+	DBG_SLOT("RX slot: t_snt=%d h_rcv=%d diff=%d", hdev->slot[RX_SLOT].head,
+		 hdev->slot[RX_SLOT].tail,
+		 hdev->slot[RX_SLOT].head - hdev->slot[RX_SLOT].tail);
+
+	DBG_SLOT("TX slot: t_rdy=%d h_snt=%d diff=%d", hdev->slot[TX_SLOT].head,
+		 hdev->slot[TX_SLOT].tail,
+		 hdev->slot[TX_SLOT].head - hdev->slot[TX_SLOT].tail);
+
+	for (ac = 0; ac < hdev->hw_queues; ac++) {
+		DBG_CREDIT("AC%d: h_snt=%d t_rcv=%d credit=%d pend=%d", ac,
+			   hdev->credit.front[ac], hdev->credit.rear[ac],
+			   hdev->credit.tx_credit[ac],
+			   hdev->credit.tx_pend[ac]);
+	}
+}
+
 int spi_update_status(struct nrc_hif_device *hdev)
 {
 	struct spi_device *spi = nrc_spi_get_device();
@@ -1420,8 +1684,8 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	struct nrc_debug *debug;
 	bool need_tx_reset = false;
 	bool need_rx_reset = false;
-	int ret, ac = 0;
-	u32 rear;
+	struct nrc_spi_event_data pending_event;
+	int ret;
 
 	if (!spi_check_core_refs(priv, __func__) || !hdev) {
 		return -EINVAL;
@@ -1435,17 +1699,6 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	 * - RX packet processing will be skipped anyway (RX thread is parked)
 	 */
 
-	if (priv->hw.sys.chip_id == 0x7394) {
-		if (NRC_DRV_IS_ASLEEP(hdev)) {
-			c_spi_enable_irq(
-				spi, false,
-				CSPI_EIRQ_A_ENABLE); /* cleanup shadow reg */
-			c_spi_enable_irq(spi, true, CSPI_EIRQ_A_ENABLE);
-			/* Note: Android PM (pm_stay_awake) is handled in core module PS state machine */
-			mdelay(10);
-		}
-	}
-
 	SLOT_SYNC_LOCK();
 	ret = c_spi_read_regs(spi, C_SPI_EIRQ_MODE, (void *)status,
 			      sizeof(*status));
@@ -1454,16 +1707,39 @@ int spi_update_status(struct nrc_hif_device *hdev)
 		return ret;
 	}
 
-	DBG_BUS("EIRQ status:0x%02x(%s) mode:0x%02x(%s) enable:0x%02x",
+	VBS_BUS("EIRQ st:%02x(%s) md:%s en:%02x msg3:%08X(%s)",
 		status->eirq.status, spi_eirq_status_str(status->eirq.status),
-		status->eirq.mode, spi_eirq_mode_str(status->eirq.mode),
-		status->eirq.enable);
-	DBG_BUS("     msg[3]:0x%08X(%s)", status->msg[3],
-		spi_target_noti_str(status->msg[3]));
+		spi_eirq_mode_str(status->eirq.mode), status->eirq.enable,
+		status->msg[3], spi_target_noti_str(status->msg[3]));
 
-	/* Process device status and check if we should skip slot/credit updates */
-	if (spi_process_device_status(hdev, spi, priv, status, debug)) {
+	/* Process device status and check if we should skip slot/credit updates.
+	 * IMPORTANT: spi_process_device_status must NOT call nrc_spi_trigger_event
+	 * while we hold SLOT_SYNC_LOCK. pending_event is set instead, and triggered
+	 * below after the lock is released to prevent recursive mutex deadlock. */
+	memset(&pending_event, 0, sizeof(pending_event));
+	if (spi_process_device_status(hdev, spi, priv, status, debug,
+				      &pending_event)) {
 		SLOT_SYNC_UNLOCK();
+		if (pending_event.type != 0)
+			nrc_spi_trigger_event(&pending_event);
+		goto done;
+	}
+
+	/*
+	 * Skip slot/credit update during SLEEPING or SLEEP state.
+	 * While the FW is shutting down the SPI bus for deep sleep, a racing
+	 * IRQ can call spi_update_status() and read garbage head/tail values,
+	 * triggering false desync warnings. Slot counts are irrelevant while TX
+	 * is blocked; they will be refreshed on the first update after wake.
+	 *
+	 * Also force RX tail = head so c_spi_num_slots() returns 0 and the
+	 * spi_rx_thread does not attempt a read against the sleeping device.
+	 */
+	if (NRC_PS_IS_SLEEPING(hdev) || NRC_DRV_IS_ASLEEP(hdev)) {
+		hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head;
+		SLOT_SYNC_UNLOCK();
+		if (pending_event.type != 0)
+			nrc_spi_trigger_event(&pending_event);
 		goto done;
 	}
 
@@ -1501,27 +1777,38 @@ int spi_update_status(struct nrc_hif_device *hdev)
 		}
 	}
 
-	trace_nrc_hif_rx_slot(priv, RX_SLOT, "update");
-	trace_nrc_hif_tx_slot(priv, TX_SLOT, "update");
 
 	/* NOTE: spi_hif_reset_tx/rx must NOT be called while SLOT_SYNC_LOCK
 	 * is held — they call disable_irq → synchronize_irq, which waits for
 	 * the IRQ handler thread. That thread also acquires SLOT_SYNC_LOCK,
 	 * causing a deadlock. Instead, set flags here and call after unlock.
 	 */
-	if (c_spi_num_slots(hdev, TX_SLOT) > 32) {
-		WARN_SPI("TX_gap:%u head:%u vs tail:%u",
+	/* Initial TX state is head=32, tail=-1, which is a gap of 33.
+	 * Any value > 33 means pointers have desynchronized (e.g. wrapped around).
+	 *
+	 * NOTE: spi_hif_reset_tx/rx must NOT be called while SLOT_SYNC_LOCK
+	 * is held — they call disable_irq → synchronize_irq, which waits for
+	 * the IRQ handler thread. That thread also acquires SLOT_SYNC_LOCK,
+	 * causing a deadlock. Instead, set flags here and call after unlock.
+	 */
+	if (c_spi_num_slots(hdev, TX_SLOT) > 33) {
+		WARN_SPI("TX_gap:%u head:%u vs tail:%u (ps=%s)",
 			 c_spi_num_slots(hdev, TX_SLOT),
-			 hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail);
-		if (priv->hw.sys.chip_id == 0x7394 && NRC_PS_IS_AWAKE(hdev))
+			 hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail,
+			 NRC_PS_STATE_STR(hdev));
+		hdev->slot[TX_SLOT].tail = hdev->slot[TX_SLOT].head;
+		if (NRC_PS_IS_AWAKE(hdev))
 			need_tx_reset = true;
 	}
 
+	/* RX gap > 33 means tail has wrapped around head */
 	if (c_spi_num_slots(hdev, RX_SLOT) > 33) {
-		WARN_SPI("RX_gap:%u head:%u vs tail:%u",
+		WARN_SPI("RX_gap:%u head:%u vs tail:%u (ps=%s)",
 			 c_spi_num_slots(hdev, RX_SLOT),
-			 hdev->slot[RX_SLOT].head, hdev->slot[RX_SLOT].tail);
-		if (priv->hw.sys.chip_id == 0x7394 && NRC_PS_IS_AWAKE(hdev))
+			 hdev->slot[RX_SLOT].head, hdev->slot[RX_SLOT].tail,
+			 NRC_PS_STATE_STR(hdev));
+		hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head;
+		if (NRC_PS_IS_AWAKE(hdev))
 			need_rx_reset = true;
 	}
 
@@ -1538,74 +1825,14 @@ int spi_update_status(struct nrc_hif_device *hdev)
 		goto done;
 	}
 
-	/* Update VIF0 credit */
-	rear = __be32_to_cpu(status->msg[1]);
+	/* Update credit rear pointers and report to HAL */
+	spi_update_credits(spi, hdev, status);
 
-	/* Protect credit rear array updates */
-	{
-		unsigned long flags;
-		CREDIT_LOCK(hdev, flags);
+	/* Log flow control information if debug is enabled */
+	spi_debug_flow_control(hdev);
 
-		for (ac = 0; ac < 4 && ac < ARRAY_SIZE(hdev->credit.rear);
-		     ac++) {
-			hdev->credit.rear[ac] = (rear >> 8 * ac) & 0xff;
-		}
-
-		/* Update VIF1 credit */
-		rear = __be32_to_cpu(status->msg[2]);
-		if (hdev->hw_queues == 6) {
-			for (ac = 0;
-			     ac < 4 && (4 + ac) < ARRAY_SIZE(hdev->credit.rear);
-			     ac++)
-				hdev->credit.rear[4 + ac] =
-					(rear >> 8 * ac) &
-					0xff; /* Actually rear[5] is used for GP */
-		} else if (hdev->hw_queues == 11) {
-			for (ac = 0;
-			     ac < 4 && (6 + ac) < ARRAY_SIZE(hdev->credit.rear);
-			     ac++)
-				hdev->credit.rear[6 + ac] = (rear >> 8 * ac) &
-							    0xff;
-		} else {
-			ERR_SPI("Invalid queue (%d)", hdev->hw_queues);
-			//BUG();
-		}
-
-		CREDIT_UNLOCK(hdev, flags);
-	}
-
-	/* For flow control debug */
-	if (hdev->params->dbg_flow_control) {
-		DBG_SLOT("RX slot: t_snt=%d h_rcv=%d diff=%d",
-			 hdev->slot[RX_SLOT].head, hdev->slot[RX_SLOT].tail,
-			 hdev->slot[RX_SLOT].head - hdev->slot[RX_SLOT].tail);
-
-		DBG_SLOT("TX slot: t_rdy=%d h_snt=%d diff=%d",
-			 hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail,
-			 hdev->slot[TX_SLOT].head - hdev->slot[TX_SLOT].tail);
-
-		for (ac = 0; ac < hdev->hw_queues; ac++) {
-			DBG_CREDIT("AC%d: h_snt=%d t_rcv=%d credit=%d pend=%d",
-				   ac, hdev->credit.front[ac],
-				   hdev->credit.rear[ac],
-				   hdev->credit.tx_credit[ac],
-				   hdev->credit.tx_pend[ac]);
-		}
-	}
-
-	spi_credit_skb(spi, hdev);
-
-/* To address the tendency of interrupts to occur slowly on low-spec CPUs,
-   we prioritize giving the rx_thread an opportunity to process first
-*/
-#define EXTRA_SLOT 1
-	if (c_spi_num_slots(hdev, RX_SLOT) >=
-		    (hdev->max_slot_num + EXTRA_SLOT) &&
-	    c_spi_num_slots(hdev, TX_SLOT) >= hdev->max_slot_num) {
-		trace_nrc_hif_tx_slot(priv, TX_SLOT, "disable irq");
-		trace_nrc_hif_rx_slot(priv, RX_SLOT, "disable irq");
-		c_spi_enable_irq(spi, false, CSPI_EIRQ_S_ENABLE);
-	}
+	/* Throttles IRQ frequency on low-spec CPUs if slots are full */
+	spi_optimize_irq_frequency(spi, priv, hdev);
 
 	/* Wake up appropriate threads based on slot availability */
 	if (c_spi_num_slots(hdev, RX_SLOT) > 0)
@@ -1616,7 +1843,6 @@ int spi_update_status(struct nrc_hif_device *hdev)
 done:
 	return 0;
 }
-
 /**
  * spi_irq_handler - Common IRQ handler for both threaded and workqueue modes
  * @hdev: HIF device structure (must not be NULL)
@@ -1633,7 +1859,7 @@ static void spi_irq_handler(struct nrc_hif_device *hdev)
 		return;
 	}
 
-	DBG_BUS("%s", __func__);
+	VBS_BUS("%s", __func__);
 
 	/* Update device status and wake appropriate threads */
 	spi_update_status(hdev);
@@ -1671,7 +1897,7 @@ static void irq_worker(struct work_struct *work)
 	struct nrc_spi_priv *priv =
 		container_of(work, struct nrc_spi_priv, irq_work);
 
-	DBG_BUS("%s", __func__);
+	VBS_BUS("%s", __func__);
 
 	/* Check core references before proceeding */
 	if (!spi_check_core_refs(priv, __func__)) {
@@ -1745,17 +1971,14 @@ static DEFINE_MUTEX(irq_mutex);
 void c_spi_enable_irq(struct spi_device *spi, bool enable, u8 mask)
 {
 	int ret = 0, retry = 0;
-	u8 m, e = 0x00;
+	u8 m = 0, e = 0x00;
 	static u8 shadow = 0;
 	u8 tmp;
 
 	mutex_lock(&irq_mutex);
 
 	if (mask == CSPI_EIRQ_A_ENABLE) {
-		//printk("EIRQ ENABLE");
-		if (enable) {
-			m = CSPI_EIRQ_MODE;
-		}
+		m = enable ? CSPI_EIRQ_MODE : 0;
 		for (retry = 0; retry < MAX_ENABLE_IRQ_RETRY; retry++) {
 			ret = c_spi_write_reg(spi, C_SPI_EIRQ_MODE, m);
 			if (ret) {
@@ -1862,6 +2085,8 @@ void c_spi_config(struct nrc_spi_priv *priv, struct nrc_hif_device *hdev)
 			 CSPI_EIRQ_A_ENABLE); /* cleanup shadow reg */
 	c_spi_enable_irq(priv->spi, spi_gpio_irq >= 0 ? true : false,
 			 CSPI_EIRQ_A_ENABLE);
+	/* A_ENABLE includes S_ENABLE bit — sync throttle flag */
+	priv->data_irq_disabled = false;
 }
 
 int nrc_cspi_gpio_alloc(struct spi_device *spi)
@@ -1981,6 +2206,17 @@ struct nrc_spi_priv *nrc_cspi_alloc(struct spi_device *dev)
 	priv->power_save_gpio_allocated = false; /* GPIO resource tracking */
 	priv->power_save_gpio_number = -1; /* No GPIO allocated initially */
 
+	priv->dummy_slot = kzalloc(TX_SLOT_SIZE, GFP_KERNEL);
+	if (!priv->dummy_slot) {
+		ERR_SPI("dummy_slot alloc failed");
+#if !defined(CONFIG_SUPPORT_THREADED_IRQ)
+		destroy_workqueue(priv->irq_wq);
+#endif
+		kfree(priv);
+		return NULL;
+	}
+	memset(priv->dummy_slot, 0xFF, TX_SLOT_SIZE);
+
 	return priv;
 }
 
@@ -1994,6 +2230,7 @@ void nrc_cspi_free(struct nrc_spi_priv *priv)
 #endif
 
 	priv->spi->dev.platform_data = NULL;
+	kfree(priv->dummy_slot);
 	kfree(priv);
 }
 

@@ -44,7 +44,7 @@ LIB_FIRMWARE    = /lib/firmware
 
 # Compilation flags
 COMMON_CFLAGS := -I$(COMMON_DIR) -DCONFIG_NRC_HIF_CSPI -Wall -Werror
-SPI_FEATURES := -DCONFIG_NRC_SPI_TRACE -DENABLE_HW_RESET
+SPI_FEATURES := -DENABLE_HW_RESET
 
 # Debug mode flags
 ifeq ($(DEBUG),y)

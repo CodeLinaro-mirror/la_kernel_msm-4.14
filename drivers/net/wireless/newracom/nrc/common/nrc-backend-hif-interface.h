@@ -69,11 +69,11 @@ static inline int nrc_hif_ops_wait_rxq_slot(u8 *data, u32 len)
 }
 
 /* Status and Control Operations */
-static inline int nrc_hif_ops_ps_status(void)
+static inline int nrc_hif_ops_check_sleep(void)
 {
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
-	return (hdev && hdev->hif_ops && hdev->hif_ops->ps_status) ?
-		       hdev->hif_ops->ps_status(hdev) :
+	return (hdev && hdev->hif_ops && hdev->hif_ops->check_sleep) ?
+		       hdev->hif_ops->check_sleep(hdev) :
 		       -EOPNOTSUPP;
 }
 

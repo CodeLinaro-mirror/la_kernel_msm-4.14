@@ -176,14 +176,7 @@ static int wim_enqueue_to_tx(struct nrc_hif_device *hdev, struct sk_buff *skb,
 		struct ieee80211_tx_info *txi = IEEE80211_SKB_CB(skb);
 		struct ieee80211_vif *vif = txi->control.vif;
 
-		if (hdev->nw) {
-			if (atomic_read(&hdev->nw->d_deauth.delayed_deauth))
-				hif->vifindex = hdev->nw->d_deauth.vif_index;
-			else
-				hif->vifindex = hw_vifindex(vif);
-		} else {
-			hif->vifindex = hw_vifindex(vif);
-		}
+		hif->vifindex = hw_vifindex(vif);
 
 		/* WLAN path validation */
 		if (hif->vifindex < 0 || hif->vifindex > NR_NRC_VIF - 1) {
@@ -622,8 +615,8 @@ int nrc_wim_set_ps(struct nrc_hif_device *hdev, enum NRC_PS_MODE mode,
 	p->ps_wakeup_high = NRC_PARAM_POWER_SAVE_GPIO(hdev, 2);
 	p->ps_duration = timeout;
 
-	DBG_PS("WIM PS config: mode=%d(%s) enable=%d duration=%llu pin=%d active_high=%d",
-	       p->ps_mode, nrc_ps_mode_str(mode), p->ps_enable, p->ps_duration,
+	VBS_PS("WIM PS: %d(%s) en=%d dur=%llu pin=%d ah=%d", p->ps_mode,
+	       nrc_ps_mode_str(mode), p->ps_enable, p->ps_duration,
 	       p->ps_wakeup_pin, p->ps_wakeup_high);
 
 	if (wowlan) {
@@ -646,56 +639,6 @@ int nrc_wim_set_ps(struct nrc_hif_device *hdev, enum NRC_PS_MODE mode,
 	}
 
 	return nrc_wim_request(skb, 0, 0, false, NULL);
-}
-
-#define NUM_WIM_SEND 5
-#define NUM_PS_CHECK 10
-#define NUM_PS_WAIT 10 /* ms */
-
-int nrc_wim_set_ps_sync(struct nrc_hif_device *hdev, enum NRC_PS_MODE mode,
-			u64 timeout, struct cfg80211_wowlan *wowlan)
-{
-	int ret = -1;
-	int done_ps;
-	int wim_ret;
-	int i, j;
-
-	for (i = 0; i < NUM_WIM_SEND; i++) {
-		wim_ret = nrc_wim_set_ps(hdev, mode, timeout, wowlan);
-		if (wim_ret != 0) {
-			ERR_PS("Failed to send PS WIM (ret=%d, try=%d/%d)",
-			       wim_ret, i + 1, NUM_WIM_SEND);
-			goto done;
-		}
-		DBG_PS("Polling sleep status (try %d/%d)...", i + 1, NUM_WIM_SEND);
-		for (j = 0; j < NUM_PS_CHECK; j++) {
-#ifdef ISSUE /* scheduler stall issue */
-			msleep(NUM_PS_WAIT);
-			usleep_range(NUM_PS_WAIT * 1000, NUM_PS_WAIT * 2000);
-#else
-			mdelay(NUM_PS_WAIT);
-#endif
-			done_ps = nrc_hif_ops_ps_status();
-			if (done_ps > 0) { /* wim sucess or halt */
-				ret = 0;
-				if (done_ps == 4) {
-					ERR_PS("FW reset detected during PS operation");
-					ret = 1;
-				}
-				DBG_PS("Sleep confirmed (polled %d times, result=%d)",
-				       j + 1, done_ps);
-				goto done;
-			}
-		}
-		/* give chance to schedule hif_work */
-		usleep_range(NUM_PS_WAIT * 1000, NUM_PS_WAIT * 2000);
-	}
-done:
-	if (ret != 0) {
-		ERR_PS("Sleep entry timeout: target not responding (mode=%s, polled %d times)",
-		       nrc_ps_mode_str(mode), j + 1);
-	}
-	return ret;
 }
 
 /*

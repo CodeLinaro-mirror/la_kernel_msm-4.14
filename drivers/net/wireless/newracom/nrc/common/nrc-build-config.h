@@ -65,17 +65,6 @@
 #define CONFIG_USE_LINK_ID
 #endif
 
-/*
- * NRC Tracing support
- * Enable kernel tracing for debugging when kernel supports ftrace
- * Requires: CONFIG_FTRACE, CONFIG_TRACEPOINTS, CONFIG_EVENT_TRACING
- */
-#if defined(CONFIG_FTRACE) && defined(CONFIG_EVENT_TRACING)
-#ifndef CONFIG_NRC_TRACING
-#define CONFIG_NRC_TRACING
-#endif
-#endif
-
 #if KERNEL_VERSION(5, 19, 2) <= NRC_TARGET_KERNEL_VERSION
 #define CONFIG_USE_BSS_CHAN_CONF
 #endif

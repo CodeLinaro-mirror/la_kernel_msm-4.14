@@ -58,7 +58,7 @@ struct nrc_hif_ops {
 	void (*reset_device)(struct nrc_hif_device *dev);
 	int (*update)(struct nrc_hif_device *dev);
 	int (*check_target)(struct nrc_hif_device *dev, u8 reg);
-	int (*ps_status)(struct nrc_hif_device *dev);
+	int (*check_sleep)(struct nrc_hif_device *dev);
 	bool (*fw_is_boot)(struct nrc_hif_device *dev);
 	bool (*fw_is_loaded)(struct nrc_hif_device *dev);
 	enum NRC_FW_STATE (*fw_state)(struct nrc_hif_device *dev);
@@ -303,6 +303,8 @@ struct nrc_hif_device {
 #define NRC_PS_IS_AWAKE(dev) (nrc_ps_get_state(&(dev)->ps) == NRC_PS_STATE_WAKE)
 #define NRC_PS_IS_WAKING(dev) \
 	(nrc_ps_get_state(&(dev)->ps) == NRC_PS_STATE_WAKING)
+#define NRC_PS_IS_NONTIM(dev) \
+	(NRC_PARAM_POWER_SAVE(dev) == NRC_PS_DEEPSLEEP_NONTIM)
 
 #define NRC_WIM_RESP_LOCK(hdev, cmd)                               \
 	do {                                                       \

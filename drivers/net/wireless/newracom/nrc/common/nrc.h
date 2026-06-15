@@ -121,27 +121,6 @@ struct nrc_txq {
 	struct ieee80211_sta *sta;
 };
 
-struct nrc_delayed_deauth {
-	atomic_t delayed_deauth;
-	s8 vif_index;
-	u16 aid;
-	bool removed;
-	struct sk_buff *deauth_frm;
-	struct sk_buff *ch_skb;
-	struct ieee80211_vif v;
-	struct ieee80211_sta s;
-	struct ieee80211_key_conf p;
-	struct ieee80211_key_conf g;
-	struct ieee80211_bss_conf b;
-#ifdef CONFIG_SUPPORT_CHANNEL_INFO
-	struct cfg80211_chan_def c;
-	struct ieee80211_channel ch;
-#else
-	struct ieee80211_conf c;
-#endif
-	struct ieee80211_tx_queue_params tqp[NRC_QUEUE_MAX];
-};
-
 struct wim_response {
 	struct completion work;
 	struct sk_buff *skb;
@@ -227,9 +206,6 @@ struct nrc {
 	unsigned long beacon_timeout;
 	struct ieee80211_vif *associated_vif;
 	bool is_bcn_timeout;
-
-	/* for processing deauth when deepsleep */
-	struct nrc_delayed_deauth d_deauth;
 
 	/* WLAN module closing state - prevents RX processing during unregister */
 	atomic_t hw_unregistering;

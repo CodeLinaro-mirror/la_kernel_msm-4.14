@@ -176,8 +176,14 @@ struct nrc_spi_priv {
 	bool power_save_gpio_allocated;
 	int power_save_gpio_number;
 
+	/* Dummy buffer for TX slot padding (prevents OOB access in c_spi_xmit) */
+	u8 *dummy_slot;
+
 	/* RX kthread park state tracking - atomic for multi-context safety */
 	atomic_t rx_thread_parked;
+
+	/* Data IRQ throttle state - tracks whether CSPI_EIRQ_S_ENABLE is disabled */
+	bool data_irq_disabled;
 };
 
 static inline u16 c_spi_num_slots(struct nrc_hif_device *hdev, int dir)
@@ -199,6 +205,7 @@ int _c_spi_write_dummy(struct spi_device *spi);
 void c_spi_enable_irq(struct spi_device *spi, bool enable, u8 mask);
 ssize_t c_spi_read(struct spi_device *spi, u8 *buf, ssize_t size);
 ssize_t c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size);
+ssize_t c_spi_xmit(struct spi_device *spi, u8 *buf, ssize_t size);
 int c_spi_read_regs(struct spi_device *spi, u8 addr, u8 *buf, ssize_t size);
 int spi_read_sys_reg(struct spi_device *spi, struct spi_sys_reg *sys);
 int nrc_cspi_gpio_alloc(struct spi_device *spi);
@@ -206,6 +213,10 @@ void nrc_cspi_gpio_free(struct spi_device *spi);
 struct nrc_spi_priv *nrc_cspi_alloc(struct spi_device *spi);
 void nrc_cspi_free(struct nrc_spi_priv *priv);
 int nrc_hif_set_model_conf(struct nrc_hif_device *hdev, u16 chip_id);
+void spi_enable_data_interrupt(struct spi_device *spi,
+			       struct nrc_spi_priv *priv, const char *reason);
+void spi_disable_data_interrupt(struct spi_device *spi,
+				struct nrc_spi_priv *priv, const char *reason);
 
 /* Global SPI private data access */
 extern struct nrc_spi_priv *g_spi_priv;

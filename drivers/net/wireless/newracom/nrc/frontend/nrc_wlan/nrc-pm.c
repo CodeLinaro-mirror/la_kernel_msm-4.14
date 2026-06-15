@@ -127,7 +127,13 @@ static void nrc_mac_rx_fictitious_ps_poll_response(struct ieee80211_vif *vif)
 	status->band = nw->band;
 	status->rate_idx = 0;
 
+	/* Track FRAME SKB allocation (RX path) - manually added as nullfunc_get is kernel function */
+	NRC_SKB_TRACK_ALLOC(nw->hdev, skb, HIF_TYPE_FRAME, true, false);
+
 	ieee80211_rx_irqsafe(nw->hw, skb);
+
+	/* Track FRAME SKB free (RX path - passed to kernel) */
+	NRC_SKB_TRACK_FREE(nw->hdev, NULL, HIF_TYPE_FRAME, true, true);
 }
 
 /**
@@ -247,6 +253,8 @@ static int ieee80211_disconnect_sta(struct ieee80211_vif *vif,
 		return -1;
 
 	ieee80211_rx_irqsafe(hw, skb);
+	/* Track FRAME SKB free (RX path - passed to kernel) */
+	NRC_SKB_TRACK_FREE(i_sta->nw->hdev, NULL, HIF_TYPE_FRAME, true, true);
 
 	return 0;
 }
@@ -368,7 +376,7 @@ static void sta_max_idle_period_expire(struct timer_list *t)
 	 * RCU read-side critical section required for accessing RCU-protected
 	 * data structures in mac80211 (e.g., chanctx_conf via rcu_dereference).
 	 * Timer callbacks run in softirq context without implicit RCU protection.
-	 * 
+	 *
 	 * Protects:
 	 * - rcu_dereference(vif->chanctx_conf) at line 410/412
 	 * - ieee80211_tx_prepare_skb() which internally uses rcu_dereference()
@@ -439,9 +447,9 @@ static void sta_max_idle_period_expire(struct timer_list *t)
 #endif
 
 #ifdef CONFIG_SUPPORT_NEW_MAC_TX
-	nrc_mac_tx_process(hw, &control, skb, false);
+	nrc_mac_tx_process(hw, &control, skb, true);
 #else
-	nrc_mac_tx_process(hw, skb, false);
+	nrc_mac_tx_process(hw, skb, true);
 #endif
 
 done:

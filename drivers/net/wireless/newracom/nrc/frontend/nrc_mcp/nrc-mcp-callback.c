@@ -83,7 +83,7 @@ int nrc_mcp_handle_spi_irq(struct nrc_hal_event_data *event)
 		return -EINVAL;
 	}
 
-	DBG_AMPDU("MCP: Processing SPI interrupt event");
+	VBS_MCP("SPI interrupt received");
 
 	return 0;
 }

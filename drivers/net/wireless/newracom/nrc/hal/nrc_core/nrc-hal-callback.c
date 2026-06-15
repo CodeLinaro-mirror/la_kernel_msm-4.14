@@ -602,7 +602,7 @@ nrc_hal_handle_fw_ready_from_ps(struct nrc_spi_event_data *backend_event,
 		return false;
 	}
 
-	/* SPI module already logged 0xEC IRQ reception */
+	/* SPI module already logged 0xEC/0x11 IRQ reception */
 
 	/* HAL handles HIF-level operations */
 	if (hdev->params->fw_name == NULL) {

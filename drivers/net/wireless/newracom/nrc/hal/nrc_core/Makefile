@@ -73,11 +73,6 @@ ifdef DEBUG
     ccflags-y += -DDEBUG -g
 endif
 
-# Tracing support from Kconfig
-ifdef CONFIG_NRC7394_TRACING
-    ccflags-y += -DCONFIG_NRC_TRACING
-endif
-
 all: modules
 
 modules:
