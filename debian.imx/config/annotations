@@ -119,6 +119,9 @@ CONFIG_DRM_AMDGPU_CIK                           note<'TODO: update note'>
 CONFIG_DRM_MGAG200                              policy<{'arm64': 'm'}>
 CONFIG_DRM_MGAG200                              note<'TODO: update note'>
 
+CONFIG_DRM_NOVA                                 policy<{'arm64': '-'}>
+CONFIG_DRM_NOVA                                 note<'LP: #2150845'>
+
 CONFIG_DRM_SIMPLEDRM                            policy<{'arm64': 'y'}>
 CONFIG_DRM_SIMPLEDRM                            note<'TODO: update note'>
 
@@ -664,7 +667,6 @@ CONFIG_DRM_INNO_HDMI                            policy<{'arm64': '-'}>
 CONFIG_DRM_ITE_IT6161                           policy<{'arm64': 'n'}>
 CONFIG_DRM_ITE_IT6263_NXP                       policy<{'arm64': 'n'}>
 CONFIG_DRM_MSM_VALIDATE_XML                     policy<{'arm64': '-'}>
-CONFIG_DRM_NOVA                                 policy<{'arm64': '-'}>
 CONFIG_DRM_NXP_SEIKO_43WVFIG                    policy<{'arm64': 'n'}>
 CONFIG_DRM_PANEL_RAYDIUM_RM692C9                policy<{'arm64': 'n'}>
 CONFIG_DRM_PANEL_ROCKTECK_HIMAX8394F            policy<{'arm64': 'n'}>
@@ -936,8 +938,6 @@ CONFIG_RPMSG_LIFE_CYCLE                         policy<{'arm64': 'y'}>
 CONFIG_RPMSG_NS                                 policy<{'arm64': 'y'}>
 CONFIG_RPMSG_VIRTIO                             policy<{'arm64': 'y'}>
 CONFIG_RTC_DRV_IMX_RPMSG                        policy<{'arm64': 'm'}>
-CONFIG_RUSTC_LLVM_VERSION                       policy<{'arm64': '210108'}>
-CONFIG_RUSTC_VERSION                            policy<{'arm64': '109301'}>
 CONFIG_RUSTC_VERSION_TEXT                       policy<{'arm64': '-'}>
 CONFIG_RUST_BITMAP_HARDENED                     policy<{'arm64': '-'}>
 CONFIG_RUST_BUILD_ASSERT_ALLOW                  policy<{'arm64': '-'}>
