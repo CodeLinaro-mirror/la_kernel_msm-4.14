@@ -604,7 +604,7 @@ static void fw_download(struct nrc_hif_device *hdev, bool to_xip,
 	if (auto_verify && !to_xip) {
 		nrc_hif_reset_slot_credit();
 
-		ret = fw_wait_ready(hdev, 10, 300);
+		ret = fw_wait_ready(hdev, 10, 500);
 		if (ret != 0) {
 			ERR_FW("FW download completed but verification failed");
 			atomic_set(&hdev->fw.state, NRC_FW_FAILED);
@@ -771,8 +771,22 @@ static int fw_download_to_ram(struct nrc_hif_device *hdev)
 	/* Check if FW is already being loaded to prevent duplicate download */
 	current_state = atomic_read(&hdev->fw.state);
 	if (current_state == NRC_FW_LOADING) {
-		WARN_FW("FW download already in progress, rejecting duplicate request");
-		return -EBUSY;
+		int wait_ms = 0;
+
+		WARN_FW("FW download already in progress, waiting for completion...");
+		/* Wait up to 10s for the in-progress download to finish */
+		while (atomic_read(&hdev->fw.state) == NRC_FW_LOADING &&
+		       wait_ms < 10000) {
+			msleep(10);
+			wait_ms += 10;
+		}
+		current_state = atomic_read(&hdev->fw.state);
+		if (current_state == NRC_FW_ACTIVE) {
+			DBG_FW("FW became active after waiting %dms", wait_ms);
+			return 0;
+		}
+		WARN_FW("FW not active after waiting %dms (state=%d), proceeding with reload",
+			wait_ms, current_state);
 	}
 
 	if (fw_check_file(hdev, hdev->params->fw_name)) {
@@ -785,7 +799,7 @@ static int fw_download_to_ram(struct nrc_hif_device *hdev)
 #endif
 		DBG_FW("FW download done (wait=%lums)",
 		       jiffies_to_msecs(jiffies - start_jiffies));
-		ret = 0;
+		ret = atomic_read(&hdev->fw.state) == NRC_FW_ACTIVE ? 0 : -EIO;
 	} else {
 		ERR_FW("FW download failed, setting FAILED state");
 		atomic_set(&hdev->fw.state, NRC_FW_FAILED);

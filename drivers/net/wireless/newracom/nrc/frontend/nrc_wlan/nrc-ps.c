@@ -166,6 +166,12 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 		return;
 	}
 
+	if ((int)atomic_read(&hdev->fw.state) == NRC_FW_FAILED) {
+		ERR_PS("FW is in FAILED state, skip PS (will retry via IRQ path)");
+		nrc_ps_dyn_start(nw);
+		return;
+	}
+
 	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE) {
 		DBG_PS("Scanning in progress, skip PS");
 		return;

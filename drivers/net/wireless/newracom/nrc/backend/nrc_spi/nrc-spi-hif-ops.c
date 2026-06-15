@@ -307,6 +307,25 @@ static int spi_hif_rx_thread_suspend(struct nrc_hif_device *hdev)
 		}
 	}
 
+	/*
+	 * Signal deep sleep state to device by clearing EIRQ A_ENABLE bits
+	 * (RegHIF_DEVICE_HST_STATS & 0xF → 0).
+	 *
+	 * On wake, ucode calls nrc_ps_force_eirq_and_wait() which checks:
+	 *   if (RegHIF_DEVICE_HST_STATS & 0xF) != 0xF → EIRQ handshake
+	 *   else                                       → return -1 ("Failed DEEPSLEEP")
+	 *
+	 * Without this call, A_ENABLE bits remain 0xF (normal operating state),
+	 * causing ucode to skip the handshake and print "Failed DEEPSLEEP" on
+	 * every NonTIM/TIM deep sleep wake cycle.
+	 *
+	 * The hardware IRQ remains enabled so the host can still receive the
+	 * EIRQ GPIO30 assertion from ucode and respond with BIT1 via
+	 * spi_process_device_status() → c_spi_enable_irq(true).
+	 */
+	c_spi_enable_irq(spi, false, CSPI_EIRQ_A_ENABLE);
+	priv->data_irq_disabled = true;
+
 	/* Synchronize IRQ to ensure no pending handlers */
 	if (spi->irq >= 0 && priv->polling_interval <= 0) {
 		synchronize_irq(spi->irq);
@@ -444,12 +463,12 @@ static int spi_hif_xmit(struct nrc_hif_device *hdev, struct sk_buff *skb)
 		SLOT_SYNC_UNLOCK();
 
 		/* 
-		 * If failure is -EIO in Non-TIM mode, it's a known PS transition race
-		 * where the target enters sleep autonomously.
-		 * High-level log is suppressed to Verbose level.
+		 * If failure is -EIO in deep sleep mode (TIM or NonTIM), it's a known
+		 * PS transition race where the target enters sleep or wakes via 0xDC.
+		 * Both modes use the same FW-reload wake path; suppress to Verbose.
 		 */
-		if (ret == -EIO && NRC_PS_IS_NONTIM(hdev)) {
-			VBS_SPI("SPI xmit desync (-EIO) during Non-TIM transition (ps=%s)",
+		if (ret == -EIO && NRC_PS_IS_DEEPSLEEP(hdev)) {
+			VBS_SPI("SPI xmit desync (-EIO) during deep sleep transition (ps=%s)",
 				NRC_PS_STATE_STR(hdev));
 		} else {
 			ERR_SPI("SPI xmit failed - expected %u bytes, wrote %zd (ps=%s, drv=%s)",

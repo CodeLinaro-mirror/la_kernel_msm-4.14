@@ -303,8 +303,10 @@ struct nrc_hif_device {
 #define NRC_PS_IS_AWAKE(dev) (nrc_ps_get_state(&(dev)->ps) == NRC_PS_STATE_WAKE)
 #define NRC_PS_IS_WAKING(dev) \
 	(nrc_ps_get_state(&(dev)->ps) == NRC_PS_STATE_WAKING)
-#define NRC_PS_IS_NONTIM(dev) \
-	(NRC_PARAM_POWER_SAVE(dev) == NRC_PS_DEEPSLEEP_NONTIM)
+/* Both TIM and NonTIM deep sleep use the same 0xDC/FW-reload wake path */
+#define NRC_PS_IS_DEEPSLEEP(dev) \
+	(NRC_PARAM_POWER_SAVE(dev) == NRC_PS_DEEPSLEEP_TIM || \
+	 NRC_PARAM_POWER_SAVE(dev) == NRC_PS_DEEPSLEEP_NONTIM)
 
 #define NRC_WIM_RESP_LOCK(hdev, cmd)                               \
 	do {                                                       \

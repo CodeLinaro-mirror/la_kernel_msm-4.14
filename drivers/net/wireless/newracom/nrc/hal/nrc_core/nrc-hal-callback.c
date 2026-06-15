@@ -577,7 +577,21 @@ nrc_hal_handle_request_fw_download(struct nrc_spi_event_data *backend_event,
 
 	/* nrc_fw_reload handles FW loading for PS wake scenarios */
 	if (nrc_fw_reload(hdev) != 0) {
-		ERR_PS("Failed to load firmware from host");
+		/*
+		 * FW reload failed (e.g. fw_wait_ready timed out → NRC_FW_FAILED).
+		 * The device sent 0xDC but FW never booted, so 0xEC will not arrive.
+		 * Without 0xEC, nrc_ps_handle_fw_ready() is never called, leaving
+		 * the PS state machine stuck in WAKING and the PS dynamic timer
+		 * never restarted — causing the "RX wakeup / timer stops" symptom.
+		 *
+		 * Recover by resetting PS state to WAKE so the next cycle can retry.
+		 */
+		struct nrc_ps_event_data fail_event = {
+			.event = NRC_PS_EVT_TIMEOUT,
+			.mode  = NRC_PS_NONE,
+		};
+		ERR_PS("FW reload failed after 0xDC wake — PS state recovery");
+		nrc_ps_handle_event(hdev, &fail_event);
 	}
 
 	/* This event is handled in HAL, no need to forward */

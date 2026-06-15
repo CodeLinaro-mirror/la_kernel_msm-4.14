@@ -332,14 +332,12 @@ static int _c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data)
 			if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 			    !NRC_PS_IS_SLEEPING(priv->hdev)) {
 				/*
-				 * [Non-TIM Autonomous Sleep Race]
-				 * In Non-TIM mode, the chip may enter sleep autonomously even if the 
-				 * driver thinks it's AWAKE. This results in a missing SPI ACK (-EIO).
-				 * Since the driver will recover by requeueing and waking the chip,
-				 * we log this as Verbose to avoid console spam in Non-TIM mode.
+				 * Both TIM and NonTIM deep sleep wake via 0xDC (FW reload path).
+				 * During this transition the device is in ROM mode and will not
+				 * respond with a valid SPI ACK. Suppress WARN_ON for both modes.
 				 */
-				if (NRC_PS_IS_NONTIM(priv->hdev)) {
-					VBS_SPI("SPI ACK missing (rx[7]=0x%02x, PS state: %s) - likely autonomous sleep",
+				if (NRC_PS_IS_DEEPSLEEP(priv->hdev)) {
+					VBS_SPI("SPI ACK missing (rx[7]=0x%02x, PS state: %s) - deep sleep wake race",
 						rx[7], NRC_PS_STATE_STR(priv->hdev));
 				} else {
 					WARN_ON_ONCE(1);
@@ -623,14 +621,15 @@ ssize_t c_spi_xmit(struct spi_device *spi, u8 *buf, ssize_t size)
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
 			/*
 			 * SPI ACK desync is a known behavior during power state transitions
-			 * in Non-TIM mode, where the host and target may briefly lose sync
-			 * as the target enters sleep.
+			 * in deep sleep modes (TIM and NonTIM), where the host and target
+			 * may briefly lose sync as the target enters or wakes from sleep.
+			 * Both modes use the same 0xDC/FW-reload wake path.
 			 *
-			 * For Non-TIM mode: Log as verbose to avoid console spam.
+			 * For deep sleep modes (TIM/NonTIM): Log as verbose to avoid console spam.
 			 * For other modes: Log as error with stack trace for investigation.
 			 */
-			if (NRC_PS_IS_NONTIM(priv->hdev)) {
-				VBS_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s) - Non-TIM transition",
+			if (NRC_PS_IS_DEEPSLEEP(priv->hdev)) {
+				VBS_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s) - deep sleep transition",
 					rx[7], NRC_PS_STATE_STR(priv->hdev));
 			} else {
 				WARN_ON_ONCE(1);

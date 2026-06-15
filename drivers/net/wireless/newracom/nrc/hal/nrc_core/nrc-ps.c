@@ -170,11 +170,12 @@ int nrc_ps_handle_event(struct nrc_hif_device *hdev,
 		} else if (event == NRC_PS_EVT_SLEEP_FAIL ||
 			   event == NRC_PS_EVT_TIMEOUT) {
 			/*
-			 * In Non-TIM mode, a timeout/fail here often means the chip already
-			 * slept autonomously and didn't respond to the final polling.
+			 * In deep sleep modes (TIM and NonTIM), a fail/timeout here often
+			 * means the chip already woke autonomously (0xDC) before the poll
+			 * could confirm sleep. The IRQ handler owns FW reload recovery.
 			 */
-			if (NRC_PS_IS_NONTIM(hdev)) {
-				VBS_PS("Sleep transition check bypassed (event=%s, ps=%s) - Non-TIM race",
+			if (NRC_PS_IS_DEEPSLEEP(hdev)) {
+				VBS_PS("Sleep transition check bypassed (event=%s, ps=%s) - deep sleep wake race",
 				       nrc_ps_event_str(event),
 				       nrc_ps_state_str(old_state));
 			} else {
@@ -488,10 +489,18 @@ static int nrc_ps_wait_device_sleep(struct nrc_hif_device *hdev)
 			/*
 			 * 3: FW reset detected (TARGET_NOTI_REQUEST_FW_DOWNLOAD, not ready)
 			 * 4: FW reset detected (TARGET_NOTI_REQUEST_FW_DOWNLOAD, ROM ready)
+			 *
+			 * In NonTIM mode this is the normal wake path: the device autonomously
+			 * reboots to ROM and requests FW download on every wake cycle.
+			 * Log as DBG for NonTIM, WARN otherwise (unexpected in TIM/modem sleep).
 			 */
 			if (done_ps == 3 || done_ps == 4) {
-				ERR_PS("FW reset detected during PS operation (result=%d)",
-				       done_ps);
+				if (NRC_PS_IS_DEEPSLEEP(hdev))
+					DBG_PS("Deep sleep wake detected (0xDC, result=%d) - TIM/NonTIM normal path",
+					       done_ps);
+				else
+					WARN_PS("FW reset detected during PS operation (result=%d)",
+						done_ps);
 				return 1;
 			}
 			VBS_PS("Sleep confirmed (polled %d times, result=%d)",
@@ -541,6 +550,13 @@ int nrc_hal_ps_request_sleep(enum NRC_PS_MODE mode, u64 timeout,
 	if (hdev->ps.state == NRC_PS_STATE_SLEEP) {
 		VBS_PS("Already in sleep state, skip");
 		return 0;
+	}
+
+	/* Reject PS if FW is not running */
+	if ((int)atomic_read(&hdev->fw.state) != NRC_FW_ACTIVE) {
+		ERR_PS("FW not active (state=%d), cannot enter PS",
+		       (int)atomic_read(&hdev->fw.state));
+		return -EIO;
 	}
 
 	/* Prepare wake completion for future wake request */
@@ -594,15 +610,24 @@ int nrc_hal_ps_request_sleep(enum NRC_PS_MODE mode, u64 timeout,
 			/* Success: target is confirmed to be in sleep */
 			goto sleep_done;
 		} else if (ret == 1) {
-			/* FW reset case - transition back to WAKE and reload FW */
+			/*
+			 * FW reset detected during sleep polling
+			 * (TARGET_NOTI_REQUEST_FW_DOWNLOAD, result=3/4).
+			 *
+			 * This is the normal NonTIM wake path: device exits deep
+			 * sleep, reboots to ROM, and requests FW download via 0xDC
+			 * notification. The IRQ handler (nrc_hal_handle_request_fw_
+			 * download) is the designated owner of FW reload for this
+			 * event and its work item is already queued.
+			 *
+			 * Do NOT call nrc_fw_reload() here — doing so races with
+			 * the IRQ path on NRC_FW_LOADING state, causing the PS
+			 * path's fw_wait_ready(3s) to time out while the IRQ path
+			 * is blocked (EBUSY), resulting in periodic false
+			 * "FW download completed but verification failed" errors.
+			 */
 			event_data.event = NRC_PS_EVT_SLEEP_FAIL;
 			nrc_ps_handle_event(hdev, &event_data);
-
-			ret = nrc_fw_reload(hdev);
-			if (ret != 0 && ret != -EBUSY) {
-				ERR_PS("Failed to reload firmware after PS reset (ret=%d)",
-				       ret);
-			}
 			return -EIO;
 		}
 
