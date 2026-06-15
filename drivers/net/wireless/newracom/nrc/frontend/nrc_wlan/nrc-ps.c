@@ -39,6 +39,33 @@
 static DEFINE_MUTEX(ps_set_mode);
 
 /**
+ * nrc_has_active_ap_vif - Check if any AP VIF is currently active
+ * @nw: NRC structure
+ *
+ * Returns: true if at least one AP (or P2P_GO) VIF is registered.
+ *
+ * Concurrent PS policy:
+ *   AP+STA: FW power-save engine is shared and cannot operate correctly
+ *           while an AP VIF is serving clients. PS sleep is suppressed.
+ *   AP+AP : Same — both APs must stay awake to send beacons.
+ *   STA+STA: PS is allowed, but FW tracks only a single VIF (vif_id=0).
+ *            Only STA0's PS setting is honoured by the firmware.
+ */
+static bool nrc_has_active_ap_vif(struct nrc *nw)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(nw->vif); i++) {
+		if (!nw->vif[i])
+			continue;
+		if (nw->vif[i]->type == NL80211_IFTYPE_AP ||
+		    nw->vif[i]->type == NL80211_IFTYPE_P2P_GO)
+			return true;
+	}
+	return false;
+}
+
+/**
  * nrc_ps_set_mode - Set power save mode
  * @nw: NRC structure
  * @mode: Power save mode (NRC_PS_NONE for wake, others for sleep)
@@ -57,6 +84,16 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 	/* Skip if power save disabled */
 	if (nw->params->power_save == 0)
 		return 0;
+
+	/*
+	 * Concurrent PS policy: suppress sleep when an AP VIF is active.
+	 * Wake requests (NRC_PS_NONE) are always allowed so the chip can
+	 * be brought back from any unexpected sleep state.
+	 */
+	if (mode != NRC_PS_NONE && nrc_has_active_ap_vif(nw)) {
+		INFO_PS("PS sleep suppressed: AP VIF active (concurrent mode)");
+		return 0;
+	}
 
 	/* Simple logging - HAL handles state/mode checking */
 	if (mode == NRC_PS_NONE) {
@@ -92,7 +129,14 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 
 	/* WLAN-specific pre-sleep operations */
 	if (!nw->params->disable_cqm) {
-		try_to_del_timer_sync(&nw->bcn_mon_timer);
+		int _i;
+
+		for (_i = 0; _i < NR_NRC_VIF; _i++) {
+			if (nw->vif[_i] &&
+			    nw->vif[_i]->type == NL80211_IFTYPE_STATION)
+				try_to_del_timer_sync(
+					&to_i_vif(nw->vif[_i])->bcn_mon_timer);
+		}
 	}
 
 	ieee80211_stop_queues(hw);
@@ -109,12 +153,39 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 		ieee80211_wake_queues(hw);
 
 		/* Recovery: restart dynamic PS and beacon monitor */
-		nrc_ps_dyn_start(nw, nw->beacon_timeout + 2000,
-				 NRC_PS_REASON_TARGET_FAILED_ENTER_PS);
-		if (!nw->params->disable_cqm && nw->associated_vif) {
-			mod_timer(&nw->bcn_mon_timer,
-				  jiffies +
-					  msecs_to_jiffies(nw->beacon_timeout));
+		{
+			unsigned long fallback_timeout = 5000;
+			int _i;
+
+			for (_i = 0; _i < NR_NRC_VIF; _i++) {
+				struct nrc_vif *_iv;
+
+				if (!nw->vif[_i] ||
+				    nw->vif[_i]->type != NL80211_IFTYPE_STATION)
+					continue;
+				_iv = to_i_vif(nw->vif[_i]);
+				if (_iv->associated && _iv->beacon_timeout)
+					fallback_timeout = _iv->beacon_timeout;
+			}
+			nrc_ps_dyn_start(nw, fallback_timeout + 2000,
+					 NRC_PS_REASON_TARGET_FAILED_ENTER_PS);
+			if (!nw->params->disable_cqm) {
+				for (_i = 0; _i < NR_NRC_VIF; _i++) {
+					struct nrc_vif *_iv;
+
+					if (!nw->vif[_i] ||
+					    nw->vif[_i]->type !=
+						    NL80211_IFTYPE_STATION)
+						continue;
+					_iv = to_i_vif(nw->vif[_i]);
+					if (_iv->associated)
+						mod_timer(
+							&_iv->bcn_mon_timer,
+							jiffies +
+								msecs_to_jiffies(
+									_iv->beacon_timeout));
+				}
+			}
 		}
 	}
 
@@ -281,6 +352,13 @@ void nrc_ps_dyn_start(struct nrc *nw, int busy_delay_ms,
 
 	/* Never arm the PS timer during an active scan */
 	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE)
+		return;
+
+	/* Concurrent PS policy: do not start the idle timer when an AP VIF
+	 * is active.  nrc_ps_set_mode() carries the same guard, so even if
+	 * the timer fires it would be a no-op — but stopping here is cleaner.
+	 */
+	if (nrc_has_active_ap_vif(nw))
 		return;
 
 	/* Suppress plain re-arm while a busy-guard is still active */

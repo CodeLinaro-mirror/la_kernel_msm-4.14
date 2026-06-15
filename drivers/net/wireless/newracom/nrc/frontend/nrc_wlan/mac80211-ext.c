@@ -111,15 +111,20 @@ struct sk_buff *ieee80211_deauth_get(struct ieee80211_hw *hw, u8 *da, u8 *sa,
 	if (sta) {
 		i_sta = to_i_sta(sta);
 	}
-	DBG_MAC("%s: cipher_pairwise:%d", __func__, nw->cipher_pairwise);
-	if (nw->cipher_pairwise == WLAN_CIPHER_SUITE_AES_CMAC && i_sta &&
-	    i_sta->state == IEEE80211_STA_AUTHORIZED) {
-		/* PMF Handling */
-		if (tosta)
-			ccmp_mic_len =
-				8; /* only need CCMP hdr. MIC will appended on Target */
-		else
-			ccmp_mic_len = 16; /* need CCMP + MIC hdr */
+	{
+		u32 cipher_pw = (i_sta && i_sta->vif) ?
+					to_i_vif(i_sta->vif)->cipher_pairwise :
+					0;
+		DBG_MAC("%s: cipher_pairwise:%d", __func__, cipher_pw);
+		if (cipher_pw == WLAN_CIPHER_SUITE_AES_CMAC && i_sta &&
+		    i_sta->state == IEEE80211_STA_AUTHORIZED) {
+			/* PMF Handling */
+			if (tosta)
+				ccmp_mic_len =
+					8; /* only need CCMP hdr. MIC will appended on Target */
+			else
+				ccmp_mic_len = 16; /* need CCMP + MIC hdr */
+		}
 	}
 
 	DBG_MAC("%s: ccmp_mic_len:%d", __func__, ccmp_mic_len);

@@ -101,19 +101,11 @@ int nrc_wlan_post_hal_init(bool restart)
 #endif
 #endif
 
-	/* Initialize CQM after IEEE80211 hardware registration */
-	if (!nw->params->disable_cqm) {
-		DBG_MAC("CQM is enabled");
-		nw->beacon_timeout = 0;
-#if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
-		setup_timer(&nw->bcn_mon_timer, nrc_bcn_mon_timer,
-			    (unsigned long)nw);
-#else
-		timer_setup(&nw->bcn_mon_timer, nrc_bcn_mon_timer, 0);
-#endif
-	} else {
+	/* CQM timers are now initialized per-VIF in nrc_mac_add_interface */
+	if (!nw->params->disable_cqm)
+		DBG_MAC("CQM is enabled (per-VIF timers)");
+	else
 		DBG_MAC("CQM is disabled");
-	}
 
 	/* Initialize statistics subsystem */
 	ret = nrc_stats_init();

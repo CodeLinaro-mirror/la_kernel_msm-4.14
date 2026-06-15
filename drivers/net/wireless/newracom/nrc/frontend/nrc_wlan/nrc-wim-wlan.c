@@ -63,12 +63,14 @@ static int wim_request_and_extract_return(struct sk_buff *skb, int timeout);
 
 static void nrc_wim_set_twt_responder(struct sk_buff *skb, u8 enable)
 {
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_TWT_RESPONDER, sizeof(u8), &enable);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_TWT_RESPONDER, sizeof(u8),
+				    &enable);
 }
 
 static void nrc_wim_set_twt_requester(struct sk_buff *skb, u8 enable)
 {
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_TWT_REQUESTER, sizeof(u8), &enable);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_TWT_REQUESTER, sizeof(u8),
+				    &enable);
 }
 
 static void nrc_wim_set_rc_mode(struct sk_buff *skb, u8 mode)
@@ -97,8 +99,8 @@ static void nrc_wim_wlan_add_mac_addr(struct sk_buff *skb, u8 *addr)
  * ===========================================================================
  */
 
-int nrc_wim_wlan_change_sta(struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-			    u8 cmd, bool sleep)
+int nrc_wim_wlan_change_sta(struct ieee80211_vif *vif,
+			    struct ieee80211_sta *sta, u8 cmd, bool sleep)
 {
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 	struct sk_buff *skb;
@@ -114,9 +116,11 @@ int nrc_wim_wlan_change_sta(struct ieee80211_vif *vif, struct ieee80211_sta *sta
 		return -EINVAL;
 	}
 
-	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_STA_CMD, tlv_len(sizeof(*p)));
+	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_STA_CMD,
+					    tlv_len(sizeof(*p)));
 
-	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_PARAM, sizeof(*p), NULL);
+	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_PARAM, sizeof(*p),
+					NULL);
 	*p = (struct wim_sta_param){0};
 
 	p->cmd = cmd;
@@ -199,10 +203,11 @@ int nrc_wim_wlan_set_sta_type(struct ieee80211_vif *vif)
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, skb_len);
 
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_TYPE, sizeof(u32), &sta_type);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_TYPE, sizeof(u32),
+				    &sta_type);
 	if (nrc_mac_is_s1g(hdev)) {
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_NDP_ACK_1M, sizeof(u8),
-				    &hdev->params->ndp_ack_1m);
+					    &hdev->params->ndp_ack_1m);
 		if (sta_type == WIM_STA_TYPE_AP) {
 			nrc_wim_wlan_set_ndp_preq(skb, true);
 			nrc_wim_set_twt_requester(skb, false);
@@ -270,9 +275,11 @@ int nrc_wim_wlan_unset_sta_type(struct ieee80211_vif *vif)
 	if (sta_type < 0)
 		return -ENOTSUPP;
 
-	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, tlv_len(sizeof(u32)));
+	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET,
+					    tlv_len(sizeof(u32)));
 
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_TYPE, sizeof(u32), &sta_type);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_TYPE, sizeof(u32),
+				    &sta_type);
 
 	return nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 }
@@ -290,9 +297,11 @@ static int nrc_wim_set_sta_mac_addr(struct nrc_hif_device *hdev,
 	struct sk_buff *skb;
 	struct wim_addr_param *p;
 
-	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, tlv_len(ETH_ALEN));
+	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET,
+					    tlv_len(ETH_ALEN));
 
-	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_MACADDR_PARAM, sizeof(*p), NULL);
+	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_MACADDR_PARAM, sizeof(*p),
+					NULL);
 	p->enable = enable;
 	p->p2p = p2p;
 	ether_addr_copy(p->addr, addr);
@@ -373,7 +382,8 @@ static void nrc_wim_build_scan_param(struct nrc_hif_device *hdev,
 #endif /* defined(CONFIG_SUPPORT_BD) */
 
 	/* WIM_TL_SCAN_PARAM */
-	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCAN_PARAM, sizeof(*p), NULL);
+	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCAN_PARAM, sizeof(*p),
+					NULL);
 	*p = (struct wim_scan_param){0};
 
 	if (WARN_ON(req->n_channels > WIM_MAX_SCAN_CHANNEL))
@@ -434,12 +444,12 @@ static void nrc_wim_build_scan_param(struct nrc_hif_device *hdev,
 
 		ie_p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCAN_BAND_IE,
 #ifdef CONFIG_S1G_CHANNEL
-					   ies->len[NL80211_BAND_S1GHZ],
+						   ies->len[NL80211_BAND_S1GHZ],
 #else
-					   ies->len[NL80211_BAND_2GHZ] +
-						   ies->len[NL80211_BAND_5GHZ],
+						   ies->len[NL80211_BAND_2GHZ] +
+							   ies->len[NL80211_BAND_5GHZ],
 #endif /* ifdef CONFIG_S1G_CHANNEL */
-					   NULL);
+						   NULL);
 
 		for (b = NL80211_BAND_2GHZ; b < ARRAY_SIZE(ies->ies); b++) {
 			if (ies->ies[b] && ies->len[b] > 0) {
@@ -449,13 +459,13 @@ static void nrc_wim_build_scan_param(struct nrc_hif_device *hdev,
 		}
 
 		ie_p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCAN_COMMON_IE,
-					   ies->common_ie_len,
-					   (void *)ies->common_ies);
+						   ies->common_ie_len,
+						   (void *)ies->common_ies);
 	}
 
 	if (req->ie) {
-		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCAN_PROBE_REQ_IE, req->ie_len,
-				    (void *)req->ie);
+		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCAN_PROBE_REQ_IE,
+					    req->ie_len, (void *)req->ie);
 	}
 }
 
@@ -469,8 +479,8 @@ nrc_wim_build_sched_scan_param(struct nrc_hif_device *hdev, struct sk_buff *skb,
 	int i;
 
 	/* WIM_TL_SCAN_PARAM */
-	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCHED_SCAN_PARAM, sizeof(*p),
-				NULL);
+	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SCHED_SCAN_PARAM,
+					sizeof(*p), NULL);
 	*p = (struct wim_sched_scan_param){0};
 
 	p->min_rssi_thold = S8_MIN;
@@ -594,7 +604,7 @@ int nrc_wim_wlan_sched_scan_stop(struct ieee80211_vif *vif)
  * ===========================================================================
  */
 
-static char *ieee80211_cipher_str(u32 cipher)
+static const char *ieee80211_cipher_str(u32 cipher)
 {
 	switch (cipher) {
 	case WLAN_CIPHER_SUITE_WEP40:
@@ -605,10 +615,22 @@ static char *ieee80211_cipher_str(u32 cipher)
 		return "TKIP";
 	case WLAN_CIPHER_SUITE_CCMP:
 		return "CCMP";
+	case WLAN_CIPHER_SUITE_CCMP_256:
+		return "CCMP-256";
+	case WLAN_CIPHER_SUITE_GCMP:
+		return "GCMP";
+	case WLAN_CIPHER_SUITE_GCMP_256:
+		return "GCMP-256";
+	case WLAN_CIPHER_SUITE_AES_CMAC:
+		return "BIP-CMAC";
+	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		return "BIP-GMAC-128";
+	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		return "BIP-GMAC-256";
 	default:
-		return NULL;
+		return "unknown";
 	}
-};
+}
 
 enum wim_cipher_type nrc_wim_wlan_to_wim_cipher_type(u32 cipher)
 {
@@ -670,15 +692,17 @@ int nrc_wim_wlan_install_key(enum set_key_cmd cmd, struct ieee80211_vif *vif,
 	if (key->keyidx > WIM_KEY_MAX_INDEX)
 		return -EINVAL;
 
-	DBG_MAC("%s: cmd=%s, key=(%s,%s,%d)", __func__,
-		(cmd == SET_KEY) ? "install" : "delete",
+	DBG_MAC("install_key VIF%d %s %s/%s idx=%d aid=%d",
+		((struct nrc_vif *)vif->drv_priv)->index,
+		(cmd == SET_KEY) ? "SET" : "DEL",
 		(key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ? "PTK" : "GTK",
-		ieee80211_cipher_str(key->cipher), key->keyidx);
+		ieee80211_cipher_str(key->cipher), key->keyidx, aid);
 
-	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET_KEY + (cmd - SET_KEY),
-				    tlv_len(sizeof(*p)));
+	skb = nrc_hal_ops_wim_alloc_skb_vif(
+		vif, WIM_CMD_SET_KEY + (cmd - SET_KEY), tlv_len(sizeof(*p)));
 
-	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_KEY_PARAM, sizeof(*p), NULL);
+	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_KEY_PARAM, sizeof(*p),
+					NULL);
 
 	*p = (struct wim_key_param){0};
 
@@ -735,14 +759,13 @@ int nrc_wim_wlan_install_key(enum set_key_cmd cmd, struct ieee80211_vif *vif,
 			       WIM_KEY_FLAG_PAIRWISE :
 			       WIM_KEY_FLAG_GROUP;
 
-	DBG_MAC("%s: cmd=%s, key=(%s,%s,%d), aid=%d", __func__,
-		(cmd == SET_KEY) ? "install" : "delete",
-		(key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ? "PTK" : "GTK",
-		ieee80211_cipher_str(key->cipher), key->keyidx, p->aid);
-
 	ret = wim_request_and_extract_return(skb, WIM_RESP_TIMEOUT * 10);
 
-	DBG_MAC("%s: ret=%d(0x%x)", __func__, ret, ret);
+	DBG_MAC("install_key VIF%d %s %s/%s idx=%d aid=%d → ret=%d",
+		((struct nrc_vif *)vif->drv_priv)->index,
+		(cmd == SET_KEY) ? "SET" : "DEL",
+		(key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ? "PTK" : "GTK",
+		ieee80211_cipher_str(key->cipher), key->keyidx, p->aid, ret);
 
 	return ret;
 }
@@ -766,10 +789,12 @@ int nrc_wim_wlan_ampdu_action(struct ieee80211_vif *vif,
 	}
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_AMPDU_ACTION,
-				    tlv_len(sizeof(u16)) + tlv_len(ETH_ALEN) +
-					    tlv_len(sizeof(u16)));
+					    tlv_len(sizeof(u16)) +
+						    tlv_len(ETH_ALEN) +
+						    tlv_len(sizeof(u16)));
 
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_AMPDU_MODE, sizeof(u16), &action);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_AMPDU_MODE, sizeof(u16),
+				    &action);
 	nrc_wim_wlan_add_mac_addr(skb, sta->addr);
 	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_TID, sizeof(u16), &tid);
 
@@ -797,7 +822,8 @@ u64 nrc_wim_wlan_get_tsf(struct ieee80211_vif *vif)
 
 	req_skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_GET, tlv_len(0));
 	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_TSF, 0, NULL);
-	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false, &resp_skb);
+	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
+				      &resp_skb);
 	if (ret) {
 		pr_err("nrc-wim-wlan: Failed to get TSF: %d\n", ret);
 		goto done;
@@ -833,7 +859,8 @@ int nrc_wim_wlan_apf_get_enable(struct nrc_hif_device *hdev, int *enable)
 
 	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_GET, tlv_len(0));
 	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_ENABLE, 0, NULL);
-	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false, &resp_skb);
+	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
+				      &resp_skb);
 	if (ret) {
 		pr_err("nrc-wim-wlan: Failed to get apf enable: %d\n", ret);
 		return ret;
@@ -858,8 +885,10 @@ int nrc_wim_wlan_apf_set_enable(struct nrc_hif_device *hdev, int enable)
 {
 	struct sk_buff *req_skb;
 
-	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_SET, tlv_len(sizeof(int)));
-	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_ENABLE, sizeof(int), &enable);
+	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_SET,
+						tlv_len(sizeof(int)));
+	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_ENABLE, sizeof(int),
+				    &enable);
 
 	return nrc_hal_ops_wim_request(req_skb, 0, 0, false, NULL);
 }
@@ -873,7 +902,8 @@ u32 nrc_wim_wlan_apf_get_version(struct nrc_hif_device *hdev)
 
 	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_GET, tlv_len(0));
 	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_VERSION, 0, NULL);
-	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false, &resp_skb);
+	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
+				      &resp_skb);
 	if (ret) {
 		pr_err("nrc-wim-wlan: Failed to get apf version: %d\n", ret);
 		goto done;
@@ -904,7 +934,8 @@ u32 nrc_wim_wlan_apf_get_maxlen(struct nrc_hif_device *hdev)
 
 	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_GET, tlv_len(0));
 	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_MAXLEN, 0, NULL);
-	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false, &resp_skb);
+	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
+				      &resp_skb);
 	if (ret) {
 		pr_err("nrc-wim-wlan: Failed to get apf maxlen: %d\n", ret);
 		goto done;
@@ -954,10 +985,10 @@ int nrc_wim_wlan_apf_get_packet_filter(struct nrc_hif_device *hdev,
 	param = (u64)src_offset << 32 | len;
 
 	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_GET, tlv_len(0));
-	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_GET_FILTER, sizeof(u32) * 2,
-			    &param);
+	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_GET_FILTER,
+				    sizeof(u32) * 2, &param);
 	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT * 10, false,
-			      &resp_skb);
+				      &resp_skb);
 	if (ret) {
 		pr_err("nrc-wim-wlan: Failed to get packet filter: %d\n", ret);
 		goto done;

@@ -94,10 +94,10 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 			     struct sk_buff *skb);
 
 /* Management frame subtype name lookup */
-static const char * const mgmt_str[] = {
-	"ASSOC REQ", "ASSOC RESP", "REASSOC REQ", "REASSOC RESP",
-	"PROBE REQ", "PROBE RESP", "???", "???",
-	"BEACON", "ATIM", "DISASSOC", "AUTH", "DEAUTH", "ACTION",
+static const char *const mgmt_str[] = {
+	"ASSOC REQ",  "ASSOC RESP", "REASSOC REQ", "REASSOC RESP", "PROBE REQ",
+	"PROBE RESP", "???",	    "???",	   "BEACON",	   "ATIM",
+	"DISASSOC",   "AUTH",	    "DEAUTH",	   "ACTION",
 };
 
 static inline const char *get_mgmt_str(u8 subtype)
@@ -196,11 +196,11 @@ static void nrc_debug_print_frame(struct ieee80211_hdr *hdr,
 	if (fc_type == cpu_to_le16(IEEE80211_FTYPE_DATA)) {
 		/* DATA frames use DBG_TX/DBG_RX */
 		if (direction) {
-			DBG_RX("%s %s, DA: %pM, SA: %pM", type_str,
-			       subtype_str, addr1, addr2);
+			DBG_RX("%s %s, DA: %pM, SA: %pM", type_str, subtype_str,
+			       addr1, addr2);
 		} else {
-			DBG_TX("%s %s, DA: %pM, SA: %pM", type_str,
-			       subtype_str, addr1, addr2);
+			DBG_TX("%s %s, DA: %pM, SA: %pM", type_str, subtype_str,
+			       addr1, addr2);
 		}
 	} else {
 		if (direction) {
@@ -318,7 +318,8 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 			 */
 			if (NRC_HIF_DRV_STATE(tx.nw->hdev) != NRC_DRV_RUNNING &&
 			    NRC_HIF_DRV_STATE(tx.nw->hdev) != NRC_DRV_PS) {
-				drop_reason = "deep sleep (drv_state not running/ps)";
+				drop_reason =
+					"deep sleep (drv_state not running/ps)";
 				goto txh_out;
 			}
 		}
@@ -343,26 +344,24 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 		}
 	}
 
-
 	eapol_msg = is_eapol(tx.skb, tx.nw);
 	if (eapol_msg) {
 		DBG_MAC("TX EAPOL(%d), ADDR1: %pM, ADDR2: %pM", eapol_msg,
 			mh->addr1, mh->addr2);
 	}
 
-	VBS_TX("xmit_frame vif=%d aid=%d len=%u",
-	       vif_id, (!!tx.sta ? tx.sta->aid : 0), tx.skb->len);
-	nrc_hal_ops_xmit_wlan_frame(
-		vif_id, (!!tx.sta ? tx.sta->aid : 0), tx.skb);
+	VBS_TX("xmit_frame vif=%d aid=%d len=%u", vif_id,
+	       (!!tx.sta ? tx.sta->aid : 0), tx.skb->len);
+	nrc_hal_ops_xmit_wlan_frame(vif_id, (!!tx.sta ? tx.sta->aid : 0),
+				    tx.skb);
 
 	return;
 
 txh_out:
 	ERR("TX:dropping packet - reason:%s fc:0x%04x addr1:%pM addr2:%pM len:%u drv_state:%d",
-		 drop_reason ? drop_reason : "unknown",
-		 le16_to_cpu(mh->frame_control),
-		 mh->addr1, mh->addr2, tx.skb ? tx.skb->len : 0,
-		 NRC_HIF_DRV_STATE(tx.nw->hdev));
+	    drop_reason ? drop_reason : "unknown",
+	    le16_to_cpu(mh->frame_control), mh->addr1, mh->addr2,
+	    tx.skb ? tx.skb->len : 0, NRC_HIF_DRV_STATE(tx.nw->hdev));
 	if (tx.skb) {
 		/* Track FRAME SKB free (TX path failure) */
 		NRC_SKB_TRACK_FREE(tx.nw->hdev, tx.skb, HIF_TYPE_FRAME, false,
@@ -530,8 +529,7 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 	VBS_AMPDU("Start BA %pM TID:%d", qmh->addr1, tid);
 
 	if (nw->frag_threshold != -1) { /* Fragmentation enabled by iwconfig */
-		ERR(
-			"Since fragmentation enabled by iwconfig, ignore to setup BA session");
+		ERR("Since fragmentation enabled by iwconfig, ignore to setup BA session");
 		return;
 	}
 
@@ -544,7 +542,7 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 	peer_sta = ieee80211_find_sta(vif, qmh->addr1);
 	if (!peer_sta) {
 		ERR("Fail to set up BA. Fail to find peer_sta (%pM)",
-			 qmh->addr1);
+		    qmh->addr1);
 		goto out;
 	}
 
@@ -556,7 +554,7 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 	i_sta = to_i_sta(peer_sta);
 	if (!i_sta) {
 		ERR("Fail to set up BA. Fail to find nrc_sta (%pM)",
-			 qmh->addr1);
+		    qmh->addr1);
 		goto out;
 	}
 
@@ -847,12 +845,20 @@ static int tx_h_put_qos_control(struct nrc_trx_data *tx)
 {
 	struct sk_buff *skb = tx->skb;
 	struct ieee80211_hdr *mh = (void *)skb->data;
+	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	u16 fc = mh->frame_control;
 
 	if (ieee80211_is_data_data(fc)) {
-		if (!(ieee80211_has_protected(fc) &&
-		      tx->nw->params->sw_enc != WIM_ENCDEC_HW))
-			insert_qos_ctrl_field_in_skb(skb, ieee80211_hdrlen(fc));
+		/*
+		 * Skip QoS insertion only when mac80211 has already
+		 * SW-encrypted the frame (hw_key == NULL with Protected set).
+		 * Inserting QoS ctrl after SW-CCMP encryption would change
+		 * the AAD and break the MIC. For HW encryption, the FW will
+		 * encrypt after the driver inserts the QoS ctrl field.
+		 */
+		if (ieee80211_has_protected(fc) && !info->control.hw_key)
+			return 0;
+		insert_qos_ctrl_field_in_skb(skb, ieee80211_hdrlen(fc));
 	}
 	return 0;
 }
@@ -997,15 +1003,21 @@ static int rx_h_vendor(struct nrc_trx_data *rx)
 	    || ieee80211_is_s1g_beacon(fc)
 #endif /* KERNEL_VERSION(5, 10, 0) <= NRC_TARGET_KERNEL_VERSION */
 	) {
-		DBG_RX("Beacon(%d)", rx->nw->is_bcn_timeout);
-		if (!rx->nw->params->disable_cqm && rx->nw->associated_vif) {
-			if (rx->nw->is_bcn_timeout) {
-				DBG_MAC("beacon receive, is_bcn_timeout to false");
-				rx->nw->is_bcn_timeout = false;
+		struct nrc_vif *i_vif = rx->vif ? to_i_vif(rx->vif) : NULL;
+
+		if (i_vif)
+			DBG_RX("Beacon VIF%d(bcn_timeout=%d)", i_vif->index,
+			       i_vif->is_bcn_timeout);
+		if (!rx->nw->params->disable_cqm && i_vif &&
+		    i_vif->associated) {
+			if (i_vif->is_bcn_timeout) {
+				DBG_MAC("VIF%d beacon receive, is_bcn_timeout to false",
+					i_vif->index);
+				i_vif->is_bcn_timeout = false;
 			}
-			mod_timer(&rx->nw->bcn_mon_timer,
+			mod_timer(&i_vif->bcn_mon_timer,
 				  jiffies + msecs_to_jiffies(
-						    rx->nw->beacon_timeout));
+						    i_vif->beacon_timeout));
 		}
 
 		ies_offset = offsetof(struct ieee80211_mgmt, u.beacon.variable);
@@ -1133,7 +1145,8 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 
 	if (!NRC_DRV_IS_READY(nw->hdev)) {
 		WARN_MAC("Target not ready (drv=%s ps=%s), discarding RX frame",
-			 NRC_DRV_STATE_STR(nw->hdev), NRC_PS_STATE_STR(nw->hdev));
+			 NRC_DRV_STATE_STR(nw->hdev),
+			 NRC_PS_STATE_STR(nw->hdev));
 		/* Track FRAME SKB free (RX path from SPI) */
 		NRC_SKB_TRACK_FREE(nw->hdev, skb, HIF_TYPE_FRAME, true, false);
 		return 0;
@@ -1175,9 +1188,7 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 	 * When associated, the scan results only include probe responses.
 	 */
 	if (atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_ACTIVE_SCANNING) {
-		if (nw->associated_vif != NULL &&
-		    nw->associated_vif->type == NL80211_IFTYPE_STATION &&
-		    ieee80211_is_beacon(fc)) {
+		if (nrc_has_associated_sta_vif(nw) && ieee80211_is_beacon(fc)) {
 			/* Track FRAME SKB free (RX path from SPI) */
 			NRC_SKB_TRACK_FREE(nw->hdev, skb, HIF_TYPE_FRAME, true,
 					   false);
@@ -1191,19 +1202,28 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 		DBG_MAC("%s, diff=%lu", __func__, (unsigned long)diff);
 
 	if (!rx.result) {
-		if (!rx.nw->params->disable_cqm) {
-			if (nw->associated_vif &&
-			    (ieee80211_is_probe_resp(fc) ||
-			     ieee80211_is_beacon(fc)
+		if (!rx.nw->params->disable_cqm &&
+		    (ieee80211_is_probe_resp(fc) || ieee80211_is_beacon(fc)
 #if KERNEL_VERSION(5, 10, 0) <= NRC_TARGET_KERNEL_VERSION
-			     || ieee80211_is_s1g_beacon(fc)
+		     || ieee80211_is_s1g_beacon(fc)
 #endif /* KERNEL_VERSION(5, 10, 0) <= NRC_TARGET_KERNEL_VERSION */
-				     ) &&
-			    atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE) {
-				mod_timer(&nw->bcn_mon_timer,
-					  jiffies +
-						  msecs_to_jiffies(
-							  nw->beacon_timeout));
+			     ) &&
+		    atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE) {
+			int _i;
+
+			for (_i = 0; _i < NR_NRC_VIF; _i++) {
+				struct nrc_vif *_iv;
+
+				if (!nw->vif[_i] ||
+				    nw->vif[_i]->type != NL80211_IFTYPE_STATION)
+					continue;
+				_iv = to_i_vif(nw->vif[_i]);
+				if (_iv->associated)
+					mod_timer(
+						&_iv->bcn_mon_timer,
+						jiffies +
+							msecs_to_jiffies(
+								_iv->beacon_timeout));
 			}
 		}
 
@@ -1274,7 +1294,6 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 			}
 		}
 #endif
-
 
 		eapol_msg = is_eapol(rx.skb, nw);
 		if (eapol_msg) {
@@ -1467,11 +1486,13 @@ static int rx_h_check_sn(struct nrc_trx_data *rx)
 				ieee80211_mark_rx_ba_filtered_frames(
 					rx->sta, tid, sn, 0,
 					IEEE80211_SN_MODULO >> 1);
-				WARN_AMPDU("BA[%d] RX SN inversion detected: expected>%d, got %d (buf_size=%d)",
+				WARN_AMPDU(
+					"BA[%d] RX SN inversion detected: expected>%d, got %d (buf_size=%d)",
 					tid, i_sta->rx_ba_session[tid].sn, sn,
 					i_sta->rx_ba_session[tid].buf_size);
 			}
-			VBS_AMPDU("BA[%d] SN %d -> %d", tid, i_sta->rx_ba_session[tid].sn, sn);
+			VBS_AMPDU("BA[%d] SN %d -> %d", tid,
+				  i_sta->rx_ba_session[tid].sn, sn);
 			i_sta->rx_ba_session[tid].sn = sn;
 		}
 	}
@@ -1871,8 +1892,7 @@ static MON_STA_T *nrc_ampdu_mon_add_sta(uint8_t *addr)
 	memcpy(m_sta->addr, addr, 6);
 	list_add_tail(&m_sta->list,
 		      &m_sta_head[addr[ETH_ALEN - 1] % MON_STA_LIST_NUM]);
-	DBG_AMPDU("Monitor STA allocated: " MACSTR,
-		  MAC2STR(addr));
+	DBG_AMPDU("Monitor STA allocated: " MACSTR, MAC2STR(addr));
 	return m_sta;
 }
 
@@ -1922,15 +1942,18 @@ static uint32_t nrc_ampdu_mon_get_ref_id(struct nrc *nw, struct sk_buff *skb)
 		uint32_t ts_diff = rxi->timestamp - m_sta->last_ts;
 		if (ts_diff < 5000) { /* 5ms */
 			m_sta->last_ts = rxi->timestamp;
-			VBS_AMPDU("" MACSTR " same scrambler=0x%02x refnum=%d (ts_diff=%uus)",
-				  MAC2STR(m_sta->addr), m_sta->scrambler,
-				  m_ampdu_refnum, ts_diff);
+			VBS_AMPDU(
+				"" MACSTR
+				" same scrambler=0x%02x refnum=%d (ts_diff=%uus)",
+				MAC2STR(m_sta->addr), m_sta->scrambler,
+				m_ampdu_refnum, ts_diff);
 			return m_ampdu_refnum;
 		} else {
 			m_sta->first_ts = rxi->timestamp;
 			m_sta->last_ts = rxi->timestamp;
 			nrc_ampdu_mon_inc_refnum();
-			VBS_AMPDU("" MACSTR " scrambler=0x%02x timeout, new refnum=%d",
+			VBS_AMPDU("" MACSTR
+				  " scrambler=0x%02x timeout, new refnum=%d",
 				  MAC2STR(m_sta->addr), m_sta->scrambler,
 				  m_ampdu_refnum);
 			return m_ampdu_refnum;
@@ -1941,7 +1964,8 @@ static uint32_t nrc_ampdu_mon_get_ref_id(struct nrc *nw, struct sk_buff *skb)
 		m_sta->first_ts = rxi->timestamp;
 		m_sta->last_ts = rxi->timestamp;
 		nrc_ampdu_mon_inc_refnum();
-		VBS_AMPDU("" MACSTR " scrambler changed to 0x%02x, new refnum=%d",
+		VBS_AMPDU("" MACSTR
+			  " scrambler changed to 0x%02x, new refnum=%d",
 			  MAC2STR(m_sta->addr), m_sta->scrambler,
 			  m_ampdu_refnum);
 		return m_ampdu_refnum;

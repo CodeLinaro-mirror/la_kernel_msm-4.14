@@ -127,9 +127,8 @@ int nrc_wlan_handle_rx_ready(struct nrc_hal_event_data *event)
 	WARN_ON(skb->len != hif->len + sizeof(*hif));
 
 	if (NRC_HIF_DRV_STATE(hdev) < NRC_DRV_START) {
-		ERR(
-			"WLAN RX: Driver not ready (state=%d), dropping packet\n",
-			NRC_HIF_DRV_STATE(hdev));
+		ERR("WLAN RX: Driver not ready (state=%d), dropping packet\n",
+		    NRC_HIF_DRV_STATE(hdev));
 		/* Error drop: driver not ready, use actual hif type */
 		NRC_SKB_TRACK_FREE(hdev, skb, hif->type, true, false);
 		return -EIO;
@@ -159,9 +158,8 @@ int nrc_wlan_handle_rx_ready(struct nrc_hal_event_data *event)
 #endif
 
 	default:
-		ERR(
-			"WLAN: Unknown HIF packet type %u forwarded from HAL\n",
-			hif->type);
+		ERR("WLAN: Unknown HIF packet type %u forwarded from HAL\n",
+		    hif->type);
 		/* Error drop: unknown packet type, but use actual type value */
 		NRC_SKB_TRACK_FREE(hdev, skb, hif->type, true, false);
 		break;
@@ -212,6 +210,7 @@ static int nrc_wlan_handle_connection_loss(struct nrc_hal_event_data *event)
 {
 	struct nrc_hif_device *hdev;
 	struct nrc *nw;
+	int i;
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
@@ -225,8 +224,11 @@ static int nrc_wlan_handle_connection_loss(struct nrc_hal_event_data *event)
 		return -EINVAL;
 	}
 
-	/* Handle W_DISABLE_ASSERTED in WLAN context */
-	ieee80211_connection_loss(nw->vif[0]);
+	/* Handle W_DISABLE_ASSERTED: signal connection loss on all active VIFs */
+	for (i = 0; i < ARRAY_SIZE(nw->vif); i++) {
+		if (nw->vif[i])
+			ieee80211_connection_loss(nw->vif[i]);
+	}
 	mdelay(300);
 	nrc_hal_ops_tx_cleanup_queues();
 	nrc_mac_clean_txq(nw);
@@ -276,9 +278,22 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 			nw->invoke_beacon_loss = true;
 	}
 
-	if (!hdev->params->disable_cqm && nw->associated_vif) {
-		mod_timer(&nw->bcn_mon_timer,
-			  jiffies + msecs_to_jiffies(nw->beacon_timeout));
+	if (!hdev->params->disable_cqm) {
+		int _i;
+
+		for (_i = 0; _i < NR_NRC_VIF; _i++) {
+			struct nrc_vif *_iv;
+
+			if (!nw->vif[_i] ||
+			    nw->vif[_i]->type != NL80211_IFTYPE_STATION)
+				continue;
+			_iv = to_i_vif(nw->vif[_i]);
+			if (_iv->associated)
+				mod_timer(&_iv->bcn_mon_timer,
+					  jiffies +
+						  msecs_to_jiffies(
+							  _iv->beacon_timeout));
+		}
 	}
 
 	VBS_PS("WLAN: Wake done processing complete");
@@ -314,13 +329,40 @@ static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event)
 	/* Need to check if AP is alive, increase timeout more than beacon_timeout
 	 * 2000msec is enough time to check with probe req/resp
 	 */
-	nrc_ps_dyn_start(nw, nw->beacon_timeout + 2000,
-			 NRC_PS_REASON_TARGET_FAILED_ENTER_PS);
+	{
+		unsigned long fallback_timeout = 5000;
+		int _i;
 
-	/* Restart beacon monitoring */
-	if (!hdev->params->disable_cqm && nw->associated_vif) {
-		mod_timer(&nw->bcn_mon_timer,
-			  jiffies + msecs_to_jiffies(nw->beacon_timeout));
+		for (_i = 0; _i < NR_NRC_VIF; _i++) {
+			struct nrc_vif *_iv;
+
+			if (!nw->vif[_i] ||
+			    nw->vif[_i]->type != NL80211_IFTYPE_STATION)
+				continue;
+			_iv = to_i_vif(nw->vif[_i]);
+			if (_iv->associated && _iv->beacon_timeout)
+				fallback_timeout = _iv->beacon_timeout;
+		}
+		nrc_ps_dyn_start(nw, fallback_timeout + 2000,
+				 NRC_PS_REASON_TARGET_FAILED_ENTER_PS);
+
+		/* Restart beacon monitoring */
+		if (!hdev->params->disable_cqm) {
+			for (_i = 0; _i < NR_NRC_VIF; _i++) {
+				struct nrc_vif *_iv;
+
+				if (!nw->vif[_i] ||
+				    nw->vif[_i]->type != NL80211_IFTYPE_STATION)
+					continue;
+				_iv = to_i_vif(nw->vif[_i]);
+				if (_iv->associated)
+					mod_timer(
+						&_iv->bcn_mon_timer,
+						jiffies +
+							msecs_to_jiffies(
+								_iv->beacon_timeout));
+			}
+		}
 	}
 
 	DBG_PS("WLAN: PS enter failed recovery complete");
@@ -341,8 +383,7 @@ nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event)
 	}
 
 	if (!event) {
-		ERR(
-			"Invalid event for PS dynamic start with custom timeout");
+		ERR("Invalid event for PS dynamic start with custom timeout");
 		return -EINVAL;
 	}
 
@@ -392,7 +433,14 @@ static int nrc_wlan_handle_cleanup_txq_all(struct nrc_hal_event_data *event)
 	}
 
 	if (!nw->params->disable_cqm) {
-		try_to_del_timer_sync(&nw->bcn_mon_timer);
+		int _i;
+
+		for (_i = 0; _i < NR_NRC_VIF; _i++) {
+			if (nw->vif[_i] &&
+			    nw->vif[_i]->type == NL80211_IFTYPE_STATION)
+				try_to_del_timer_sync(
+					&to_i_vif(nw->vif[_i])->bcn_mon_timer);
+		}
 	}
 
 	ieee80211_stop_queues(nw->hw);
@@ -629,9 +677,15 @@ static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *hal_event)
 		break;
 	case WIM_EVENT_REQ_DEAUTH:
 		DBG_MAC("WLAN: Processing WIM_EVENT_REQ_DEAUTH");
-		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM &&
-		    nw->vif[0])
-			ieee80211_connection_loss(nw->vif[0]);
+		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
+			int i;
+
+			for (i = 0; i < ARRAY_SIZE(nw->vif); i++) {
+				if (nw->vif[i] &&
+				    nw->vif[i]->type == NL80211_IFTYPE_STATION)
+					ieee80211_connection_loss(nw->vif[i]);
+			}
+		}
 		break;
 
 	case WIM_EVENT_CSA:
@@ -674,8 +728,14 @@ static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *hal_event)
 	case WIM_EVENT_REQ_DEAUTH_BY_FORCE:
 		/* FW detected abnormal TSF and requests forced disconnection */
 		DBG_MAC("WLAN: Processing WIM_EVENT_REQ_DEAUTH_BY_FORCE");
-		if (nw->vif[0])
-			ieee80211_connection_loss(nw->vif[0]);
+		{
+			int i;
+
+			for (i = 0; i < ARRAY_SIZE(nw->vif); i++) {
+				if (nw->vif[i])
+					ieee80211_connection_loss(nw->vif[i]);
+			}
+		}
 		break;
 
 	default:
@@ -803,6 +863,7 @@ static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event)
 static int nrc_wlan_handle_wdt_expired(struct nrc_hal_event_data *event)
 {
 	struct nrc *nw;
+	int i;
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
@@ -812,9 +873,31 @@ static int nrc_wlan_handle_wdt_expired(struct nrc_hal_event_data *event)
 
 	WARN_MAC("FW WDT expired - waiting for FW_READY_FROM_WDT");
 
-	if (nw->vif[0] && nw->vif[0]->type == NL80211_IFTYPE_STATION) {
-		DBG_MAC("WDT: notifying mac80211 of connection loss (STA mode)");
-		ieee80211_connection_loss(nw->vif[0]);
+	/*
+	 * Stop all mac80211 TX queues before notifying connection loss.
+	 *
+	 * Without this, a race exists between the WDT recovery path and
+	 * mac80211's beacon_loss workqueue: ieee80211_connection_loss()
+	 * schedules ieee80211_beacon_connection_loss_work(), which calls
+	 * __ieee80211_disconnect() -> nl80211_send_disconnected() ->
+	 * skb_clone() -> kmem_cache_alloc(). If the slab cache is already
+	 * in a torn-down state (driver REBOOT), this causes a NULL pointer
+	 * dereference. This is especially likely in ap+sta concurrent mode
+	 * where AP and STA VIFs share hardware state.
+	 *
+	 * Stopping TX queues serialises mac80211 activity before we trigger
+	 * the disconnect notification. Queues are re-enabled in
+	 * nrc_wlan_handle_fw_ready_from_wdt() after full recovery.
+	 */
+	ieee80211_stop_queues(nw->hw);
+
+	/* Notify connection loss for all STA VIFs (covers multi-VIF concurrent mode) */
+	for (i = 0; i < ARRAY_SIZE(nw->vif); i++) {
+		if (nw->vif[i] && nw->vif[i]->type == NL80211_IFTYPE_STATION) {
+			DBG_MAC("WDT: notifying mac80211 of connection loss (vif[%d])",
+				i);
+			ieee80211_connection_loss(nw->vif[i]);
+		}
 	}
 
 	return 0;
@@ -852,6 +935,9 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 		ieee80211_restart_hw(nw->hw);
 	}
 
+	/* Re-enable TX queues stopped during WDT expiry handling */
+	ieee80211_wake_queues(nw->hw);
+
 	/* Re-send country code / board data to FW after WDT recovery */
 	nrc_restore_reg_domain(nw);
 	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_HAL_CALLBACK);
@@ -884,8 +970,8 @@ static int nrc_wlan_handle_recovery_trigger(struct nrc_hal_event_data *event)
 	}
 
 	ERR("recovery: triggered (reason=%s, mode=%s)",
-		 reason ? reason : "unknown",
-		 (nw->params && nw->params->recovery) ? "auto" : "monitor");
+	    reason ? reason : "unknown",
+	    (nw->params && nw->params->recovery) ? "auto" : "monitor");
 
 	/* Notify user-space via netlink — actual restart happens there */
 	nrc_netlink_trigger_recovery(nw);

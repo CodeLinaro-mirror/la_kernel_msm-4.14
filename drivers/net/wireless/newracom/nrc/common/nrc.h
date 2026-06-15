@@ -159,13 +159,10 @@ struct nrc {
 	 */
 	char alpha2[2];
 
-	/* Move to vif or sta driver data */
+	/* Per-radio channel state (single radio — same for all VIFs) */
 	u8 frame_seqno;
 	u8 band;
 	u16 center_freq;
-	u16 aid;
-	u32 cipher_pairwise;
-	u32 cipher_group;
 
 	bool invoke_beacon_loss;
 	struct timer_list dynamic_ps_timer;
@@ -217,12 +214,6 @@ struct nrc {
 	/* work for removing vendor specific ie for wowlan pattern (AP) */
 	struct delayed_work rm_vendor_ie_wowlan_pattern;
 
-	/* CQM offload */
-	struct timer_list bcn_mon_timer;
-	unsigned long beacon_timeout;
-	struct ieee80211_vif *associated_vif;
-	bool is_bcn_timeout;
-
 	/* WLAN module stopping state - prevents RX processing during unregister */
 	atomic_t hw_unregistering;
 
@@ -263,6 +254,16 @@ struct nrc_vif {
 	u32 max_idle_period;
 	struct timer_list max_idle_timer;
 
+	/* CQM offload (per-VIF for multi-STA support) */
+	struct timer_list bcn_mon_timer;
+	unsigned long beacon_timeout;
+	bool is_bcn_timeout;
+
+	/* Association state (per-VIF for multi-STA support) */
+	bool associated;
+	u16 aid;
+	u32 cipher_pairwise;
+
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
 	/* P2p client NoA */
 	struct ieee80211_noa_data noa;
@@ -283,6 +284,25 @@ static inline int hw_vifindex(struct ieee80211_vif *vif)
 
 	i_vif = to_i_vif(vif);
 	return i_vif->index;
+}
+
+/**
+ * nrc_has_associated_sta_vif - check if any STA VIF is currently associated
+ * @nw: driver state
+ *
+ * Returns true if at least one STA-type VIF has completed association.
+ */
+static inline bool nrc_has_associated_sta_vif(struct nrc *nw)
+{
+	int i;
+
+	for (i = 0; i < NR_NRC_VIF; i++) {
+		if (nw->vif[i] &&
+		    nw->vif[i]->type == NL80211_IFTYPE_STATION &&
+		    to_i_vif(nw->vif[i])->associated)
+			return true;
+	}
+	return false;
 }
 
 struct tx_ba_session {

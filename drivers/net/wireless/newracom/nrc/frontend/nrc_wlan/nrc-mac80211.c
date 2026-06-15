@@ -747,7 +747,8 @@ static void nrc_assoc_h_basic(struct ieee80211_hw *hw,
 			      struct ieee80211_bss_conf *info,
 			      struct ieee80211_sta *sta, struct sk_buff *skb)
 {
-	struct nrc *nw = hw->priv;
+	struct nrc *nw __maybe_unused = hw->priv;
+	struct nrc_vif *i_vif = to_i_vif(vif);
 #ifdef CONFIG_USE_VIF_CFG
 	struct ieee80211_vif_cfg *vif_cfg = &vif->cfg;
 #endif
@@ -766,10 +767,10 @@ static void nrc_assoc_h_basic(struct ieee80211_hw *hw,
 
 #ifdef CONFIG_USE_VIF_CFG
 	DBG_MAC("%s: aid=%u, bssid=%pM", __func__, vif_cfg->aid, info->bssid);
-	nw->aid = vif_cfg->aid;
+	i_vif->aid = vif_cfg->aid;
 #else
 	DBG_MAC("%s: aid=%u, bssid=%pM", __func__, info->aid, info->bssid);
-	nw->aid = info->aid;
+	i_vif->aid = info->aid;
 #endif
 
 #ifdef CONFIG_TRX_BACKOFF
@@ -1039,34 +1040,38 @@ static int nrc_mac_start(struct ieee80211_hw *hw)
 				NRC_PS_REASON_DRV_BSS_CONFIG);
 	}
 
-	nw->aid = 0;
-
-	alloc_size = tlv_len(sizeof(u16)) + tlv_len(ETH_ALEN);
-	if (nrc_mac_is_s1g(hdev)) {
-		alloc_size += tlv_len(sizeof(u8));
-	}
-	skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, alloc_size);
-
-	/* Add AID TLV */
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_AID, sizeof(u16), &nw->aid);
-	/* Add MAC address TLV */
-	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_MACADDR, ETH_ALEN,
-				    hdev->mac_addr[0].addr);
-
-	if (nrc_mac_is_s1g(hdev)) {
-		u8 ndp_preq = nw->params->ndp_preq;
-		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_NDP_PREQ, sizeof(u8),
-					    &ndp_preq);
-#if defined(CONFIG_SUPPORT_LEGACY_ACK)
-		if (nw->params->enable_legacy_ack) {
-			u8 legacy_ack = nw->params->enable_legacy_ack;
-			nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_LEGACY_ACK,
-						    sizeof(u8), &legacy_ack);
+	{
+		u16 init_aid = 0;
+		alloc_size = tlv_len(sizeof(u16)) + tlv_len(ETH_ALEN);
+		if (nrc_mac_is_s1g(hdev)) {
+			alloc_size += tlv_len(sizeof(u8));
 		}
-#endif /* CONFIG_SUPPORT_LEGACY_ACK */
-	}
+		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, alloc_size);
 
-	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+		/* Add AID TLV */
+		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_AID, sizeof(u16),
+					    &init_aid);
+		/* Add MAC address TLV */
+		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_MACADDR, ETH_ALEN,
+					    hdev->mac_addr[0].addr);
+
+		if (nrc_mac_is_s1g(hdev)) {
+			u8 ndp_preq = nw->params->ndp_preq;
+			nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_NDP_PREQ,
+						    sizeof(u8), &ndp_preq);
+#if defined(CONFIG_SUPPORT_LEGACY_ACK)
+			if (nw->params->enable_legacy_ack) {
+				u8 legacy_ack = nw->params->enable_legacy_ack;
+				nrc_hal_ops_wim_skb_add_tlv(skb,
+							    WIM_TLV_LEGACY_ACK,
+							    sizeof(u8),
+							    &legacy_ack);
+			}
+#endif /* CONFIG_SUPPORT_LEGACY_ACK */
+		}
+
+		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+	}
 
 	mutex_unlock(&nw->state_mtx);
 
@@ -1360,6 +1365,15 @@ static int nrc_mac_add_interface(struct ieee80211_hw *hw,
 		/* TODO: stop TWT if interface changed to STA */
 	}
 
+	if (vif->type == NL80211_IFTYPE_STATION) {
+#if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
+		setup_timer(&i_vif->bcn_mon_timer, nrc_bcn_mon_timer,
+			    (unsigned long)i_vif);
+#else
+		timer_setup(&i_vif->bcn_mon_timer, nrc_bcn_mon_timer, 0);
+#endif
+	}
+
 out:
 
 	if (vif->p2p)
@@ -1445,6 +1459,11 @@ static void nrc_mac_remove_interface(struct ieee80211_hw *hw,
 
 	if (vif->type == NL80211_IFTYPE_AP) {
 		ap_max_idle_timer_stop(nw, i_vif);
+	}
+
+	if (vif->type == NL80211_IFTYPE_STATION) {
+		try_to_del_timer_sync(&i_vif->bcn_mon_timer);
+		i_vif->associated = false;
 	}
 
 	/**
@@ -1541,6 +1560,8 @@ static void prepare_deauth_sta(void *data, struct ieee80211_sta *sta)
 	++total_sta;
 }
 
+static void scan_complete(struct ieee80211_hw *hw, bool aborted);
+
 int nrc_mac_restart(struct nrc *nw)
 {
 	int is_relay;
@@ -1559,16 +1580,24 @@ int nrc_mac_restart(struct nrc *nw)
 				 */
 				DBG_STATE("STA(%d) : Reconnect to AP", i);
 				mdelay(300);
-				nrc_cancel_hw_scan(nw->hw, nw->vif[i]);
+				/*
+				 * Cancel any in-progress hw scan and notify mac80211
+				 * via ieee80211_scan_completed(). Without this,
+				 * mac80211 still believes a scan is running when
+				 * ieee80211_restart_hw() is called later (in AP/relay
+				 * mode), triggering a WARN in ieee80211_restart_work().
+				 */
+				if (nrc_cancel_hw_scan(nw->hw, nw->vif[i]))
+					scan_complete(nw->hw, true);
 				ieee80211_connection_loss(nw->vif[i]);
 
 				/*
-				 * Reset associated_vif on recovery restart.
-				 * If bss_info_changed fails (e.g., wakeup failure
-				 * during recovery), associated_vif would remain
-				 * stale, blocking sched_scan after restart.
+				 * Reset per-VIF associated state on recovery
+				 * restart.  If bss_info_changed fails (e.g.,
+				 * wakeup failure during recovery), the flag would
+				 * remain stale, blocking sched_scan after restart.
 				 */
-				nw->associated_vif = NULL;
+				to_i_vif(nw->vif[i])->associated = false;
 				if (!is_relay) {
 					nrc_vcmd_backup_init_info(i, nw);
 					return 0;
@@ -1928,8 +1957,7 @@ static void nrc_mac_apply_ps(struct nrc *nw, bool ps_on, int timeout_ms)
 {
 	struct nrc_hif_device *hdev = nw->hdev;
 
-	DBG(CAT(MAC) | CAT(PS),
-	    "apply_ps: ps_on=%d timeout=%d drv=%s scan=%d",
+	DBG(CAT(MAC) | CAT(PS), "apply_ps: ps_on=%d timeout=%d drv=%s scan=%d",
 	    ps_on, timeout_ms, NRC_DRV_STATE_STR(hdev),
 	    atomic_read(&nw->scan_mode));
 
@@ -2223,12 +2251,12 @@ static void nrc_bss_handle_assoc(struct ieee80211_hw *hw,
 		nrc_bss_assoc(hw, vif, info, skb);
 
 		spin_lock_bh(&nw->vif_lock);
-		nw->associated_vif = vif;
+		i_vif->associated = true;
 		if (!nw->params->disable_cqm) {
 			DBG_MAC("mod_timer in %s:%d", __FUNCTION__, __LINE__);
-			mod_timer(&nw->bcn_mon_timer,
-				  jiffies +
-					  msecs_to_jiffies(nw->beacon_timeout));
+			mod_timer(&i_vif->bcn_mon_timer,
+				  jiffies + msecs_to_jiffies(
+						    i_vif->beacon_timeout));
 		}
 		spin_unlock_bh(&nw->vif_lock);
 
@@ -2243,7 +2271,8 @@ static void nrc_bss_handle_assoc(struct ieee80211_hw *hw,
 		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
 			nw->hdev->ps.timeout =
 				hw->conf.dynamic_ps_timeout > 0 ?
-				hw->conf.dynamic_ps_timeout : 3000;
+					hw->conf.dynamic_ps_timeout :
+					3000;
 			DBG_MAC("[BSS_CHANGED_ASSOC] Auto PS start (mode=%d), timeout=%d ms",
 				nw->params->power_save, nw->hdev->ps.timeout);
 			nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
@@ -2251,17 +2280,17 @@ static void nrc_bss_handle_assoc(struct ieee80211_hw *hw,
 	} else {
 		spin_lock_bh(&nw->vif_lock);
 		if (!nw->params->disable_cqm) {
-			nw->beacon_timeout = 0;
+			i_vif->beacon_timeout = 0;
 			DBG_MAC("del_timer in %s:%d", __FUNCTION__, __LINE__);
-			try_to_del_timer_sync(&nw->bcn_mon_timer);
-			nw->is_bcn_timeout = false;
+			try_to_del_timer_sync(&i_vif->bcn_mon_timer);
+			i_vif->is_bcn_timeout = false;
 		}
-		nw->associated_vif = NULL;
+		i_vif->associated = false;
 		spin_unlock_bh(&nw->vif_lock);
 	}
 
-	DBG_MAC("[BSS_CHANGED_ASSOC] associated_vif:%d beacon_timeout:%lu",
-		nw->associated_vif ? i_vif->index : -1, nw->beacon_timeout);
+	DBG_MAC("[BSS_CHANGED_ASSOC] VIF%d associated:%d beacon_timeout:%lu",
+		i_vif->index, i_vif->associated, i_vif->beacon_timeout);
 }
 
 /**
@@ -2283,15 +2312,15 @@ static void nrc_bss_handle_beacon_int(struct ieee80211_hw *hw,
 	u8 dtim_period = info->dtim_period;
 
 	DBG_MAC("beacon: %s, interval=%u, dtim_period:%u",
-		info->enable_beacon ? "enabled" : "disabled",
-		info->beacon_int, info->dtim_period);
+		info->enable_beacon ? "enabled" : "disabled", info->beacon_int,
+		info->dtim_period);
 
 	nw->beacon_int = bi = info->beacon_int;
 	if (!nw->params->disable_cqm && vif->type == NL80211_IFTYPE_STATION) {
-		nw->beacon_timeout = nw->params->beacon_loss_count * bi;
+		i_vif->beacon_timeout = nw->params->beacon_loss_count * bi;
 		DBG_MAC("[BSS_CHANGED_BEACON_INT] assoc:%d beacon_timeout:%lu",
-			nw->associated_vif ? i_vif->index : -1,
-			nw->beacon_timeout);
+			i_vif->associated ? i_vif->index : -1,
+			i_vif->beacon_timeout);
 	}
 
 	/*
@@ -2305,7 +2334,8 @@ static void nrc_bss_handle_beacon_int(struct ieee80211_hw *hw,
 #if defined(CONFIG_SUPPORT_IBSS)
 	     || vif->type == NL80211_IFTYPE_ADHOC
 #endif
-	    ) && nrc_mac_is_s1g(nw->hdev) && nw->params->enable_short_bi) {
+	     ) &&
+	    nrc_mac_is_s1g(nw->hdev) && nw->params->enable_short_bi) {
 		short_bi = info->beacon_int;
 		/* beacon interval is 16-bit; clamp the multiplied value */
 		if (DEF_CFG_S1G_SHORT_BEACON_COUNT * short_bi <= 65535)
@@ -2350,8 +2380,8 @@ static void nrc_bss_handle_txpower(struct ieee80211_hw *hw,
 	int txpower = info->txpower;
 	uint16_t txpower_type = info->txpower_type;
 
-	INFO("%s(changed:%s[PW=%d TYPE=%s])", __func__,
-	     "BSS_CHANGED_TXPOWER", txpower,
+	INFO("%s(changed:%s[PW=%d TYPE=%s])", __func__, "BSS_CHANGED_TXPOWER",
+	     txpower,
 	     txpower_type == TXPWR_LIMIT ? "limit" :
 	     txpower_type		 ? "fixed" :
 					   "auto");
@@ -2385,8 +2415,8 @@ static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
 	bool ps_on;
 
 	if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
-		DBG_MAC("%s(changed:%s) deep-sleep mode — skipping",
-			__func__, "BSS_CHANGED_PS");
+		DBG_MAC("%s(changed:%s) deep-sleep mode — skipping", __func__,
+			"BSS_CHANGED_PS");
 		return;
 	}
 
@@ -2396,9 +2426,8 @@ static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
 	ps_on = info->ps;
 #endif
 
-	DBG_MAC("%s(changed:%s) ps=%d timeout=%d",
-		__func__, "BSS_CHANGED_PS", ps_on,
-		hw->conf.dynamic_ps_timeout);
+	DBG_MAC("%s(changed:%s) ps=%d timeout=%d", __func__, "BSS_CHANGED_PS",
+		ps_on, hw->conf.dynamic_ps_timeout);
 	nrc_mac_apply_ps(nw, ps_on, hw->conf.dynamic_ps_timeout);
 }
 
@@ -2451,7 +2480,8 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 
 	if (changed & (BSS_CHANGED_BEACON_INT | BSS_CHANGED_BEACON_ENABLED))
 		nrc_bss_handle_beacon_int(hw, vif, info, skb,
-					  !!(changed & BSS_CHANGED_BEACON_ENABLED));
+					  !!(changed &
+					     BSS_CHANGED_BEACON_ENABLED));
 
 	if (changed & BSS_CHANGED_BEACON)
 		nrc_vendor_update_beacon(hw, vif);
@@ -3206,14 +3236,25 @@ void beacon_loss_check_work_handler(struct work_struct *work)
 {
 	struct nrc *nw = container_of(to_delayed_work(work), struct nrc,
 				      beacon_loss_work);
+	int i;
 
 	DBG_STATE("check delayed beacon loss");
 
-	if (nw->is_bcn_timeout &&
-	    atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE) {
-		DBG_STATE("So far, no beacons have been received.");
-		nrc_send_beacon_loss(nw);
-		nw->is_bcn_timeout = false;
+	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE)
+		return;
+
+	for (i = 0; i < NR_NRC_VIF; i++) {
+		struct nrc_vif *i_vif;
+
+		if (!nw->vif[i] || nw->vif[i]->type != NL80211_IFTYPE_STATION)
+			continue;
+		i_vif = to_i_vif(nw->vif[i]);
+		if (i_vif->is_bcn_timeout) {
+			DBG_STATE("VIF%d: no beacons received since last scan",
+				  i_vif->index);
+			ieee80211_beacon_loss(nw->vif[i]);
+			i_vif->is_bcn_timeout = false;
+		}
 	}
 }
 
@@ -3230,11 +3271,21 @@ void nrc_mac_scan_completed_work_handler(struct work_struct *work)
 	int delay_ms = nw->beacon_int * 3;
 
 	/* timer must be updated first before changing scan_mode to IDLE */
-	if (nw->associated_vif) {
-		if (!nw->params->disable_cqm) {
-			mod_timer(&nw->bcn_mon_timer,
-				  jiffies +
-					  msecs_to_jiffies(nw->beacon_timeout));
+	if (!nw->params->disable_cqm) {
+		int i;
+
+		for (i = 0; i < NR_NRC_VIF; i++) {
+			struct nrc_vif *iv;
+
+			if (!nw->vif[i] ||
+			    nw->vif[i]->type != NL80211_IFTYPE_STATION)
+				continue;
+			iv = to_i_vif(nw->vif[i]);
+			if (iv->associated)
+				mod_timer(&iv->bcn_mon_timer,
+					  jiffies +
+						  msecs_to_jiffies(
+							  iv->beacon_timeout));
 		}
 	}
 
@@ -3275,17 +3326,31 @@ void nrc_mac_scan_completed_work_handler(struct work_struct *work)
 	change_scan_mode(nw, NRC_SCAN_MODE_IDLE);
 	mutex_unlock(&nw->state_mtx);
 
-	if (nw->associated_vif) {
+	if (nrc_has_associated_sta_vif(nw)) {
 		if (!nw->params->disable_cqm) {
-			if (nw->params->disable_cqm_on_scan) {
-				// nothing to do
-			} else {
-				if (nw->is_bcn_timeout) {
-					INFO("delayed beacon loss event due to scan");
-					queue_delayed_work(
-						nw->hdev->workqueue,
-						&nw->beacon_loss_work,
-						msecs_to_jiffies(delay_ms));
+			if (!nw->params->disable_cqm_on_scan) {
+				int i;
+
+				for (i = 0; i < NR_NRC_VIF; i++) {
+					struct nrc_vif *iv;
+
+					if (!nw->vif[i] ||
+					    nw->vif[i]->type !=
+						    NL80211_IFTYPE_STATION)
+						continue;
+					iv = to_i_vif(nw->vif[i]);
+					if (!iv->associated)
+						continue;
+					if (iv->is_bcn_timeout) {
+						INFO("VIF%d: delayed beacon loss due to scan",
+						     iv->index);
+						queue_delayed_work(
+							nw->hdev->workqueue,
+							&nw->beacon_loss_work,
+							msecs_to_jiffies(
+								delay_ms));
+						break;
+					}
 				}
 			}
 		}
@@ -3411,16 +3476,57 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	if (nrc_stats_channel_noise_reset() < 0)
 		DBG_MAC("%s Channel noise reset fail", __func__);
 
-	if (nw->associated_vif) {
-		if (!nw->params->disable_cqm) {
-			if (nw->params->disable_cqm_on_scan) {
-				DBG_MAC("%s CQM timer off %u", __func__,
-					nw->beacon_timeout);
-				try_to_del_timer_sync(&nw->bcn_mon_timer);
+	if (nrc_has_associated_sta_vif(nw)) {
+		int i;
+
+		if (!nw->params->disable_cqm &&
+		    nw->params->disable_cqm_on_scan) {
+			for (i = 0; i < NR_NRC_VIF; i++) {
+				struct nrc_vif *iv;
+
+				if (!nw->vif[i] ||
+				    nw->vif[i]->type != NL80211_IFTYPE_STATION)
+					continue;
+				iv = to_i_vif(nw->vif[i]);
+				if (iv->associated) {
+					DBG_MAC("%s CQM timer off VIF%d %lu",
+						__func__, iv->index,
+						iv->beacon_timeout);
+					try_to_del_timer_sync(
+						&iv->bcn_mon_timer);
+				}
 			}
 		}
 
 		nrc_ps_dyn_stop(nw, NRC_PS_REASON_DRV_SCAN_START);
+	}
+
+	/*
+	 * Multi-STA same-channel constraint: if another STA VIF is already
+	 * associated, restrict this scan to the home channel only.  Scanning
+	 * off-channel while a STA VIF is connected would disrupt ongoing
+	 * traffic and is not supported by the single-radio firmware.
+	 */
+	if (vif->type == NL80211_IFTYPE_STATION) {
+		int i;
+
+		for (i = 0; i < NR_NRC_VIF; i++) {
+			struct nrc_vif *iv;
+
+			if (!nw->vif[i] || nw->vif[i] == vif ||
+			    nw->vif[i]->type != NL80211_IFTYPE_STATION)
+				continue;
+			iv = to_i_vif(nw->vif[i]);
+			if (iv->associated && nw->center_freq) {
+				DBG_MAC("%s VIF%d restricting scan to home channel %u (multi-STA)",
+					__func__, to_i_vif(vif)->index,
+					nw->center_freq);
+				req->n_channels = 1;
+				req->channels[0] = ieee80211_get_channel(
+					hw->wiphy, nw->center_freq);
+				break;
+			}
+		}
 	}
 
 	nrc_wim_wlan_hw_scan(vif, req, ies);
@@ -3690,6 +3796,34 @@ static int nrc_mac_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 	return 0;
 }
 
+static const char *nrc_cipher_str(u32 cipher)
+{
+	switch (cipher) {
+	case WLAN_CIPHER_SUITE_WEP40:
+		return "WEP40";
+	case WLAN_CIPHER_SUITE_WEP104:
+		return "WEP104";
+	case WLAN_CIPHER_SUITE_TKIP:
+		return "TKIP";
+	case WLAN_CIPHER_SUITE_CCMP:
+		return "CCMP";
+	case WLAN_CIPHER_SUITE_CCMP_256:
+		return "CCMP-256";
+	case WLAN_CIPHER_SUITE_GCMP:
+		return "GCMP";
+	case WLAN_CIPHER_SUITE_GCMP_256:
+		return "GCMP-256";
+	case WLAN_CIPHER_SUITE_AES_CMAC:
+		return "BIP-CMAC";
+	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		return "BIP-GMAC-128";
+	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		return "BIP-GMAC-256";
+	default:
+		return "unknown";
+	}
+}
+
 static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			   struct ieee80211_vif *vif, struct ieee80211_sta *sta,
 			   struct ieee80211_key_conf *key)
@@ -3699,11 +3833,11 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	int vif_id = i_vif->index;
 	int ret;
 
-	DBG_MAC("[%s_1] VIF(%d) CAP_MASK:0X%llx CMD:%d", __func__, vif_id,
-		nw->hdev->cap.vif_caps[vif_id].cap_mask, cmd);
-	DBG_MAC("[%s_2] key (flag:%u, cipher:%u)", __func__, key->flags,
-		key->cipher);
-	DBG_MAC("[%s_3] sw_enc (%d)", __func__, nw->params->sw_enc);
+	DBG_MAC("set_key VIF%d %s %s/%s idx=%d sw_enc=%d cap=0x%llx", vif_id,
+		(cmd == SET_KEY) ? "SET" : "DEL",
+		(key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ? "PTK" : "GTK",
+		nrc_cipher_str(key->cipher), key->keyidx, nw->params->sw_enc,
+		nw->hdev->cap.vif_caps[vif_id].cap_mask);
 
 	/* if use SW SECURITY, return 1 */
 	if (nw->params->sw_enc == WIM_ENCDEC_SW) {
@@ -3711,16 +3845,18 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		    (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
 		     key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
 		     key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256))
-			nw->cipher_pairwise =
+			i_vif->cipher_pairwise =
 				key->cipher; //for PMF deauth for keep alive on AP
 
-		DBG_MAC("SW Encryption for vif type=%d", vif->type);
+		DBG_MAC("set_key VIF%d SW-only mode, skip HW key install",
+			vif_id);
 		return 1;
 	}
 
 	/* if not use HW SECURITY of VIF , return 1 */
 	if (!(nw->hdev->cap.vif_caps[vif_id].cap_mask & WIM_SYSTEM_CAP_HWSEC)) {
-		ERR("failed to set caps");
+		ERR("set_key VIF%d HWSEC not set in cap=0x%llx — skip", vif_id,
+		    nw->hdev->cap.vif_caps[vif_id].cap_mask);
 		return 1;
 	}
 	//nrc_wim_install_key need to wait to receive fw result
@@ -3742,12 +3878,9 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	}
 
 	if (cmd == DISABLE_KEY) {
-		DBG_MAC("%s delete key (flag:%u, cipher:%u)", __func__,
-			key->flags, key->cipher);
-
 		if ((key->flags & IEEE80211_KEY_FLAG_PAIRWISE) && sta == NULL) {
-			DBG_MAC("%s delete ptk but sta is null! (key->flag:%u)",
-				__func__, key->flags);
+			DBG_MAC("set_key VIF%d DEL PTK but sta=NULL — skip",
+				vif_id);
 			ret = 1;
 			goto return_with_rcu_unlock;
 		}
@@ -3755,8 +3888,8 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
 		    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
 		    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256) {
-			DBG_MAC("%s delete key but not supported key cipher (key->cipher:%u)",
-				__func__, key->cipher);
+			DBG_MAC("set_key VIF%d DEL BIP cipher=%s — SW only, skip HW",
+				vif_id, nrc_cipher_str(key->cipher));
 			ret = 1;
 			goto return_with_rcu_unlock;
 		}
@@ -3777,18 +3910,15 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	/* Record key information to per-STA driver data structure for RX */
 	/* TODO: DISABLE_KEY -> later */
 	if (cmd == SET_KEY) {
-		DBG_MAC("%s add key (flag:%u, cipher:%u)", __func__, key->flags,
-			key->cipher);
-
 		/* HW does NOT Support BIP until now => need to SW-based Crypto => return 1 for this */
 		if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
 		    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
 		    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256) {
-			nw->cipher_pairwise =
+			i_vif->cipher_pairwise =
 				key->cipher; //for PMF deauth for keep alive on AP
 			key->flags |= IEEE80211_KEY_FLAG_SW_MGMT_TX;
-			DBG_MAC("%s add key but not supported key cipher (key->cipher:%u)",
-				__func__, key->cipher);
+			DBG_MAC("set_key VIF%d SET BIP cipher=%s — SW mgmt TX only",
+				vif_id, nrc_cipher_str(key->cipher));
 			ret = 1;
 			goto return_with_rcu_unlock;
 		}
@@ -3827,13 +3957,18 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 
 	ret = nrc_wim_wlan_install_key(cmd, vif, sta, key);
 	if (ret < 0) {
-		ERR("Failed to install key in HW");
+		ERR("set_key VIF%d %s %s/%s idx=%d — install failed ret=%d",
+		    vif_id, (cmd == SET_KEY) ? "SET" : "DEL",
+		    (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ? "PTK" : "GTK",
+		    nrc_cipher_str(key->cipher), key->keyidx, ret);
 		ret = -EINVAL;
 		goto return_with_rcu_unlock;
 	}
 
 	if (0xDEAD == ret) {
-		ERR("Failed to tx EAPOL M4");
+		ERR("set_key VIF%d %s PTK/%s idx=%d — EAPOL M4 TX failed",
+		    vif_id, (cmd == SET_KEY) ? "SET" : "DEL",
+		    nrc_cipher_str(key->cipher), key->keyidx);
 		ieee80211_hw_set(
 			hw, SW_CRYPTO_CONTROL); /* Disable fallback to SW */
 		ret = -EINVAL;
@@ -5782,30 +5917,33 @@ void nrc_rm_vendor_ie_wowlan_pattern(struct work_struct *work)
 #if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
 void nrc_bcn_mon_timer(unsigned long data)
 {
-	struct nrc *nw = (struct nrc *)data;
+	struct nrc_vif *i_vif = (struct nrc_vif *)data;
+	struct nrc *nw = i_vif->nw;
 #else
 void nrc_bcn_mon_timer(struct timer_list *t)
 {
-	struct nrc *nw = from_timer(nw, t, bcn_mon_timer);
+	struct nrc_vif *i_vif = from_timer(i_vif, t, bcn_mon_timer);
+	struct nrc *nw = i_vif->nw;
 #endif
 	struct nrc_hif_device *hdev = nw->hdev;
 
-	//DBG_MAC("[%s,L%d]", __func__, __LINE__);
 	if (NRC_DRV_IS_ASLEEP(hdev)) {
-		DBG_MAC("In PS state, ignore bcn_mon_timeout");
+		DBG_MAC("VIF%d in PS state, ignore bcn_mon_timeout",
+			i_vif->index);
 		return;
 	}
 	if (nw->params->disable_cqm_on_scan) {
-		nrc_send_beacon_loss(nw);
+		ieee80211_beacon_loss(to_ieee80211_vif(i_vif));
 	} else {
 		if (atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE) {
-			nrc_send_beacon_loss(nw);
+			ieee80211_beacon_loss(to_ieee80211_vif(i_vif));
 		} else {
-			DBG_MAC("In scan state, delay beacon loss event");
-			nw->is_bcn_timeout = true;
-			mod_timer(&nw->bcn_mon_timer,
-				  jiffies +
-					  msecs_to_jiffies(nw->beacon_timeout));
+			DBG_MAC("VIF%d in scan state, delay beacon loss event",
+				i_vif->index);
+			i_vif->is_bcn_timeout = true;
+			mod_timer(&i_vif->bcn_mon_timer,
+				  jiffies + msecs_to_jiffies(
+						    i_vif->beacon_timeout));
 		}
 	}
 }
@@ -6162,9 +6300,15 @@ void nrc_unregister_hw(struct nrc *nw)
 	nrc_cleanup_txq_all(nw);
 #endif
 
-	/* Cleanup CQM timer before unregistering hardware */
+	/* Cleanup CQM timers before unregistering hardware */
 	if (!nw->params->disable_cqm) {
-		del_timer(&nw->bcn_mon_timer);
+		int i;
+
+		for (i = 0; i < NR_NRC_VIF; i++) {
+			if (nw->vif[i] &&
+			    nw->vif[i]->type == NL80211_IFTYPE_STATION)
+				del_timer(&to_i_vif(nw->vif[i])->bcn_mon_timer);
+		}
 	}
 
 	ieee80211_unregister_hw(nw->hw);
@@ -6212,21 +6356,23 @@ void nrc_mac_free_hw(struct ieee80211_hw *hw)
 	ieee80211_free_hw(hw);
 }
 
-/* Send loss event to proper vif */
+/* Send loss event to all associated STA VIFs */
 void nrc_send_beacon_loss(struct nrc *nw)
 {
-	struct nrc_vif *i_vif;
+	int i;
 
 	spin_lock_bh(&nw->vif_lock);
-	if (nw->associated_vif == NULL) {
-		DBG_MAC("beacon loss event, but not associated");
-		goto done;
-	}
-	i_vif = to_i_vif(nw->associated_vif);
+	for (i = 0; i < NR_NRC_VIF; i++) {
+		struct nrc_vif *iv;
 
-	DBG_STATE("beacon loss event to vif(%d)", i_vif->index);
-	ieee80211_beacon_loss(nw->associated_vif);
-done:
+		if (!nw->vif[i] || nw->vif[i]->type != NL80211_IFTYPE_STATION)
+			continue;
+		iv = to_i_vif(nw->vif[i]);
+		if (!iv->associated)
+			continue;
+		DBG_STATE("beacon loss event to VIF%d", iv->index);
+		ieee80211_beacon_loss(nw->vif[i]);
+	}
 	spin_unlock_bh(&nw->vif_lock);
 }
 
@@ -6264,7 +6410,7 @@ char *nrc_idle_mode_get_state_str(struct nrc *nw)
 bool nrc_idle_mode_get_state(struct nrc *nw)
 {
 	return nw->hdev->params->idle_mode && nw->idle_state &&
-	       (nw->associated_vif == NULL) &&
+	       !nrc_has_associated_sta_vif(nw) &&
 	       (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_ACTIVE_SCANNING);
 }
 
