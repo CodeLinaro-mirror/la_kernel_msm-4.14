@@ -327,13 +327,16 @@ static enum hrtimer_restart twt_sched_timer_handler(struct hrtimer *hrtimer)
 {
 	struct nrc_twt_sched *twt_sched =
 		container_of(hrtimer, struct nrc_twt_sched, timer);
-	//struct nrc *nw = twt_sched->nw;
 	ktime_t t;
-	//u64 tsf;
 
-	if (0)
+	/*
+	 * Stop the timer if the scheduler has been deactivated.
+	 * This prevents work from being queued onto the workqueue after
+	 * nrc_twt_sched_stop() or nrc_twt_sched_deinit() has been called.
+	 */
+	if (!READ_ONCE(twt_sched->started))
 		return HRTIMER_NORESTART;
-	//tsf = nrc_wim_wlan_get_tsf(nw->vif[0]);
+
 	queue_work(twt_sched->get_tsf_wq, &twt_sched->get_tsf_work);
 
 	t = get_ktime_from_interval(twt_sched->interval);
@@ -423,7 +426,12 @@ void nrc_twt_sched_entry_del(struct nrc *nw, struct nrc_sta *sta, u8 flowid)
 	if (s == NULL)
 		return;
 
-	mutex_lock(&s->mutex);
+	/*
+	 * Use entry_lock (spinlock): del may be called from RX kthread context
+	 * while holding rcu_read_lock (preemption disabled). The mutex is only
+	 * for scheduler lifecycle state, not entry list manipulation.
+	 */
+	spin_lock_bh(&s->entry_lock);
 
 	if (!s->started) {
 		goto unlock;
@@ -464,7 +472,7 @@ void nrc_twt_sched_entry_del(struct nrc *nw, struct nrc_sta *sta, u8 flowid)
 	}
 
 unlock:
-	mutex_unlock(&s->mutex);
+	spin_unlock_bh(&s->entry_lock);
 }
 
 #define MAX_MULTI 8
@@ -489,7 +497,20 @@ int nrc_twt_sched_entry_add(struct nrc *nw, struct nrc_sta *sta,
 		return -1;
 	}
 
-	mutex_lock(&twt_sched->mutex);
+	/*
+	 * entry_lock (spinlock) is used here instead of mutex because this
+	 * function is called from the nrc-spi-rx kthread which holds
+	 * rcu_read_lock (preemption disabled). Acquiring a sleeping mutex
+	 * in that context triggers a kernel "Invalid wait context" BUG.
+	 *
+	 * The started flag is read without a lock as a fast pre-check;
+	 * it is re-validated under entry_lock to prevent TOCTOU races
+	 * with nrc_twt_sched_stop().
+	 */
+	if (!READ_ONCE(twt_sched->started))
+		return -1;
+
+	spin_lock_bh(&twt_sched->entry_lock);
 
 	if (!twt_sched->started) {
 		ret = -1;
@@ -546,8 +567,13 @@ int nrc_twt_sched_entry_add(struct nrc *nw, struct nrc_sta *sta,
 		goto done;
 	}
 
+	/*
+	 * Use GFP_ATOMIC: this function may be called from the nrc-spi-rx
+	 * kthread while holding rcu_read_lock (preemption disabled).
+	 * Sleepable allocation is not permitted in that context.
+	 */
 	fentry = (struct twt_flow_entry *)kzalloc(sizeof(struct twt_flow_entry),
-						  GFP_KERNEL);
+						  GFP_ATOMIC);
 	if (!fentry) {
 		ERR("alloc failed");
 		ret = -1;
@@ -555,6 +581,7 @@ int nrc_twt_sched_entry_add(struct nrc *nw, struct nrc_sta *sta,
 	}
 	fentry->id = flow->id;
 	fentry->sta = sta;
+
 	list_add_tail(&fentry->list, &e->flow_entry_list);
 
 	/* return flow */
@@ -568,7 +595,7 @@ done:
 	}
 	flow->exp = exp;
 unlock:
-	mutex_unlock(&twt_sched->mutex);
+	spin_unlock_bh(&twt_sched->entry_lock);
 	return ret;
 }
 
@@ -661,6 +688,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 	INIT_WORK(&twt_sched->get_tsf_work, get_tsf_worker);
 
 	mutex_init(&twt_sched->mutex);
+	spin_lock_init(&twt_sched->entry_lock);
 
 	twt_sched->nw = nw;
 
@@ -679,18 +707,30 @@ void nrc_twt_sched_deinit(struct nrc *nw)
 	if (twt_sched == NULL)
 		return;
 
-	if (twt_sched->started) {
-		nrc_twt_sched_stop(nw, NULL);
-	}
+	/*
+	 * Force-stop the scheduler before destroying resources.
+	 *
+	 * Setting started=false first causes twt_sched_timer_handler to
+	 * return HRTIMER_NORESTART on its next firing. hrtimer_cancel()
+	 * then waits for any in-progress callback to complete, guaranteeing
+	 * no new work is queued after this point. cancel_work_sync() drains
+	 * any work that was already queued before started became false.
+	 *
+	 * This sequence is safe regardless of whether nrc_twt_sched_stop()
+	 * was called before deinit (e.g., during module unload without a
+	 * clean AP teardown).
+	 */
+	WRITE_ONCE(twt_sched->started, false);
+	hrtimer_cancel(&twt_sched->timer);
 
 	if (twt_sched->get_tsf_wq != NULL) {
-		flush_workqueue(twt_sched->get_tsf_wq);
+		cancel_work_sync(&twt_sched->get_tsf_work);
 		destroy_workqueue(twt_sched->get_tsf_wq);
+		twt_sched->get_tsf_wq = NULL;
 	}
 
-	if (twt_sched->entries) {
-		kfree(twt_sched->entries);
-	}
+	kfree(twt_sched->entries);
+	twt_sched->entries = NULL;
 
 	nw->twt_sched = NULL;
 
@@ -743,7 +783,8 @@ int nrc_twt_sched_start(struct nrc *nw, struct ieee80211_vif *vif)
 	DBG_STATE("TSF:%llu, KTIME:%lld, DIFF:%llu", twt_sched->tsf,
 		  twt_sched->time, twt_sched->time - twt_sched->tsf);
 
-	twt_sched->started = true;
+	/* WRITE_ONCE: entry_lock readers use READ_ONCE for this flag */
+	WRITE_ONCE(twt_sched->started, true);
 
 	nw->twt_requester = false;
 	nw->twt_responder = true;
@@ -757,31 +798,33 @@ unlock:
 void nrc_twt_sched_stop(struct nrc *nw, struct ieee80211_vif *vif)
 {
 	struct nrc_twt_sched *twt_sched = nw->twt_sched;
+	bool was_started = false;
 
 	if (twt_sched == NULL)
 		return;
 
+	/*
+	 * Mark scheduler stopped under mutex, then cancel timer/work outside
+	 * the lock. hrtimer_cancel() and cancel_work_sync() may sleep and
+	 * must not be called while holding any lock.
+	 */
 	mutex_lock(&twt_sched->mutex);
 
-	if (!twt_sched->started) {
-		goto unlock;
+	if (twt_sched->started && twt_sched->vif == vif) {
+		DBG_STATE("TWT Stop");
+		twt_sched->vif = NULL;
+		/* WRITE_ONCE: entry_lock readers use READ_ONCE for this flag */
+		WRITE_ONCE(twt_sched->started, false);
+		nw->twt_responder = false;
+		was_started = true;
 	}
 
-	if (twt_sched->vif != vif) {
-		goto unlock;
-	}
-
-	DBG_STATE("TWT Stop");
-
-	hrtimer_cancel(&twt_sched->timer);
-	cancel_work_sync(&twt_sched->get_tsf_work);
-
-	twt_sched->vif = NULL;
-	twt_sched->started = false;
-
-	nw->twt_responder = false;
-unlock:
 	mutex_unlock(&twt_sched->mutex);
+
+	if (was_started) {
+		hrtimer_cancel(&twt_sched->timer);
+		cancel_work_sync(&twt_sched->get_tsf_work);
+	}
 }
 
 #define SP_MARGIN (1000 * 1000) /* 1sec */

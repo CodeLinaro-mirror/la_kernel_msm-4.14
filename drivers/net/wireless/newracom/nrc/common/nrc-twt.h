@@ -54,7 +54,7 @@ struct nrc_twt_flow {
 struct nrc_twt {
 	u8 flowid_mask;
 	struct nrc_twt_flow flow[NRC_MAX_STA_TWT_AGRT];
-	s8 assoc_flowid; /* 1 based */
+	s8 assoc_flowid; /* 1-based: set while TWT IE is pending in AssocResp */
 };
 
 /* TWT debugfs function declaration - implemented in frontend layer */

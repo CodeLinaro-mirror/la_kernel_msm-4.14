@@ -30,9 +30,41 @@
  * nrc-hif-cspi.c) but are NOT part of the HIF ops structure.
  * =========================================================================== */
 
-/* Device reset and cleanup functions */
+/*
+ * Context rules for SPI reset functions
+ * ======================================
+ *
+ * Two layers of reset are provided, each with strict context requirements:
+ *
+ * [1] spi_hif_reset_tx() / spi_hif_reset_rx()   — PROCESS CONTEXT ONLY
+ *
+ *     Full reset: resets local slot counters to canonical initial values,
+ *     disables the host IRQ (disable_irq), and sends WIM_CMD_RESET_HIF_TX/RX
+ *     to firmware to synchronize FW-side state.
+ *
+ *     MUST be called from process context only (e.g., spi_rx_thread kthread).
+ *     MUST NOT be called from the threaded IRQ handler (spi_irq path):
+ *       disable_irq() calls synchronize_irq() internally, which waits for
+ *       the IRQ thread to finish — the IRQ thread IS the caller → self-deadlock.
+ *
+ * [2] spi_reset_slot_tx() / spi_reset_slot_rx()  — IRQ-THREAD SAFE
+ *
+ *     Lightweight reset: only corrects local host-side slot counters to
+ *     canonical initial values. No IRQ control, no WIM command, no sleeping.
+ *     Safe to call from the threaded IRQ handler (spi_irq → spi_update_status).
+ *
+ * Rule: spi_update_status() (IRQ thread) must use spi_reset_slot_tx/rx().
+ *       spi_rx_data() and other kthread/process callers use spi_hif_reset_tx/rx().
+ */
+
+/* Full reset — process context only (see context rules above) */
 void spi_hif_reset_rx(struct nrc_hif_device *hdev);
 void spi_hif_reset_tx(struct nrc_hif_device *hdev);
+
+/* Slot-only reset — IRQ-thread safe (see context rules above) */
+void spi_reset_slot_tx(struct nrc_hif_device *hdev);
+void spi_reset_slot_rx(struct nrc_hif_device *hdev);
+
 void spi_hif_close(struct nrc_hif_device *hdev);
 
 /* IRQ management functions */

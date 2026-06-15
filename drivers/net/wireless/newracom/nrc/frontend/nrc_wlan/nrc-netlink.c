@@ -61,23 +61,18 @@ static int nrc_nl_pre_doit(struct genl_ops *ops, struct sk_buff *skb,
 #endif
 {
 	struct nrc *nw = nrc_nw;
-	struct nrc_hif_device *hdev = nw->hdev;
 	int ret = 0;
 
 	if (ops->internal_flags & NRC_FLAG_NO_NEED_PS) {
 		return ret;
 	}
 
-	/* If ps timeout is too short, there is no chance to receive wim response from TFW */
-	nrc_ps_dyn_start_custom_timeout(nw, 3000);
-
-	if (NRC_DRV_IS_ASLEEP(hdev)) {
-		ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
-				      NRC_PS_REASON_USER_NETLINK_CMD);
-		if (ret == -1) {
-			ret = -EBUSY;
-		}
-	}
+	/*
+	 * Stop dynamic PS timer and wake the device before the netlink WIM
+	 * command is dispatched.  post_doit will resume the idle timer once
+	 * the command completes.
+	 */
+	nrc_ps_dyn_stop(nw, NRC_PS_REASON_USER_NETLINK_CMD);
 
 	return ret;
 }
@@ -112,7 +107,8 @@ static void nrc_nl_post_doit(struct genl_ops *ops, struct sk_buff *skb,
 	}
 
 done:
-	nrc_ps_dyn_start_custom_timeout(nw, 0);
+	/* WIM command complete: resume normal PS idle timer */
+	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_USER_NETLINK_CMD);
 }
 
 static bool nrc_set_stbc_rx(struct nrc *nw, u8 stream)

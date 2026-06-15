@@ -1813,11 +1813,23 @@ int spi_update_status(struct nrc_hif_device *hdev)
 
 	SLOT_SYNC_UNLOCK();
 
-	/* Deferred HIF resets — safe now that SLOT_SYNC_LOCK is released */
+	/*
+	 * Deferred slot reset — safe now that SLOT_SYNC_LOCK is released.
+	 *
+	 * Use spi_reset_slot_tx/rx() (IRQ-thread-safe) instead of
+	 * spi_hif_reset_tx/rx() (process context only).
+	 *
+	 * spi_hif_reset_tx/rx() calls disable_irq() → synchronize_irq(),
+	 * which waits for this IRQ thread to finish — causing a self-deadlock.
+	 * spi_reset_slot_tx/rx() only corrects local slot counters; no IRQ
+	 * control, no WIM command. FW-side sync is not needed here: the local
+	 * correction above (tail = head) already prevents further bad reads,
+	 * and FW re-establishes clean state via the normal FW_READY flow.
+	 */
 	if (need_tx_reset)
-		spi_hif_reset_tx(hdev);
+		spi_reset_slot_tx(hdev);
 	if (need_rx_reset)
-		spi_hif_reset_rx(hdev);
+		spi_reset_slot_rx(hdev);
 
 	/* no need to update credit while loopback test */
 	if (hdev->params->loopback) {

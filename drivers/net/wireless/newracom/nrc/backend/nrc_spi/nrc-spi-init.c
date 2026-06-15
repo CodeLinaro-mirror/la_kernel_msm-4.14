@@ -207,13 +207,14 @@ static void nrc_cspi_remove(struct spi_device *spi)
 	}
 
 	/* Force cleanup only essential resources - avoid kthread operations */
-	if (spi->irq >= 0 && priv->irq_requested) {
+	if (spi->irq >= 0 && priv->irq_requested && priv->irq_dev_id) {
 		dev_warn(&spi->dev,
 			 "SPI: Force cleanup IRQ %d during module unload",
 			 spi->irq);
 		synchronize_irq(spi->irq);
-		free_irq(spi->irq, priv->hdev);
+		free_irq(spi->irq, priv->irq_dev_id);
 		priv->irq_requested = false;
+		priv->irq_dev_id = NULL;
 	}
 
 	/* Cancel any pending work - this is safe */

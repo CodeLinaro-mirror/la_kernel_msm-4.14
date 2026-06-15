@@ -56,6 +56,7 @@
 static int nrc_wlan_hal_callback_handler(struct nrc_hal_event_data *hal_event);
 static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event);
+static int nrc_wlan_handle_wdt_expired(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event);
@@ -265,7 +266,7 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 	nrc_restore_reg_domain(nw);
 
 	/* Restart dynamic PS timer (function checks supports_dynamic_ps internally) */
-	nrc_ps_dyn_start(nw);
+	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_TARGET_FW_READY);
 
 	if (!ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
 		/* PS not supported - handle beacon loss */
@@ -313,7 +314,8 @@ static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event)
 	/* Need to check if AP is alive, increase timeout more than beacon_timeout
 	 * 2000msec is enough time to check with probe req/resp
 	 */
-	nrc_ps_dyn_start_custom_timeout(nw, nw->beacon_timeout + 2000);
+	nrc_ps_dyn_start(nw, nw->beacon_timeout + 2000,
+			 NRC_PS_REASON_TARGET_FAILED_ENTER_PS);
 
 	/* Restart beacon monitoring */
 	if (!hdev->params->disable_cqm && nw->associated_vif) {
@@ -350,7 +352,7 @@ nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event)
 	}
 
 	/* Start dynamic power save with custom timeout */
-	nrc_ps_dyn_start_custom_timeout(nw, custom_timeout);
+	nrc_ps_dyn_start(nw, custom_timeout, NRC_PS_REASON_HAL_PS_DYNAMIC);
 
 	return 0;
 }
@@ -486,6 +488,9 @@ static int nrc_wlan_hal_callback_handler(struct nrc_hal_event_data *hal_event)
 		break;
 	case NRC_HAL_EVT_TARGET_NOTI_FW_READY_FROM_WDT:
 		ret = nrc_wlan_handle_fw_ready_from_wdt(hal_event);
+		break;
+	case NRC_HAL_EVT_TARGET_NOTI_WDT_EXPIRED:
+		ret = nrc_wlan_handle_wdt_expired(hal_event);
 		break;
 	case NRC_HAL_EVT_WAKE_DONE:
 		ret = nrc_wlan_handle_wake_done(hal_event);
@@ -753,7 +758,7 @@ static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event)
 	}
 
 	DBG_STATE("TARGET_NOTI_TWT_SERVICE");
-	nrc_ps_dyn_start_twt(nw);
+	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_TARGET_TWT_SERVICE);
 	nw->params->twt_service = true;
 	sysfs_notify(&THIS_MODULE->mkobj.kobj, NULL, "twt_service");
 
@@ -782,7 +787,40 @@ static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event)
 }
 
 /**
- * nrc_wlan_handle_fw_ready_from_wdt - Handle firmware ready from WDT event
+ * nrc_wlan_handle_wdt_expired - Handle firmware watchdog timer expired event
+ * @event: HAL event data
+ *
+ * Called by HAL when the firmware WDT fires. The firmware is rebooting;
+ * a subsequent NRC_HAL_EVT_TARGET_NOTI_FW_READY_FROM_WDT event will arrive
+ * once it comes back up.
+ *
+ * In STA mode, notify mac80211 of connection loss so it can start
+ * reassociation. In AP mode, just log — the FW_READY_FROM_WDT handler
+ * will restart the hardware and restore AP operation.
+ *
+ * Returns: 0 (always — WDT expiry is an expected recovery path, not an error)
+ */
+static int nrc_wlan_handle_wdt_expired(struct nrc_hal_event_data *event)
+{
+	struct nrc *nw;
+
+	nw = nrc_wlan_get_nw();
+	if (!nw) {
+		WARN_MAC("WDT expired: nw not available yet");
+		return 0;
+	}
+
+	WARN_MAC("FW WDT expired - waiting for FW_READY_FROM_WDT");
+
+	if (nw->vif[0] && nw->vif[0]->type == NL80211_IFTYPE_STATION) {
+		DBG_MAC("WDT: notifying mac80211 of connection loss (STA mode)");
+		ieee80211_connection_loss(nw->vif[0]);
+	}
+
+	return 0;
+}
+
+/**
  * @event: HAL event data containing FW ready information
  *
  * Returns: 0 on success, negative error code on failure
@@ -816,7 +854,7 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 
 	/* Re-send country code / board data to FW after WDT recovery */
 	nrc_restore_reg_domain(nw);
-	nrc_ps_dyn_start(nw);
+	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_HAL_CALLBACK);
 
 	return 0;
 }

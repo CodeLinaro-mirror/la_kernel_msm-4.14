@@ -120,7 +120,11 @@ twt_setup_assoc_info_restore(struct nrc *nw, struct ieee80211_sta *sta,
 	memcpy(twt_ie, &flow->twt_ie,
 	       sizeof(struct ieee80211_twt_setup_assoc_ie));
 
-	i_sta->twt.assoc_flowid = 0;
+	/*
+	 * Do NOT clear assoc_flowid here. It is kept set so that
+	 * nrc_mac_rx_twt_teardown() can re-establish the TWT session
+	 * when the STA sends its cleanup Teardown after association.
+	 */
 	ret = 0;
 
 done:
@@ -291,18 +295,47 @@ void nrc_mac_rx_twt_teardown(struct nrc *nw, struct ieee80211_sta *sta,
 			     struct ieee80211_mgmt *mgmt)
 {
 	struct nrc_twt_sched *twt_sched = nw->twt_sched;
+	struct nrc_sta *i_sta = to_i_sta(sta);
 	//u8 flowid = mgmt->u.action.u.s1g.variable[0];
 	u8 flowid = mgmt->u.action.u.chan_switch.variable[0];
+	bool was_active;
 
-	if (!twt_sched) {
+	if (!twt_sched)
 		return;
-	}
 
 	if (test_bit(TWT_DEBUG_IE_FLAG, &twt_sched->debug_flags))
 		DBG_STATE("TWT teardown Flowid : %u", flowid);
 
-	if (nw->twt_responder) {
-		nrc_mac_twt_teardown_request(nw->hw, sta, flowid);
+	if (!nw->twt_responder)
+		return;
+
+	if (flowid >= NRC_MAX_STA_TWT_AGRT) {
+		ERR_CAT(STATE, "TWT teardown: invalid flowid %u (max %u)",
+			flowid, NRC_MAX_STA_TWT_AGRT);
+		return;
+	}
+
+	/*
+	 * Check if this flowid has an active scheduler entry before deleting.
+	 * The STA sends a Teardown frame as session cleanup after association,
+	 * then expects the TWT session (negotiated via S1G Action frame) to
+	 * persist. We re-establish the entry using the same flow parameters
+	 * so that TWT SPs continue to fire.
+	 *
+	 * Note: nrc_twt_sched_entry_del() clears flowid_mask but does NOT
+	 * zero flow->id/mantissa/exp/duration, so re-add can reuse them.
+	 */
+	was_active = !!(i_sta->twt.flowid_mask & BIT(flowid));
+
+	nrc_mac_twt_teardown_request(nw->hw, sta, flowid);
+
+	if (was_active) {
+		struct nrc_twt_flow *flow = &i_sta->twt.flow[flowid];
+
+		DBG_STATE("TWT: re-establishing flowid=%u for %pM after STA cleanup teardown",
+			  flowid, sta->addr);
+		nrc_twt_sched_entry_add(nw, i_sta, flow);
+		i_sta->twt.assoc_flowid = 0;
 	}
 }
 
@@ -356,12 +389,15 @@ void nrc_mac_rx_twt_setup_assoc_req(struct nrc *nw, struct ieee80211_sta *sta,
 		goto done;
 	}
 
-	/* prepare response */
+	/*
+	 * Only save TWT params for embedding in AssocResp. Do NOT add to the
+	 * TWT scheduler here. The STA will follow up with a TWT Teardown and
+	 * then a TWT Setup Action frame to establish the actual session.
+	 * Adding to the scheduler prematurely causes an Alloc→Delete race
+	 * because the STA's Teardown Action frame arrives ~29ms after
+	 * association and would immediately delete the entry.
+	 */
 	twt_agrt->req_type &= cpu_to_le16(~IEEE80211_TWT_REQTYPE_REQUEST);
-
-	nrc_mac_add_twt_setup(nw->hw, sta, twt);
-
-	twt_setup_dump(nw, twt);
 
 	twt_setup_assoc_info_save(nw, sta, twt);
 
@@ -564,7 +600,8 @@ void nrc_mac_twt_teardown_request(struct ieee80211_hw *hw,
 	struct nrc *nw = hw->priv;
 	struct nrc_sta *i_sta = to_i_sta(sta);
 
-	DBG_STATE("TWT Teardown from %pM (%d)\n", sta->addr, sta->aid);
+	DBG_STATE("TWT Teardown from %pM (aid=%d flowid=%u)\n",
+		  sta->addr, sta->aid, flowid);
 	nrc_twt_sched_entry_del(nw, i_sta, flowid);
 }
 

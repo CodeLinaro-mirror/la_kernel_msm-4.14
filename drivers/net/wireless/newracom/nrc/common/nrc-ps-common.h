@@ -47,6 +47,7 @@ enum NRC_PS_REASON {
 	/* Firmware/Target initiated */
 	NRC_PS_REASON_TARGET_FW_READY, /* Target: Firmware ready interrupt from PS */
 	NRC_PS_REASON_TARGET_FAILED_ENTER_PS, /* Target: Failed to enter PS, recovery needed */
+	NRC_PS_REASON_TARGET_TWT_SERVICE, /* Target: TWT service period started */
 
 	/* Driver-initiated actions */
 	NRC_PS_REASON_DRV_TX_WAKEUP = 10, /* Driver: TX queue wakeup */
@@ -227,6 +228,8 @@ static inline const char *nrc_ps_reason_str(enum NRC_PS_REASON reason)
 		return "TARGET_FW_READY";
 	case NRC_PS_REASON_TARGET_FAILED_ENTER_PS:
 		return "TARGET_FAILED_ENTER_PS";
+	case NRC_PS_REASON_TARGET_TWT_SERVICE:
+		return "TARGET_TWT_SERVICE";
 	case NRC_PS_REASON_DRV_TX_WAKEUP:
 		return "DRV_TX_WAKEUP";
 	case NRC_PS_REASON_DRV_RX_WAKEUP:

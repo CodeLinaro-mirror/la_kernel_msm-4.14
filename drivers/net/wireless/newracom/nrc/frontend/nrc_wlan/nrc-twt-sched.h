@@ -50,7 +50,7 @@ struct nrc_twt_sched {
 	u64 start_tsf;
 	s64 start_time;
 	u64 sched_count;
-	
+
 	u64 tsf;
 	s64 time;
 	s64 tsf_diff;
@@ -58,6 +58,21 @@ struct nrc_twt_sched {
 	struct hrtimer timer;
 	struct work_struct get_tsf_work;
 	struct workqueue_struct *get_tsf_wq;
+
+	/*
+	 * Two-lock design to prevent Invalid wait context bugs:
+	 *
+	 * entry_lock (spinlock): protects entries[], alloc_num, alloc_index,
+	 *   min_num_in_group, and all per-entry flow_entry_list operations.
+	 *   Must be used from any context, including RX kthread holding
+	 *   rcu_read_lock (which disables preemption).
+	 *
+	 * mutex: protects scheduler lifecycle state — started, vif, TSF,
+	 *   timer, and sched_count. Only used from sleepable contexts
+	 *   (workqueue, module init/deinit, debugfs).
+	 *   Never acquire while holding entry_lock.
+	 */
+	spinlock_t entry_lock;
 	struct mutex mutex;
 };
 

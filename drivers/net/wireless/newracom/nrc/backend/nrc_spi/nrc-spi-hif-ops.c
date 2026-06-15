@@ -229,9 +229,11 @@ static int spi_hif_start(struct nrc_hif_device *hdev)
 			ERR("request_threaded_irq() is failed");
 #endif
 			priv->irq_requested = false;
+			priv->irq_dev_id = NULL;
 			goto kill_kthread;
 		} else {
 			priv->irq_requested = true;
+			priv->irq_dev_id = hdev; /* save for free_irq in remove */
 		}
 		/* IRQ is now enabled and stays enabled until free_irq() in spi_stop() */
 	} else {
@@ -286,6 +288,7 @@ static int spi_hif_stop(struct nrc_hif_device *hdev)
 		synchronize_irq(spi->irq);
 		free_irq(spi->irq, hdev);
 		priv->irq_requested = false;
+		priv->irq_dev_id = NULL;
 	}
 
 	c_spi_enable_irq(priv->spi, false, CSPI_EIRQ_A_ENABLE);
@@ -610,6 +613,8 @@ static int spi_hif_wait_rxq_slot(struct nrc_hif_device *hdev, u8 *data, u32 len)
 
 /* ===========================================================================
  * Device Control Operations
+ *
+ * Two-tier reset design — see context rules in nrc-spi-hif-ops.h.
  * =========================================================================== */
 
 static void spi_hif_reset_device(struct nrc_hif_device *hdev)
@@ -631,6 +636,12 @@ void spi_hif_reset_rx(struct nrc_hif_device *hdev)
 	struct spi_device *spi = nrc_spi_get_device();
 	struct nrc_spi_event_data event_data;
 
+	/*
+	 * Must be called from process context only.
+	 * See context rules in nrc-spi-hif-ops.h.
+	 */
+	might_sleep();
+
 	WARN_HIF("Reset SPI RX");
 
 	spi_host_irq_disable(hdev);
@@ -651,6 +662,12 @@ void spi_hif_reset_tx(struct nrc_hif_device *hdev)
 	struct spi_device *spi = nrc_spi_get_device();
 	struct nrc_spi_event_data event_data;
 
+	/*
+	 * Must be called from process context only.
+	 * See context rules in nrc-spi-hif-ops.h.
+	 */
+	might_sleep();
+
 	WARN_HIF("Reset SPI TX");
 
 	spi_host_irq_disable(hdev);
@@ -669,6 +686,38 @@ void spi_hif_reset_tx(struct nrc_hif_device *hdev)
 	c_spi_enable_irq(spi, true, CSPI_EIRQ_A_ENABLE);
 }
 
+/*
+ * spi_reset_slot_tx / spi_reset_slot_rx - IRQ-thread-safe slot reset
+ *
+ * Resets only the local host-side slot counters to canonical initial values.
+ * Does NOT touch IRQ control and does NOT send any WIM command to firmware.
+ *
+ * Safe to call from the threaded IRQ handler (spi_irq → spi_update_status).
+ * Used when slot desync is detected inside spi_update_status(): the full reset
+ * (spi_hif_reset_tx/rx) cannot be used there because disable_irq() →
+ * synchronize_irq() would deadlock waiting for the IRQ thread itself.
+ *
+ * The firmware-side sync (WIM_CMD_RESET_HIF_TX/RX) is intentionally skipped
+ * here because: (a) during early boot FW may not yet be ready to receive WIM,
+ * and (b) normal slot operation resumes naturally once FW is ready.
+ */
+void spi_reset_slot_tx(struct nrc_hif_device *hdev)
+{
+	if (!hdev)
+		return;
+	/* Canonical initial TX slot state */
+	hdev->slot[TX_SLOT].tail = -1;
+	hdev->slot[TX_SLOT].head = 32;
+}
+
+void spi_reset_slot_rx(struct nrc_hif_device *hdev)
+{
+	if (!hdev)
+		return;
+	/* Canonical initial RX slot state */
+	hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head = 0;
+}
+
 /* ===========================================================================
  * Synchronization Operations
  * =========================================================================== */
@@ -677,20 +726,19 @@ void spi_hif_reset_tx(struct nrc_hif_device *hdev)
  * Interrupt Management Operations
  *
  * IRQ lifecycle is fully managed by SPI module:
- * - request_irq() in spi_start() - IRQ enabled
- * - free_irq() in spi_stop() - IRQ disabled
+ * - request_irq() in spi_start() — IRQ enabled
+ * - free_irq() in spi_stop()     — IRQ disabled
  *
- * These internal functions are used within SPI module for reset operations.
- * External modules should NOT control IRQ enable/disable.
+ * spi_host_irq_disable/enable are used only inside spi_hif_reset_tx/rx(),
+ * which are process-context-only functions. They MUST NOT be called from
+ * the threaded IRQ handler. See context rules in nrc-spi-hif-ops.h.
  * =========================================================================== */
 
 /*
- * spi_host_irq_disable/enable - Internal host IRQ control
+ * spi_host_irq_disable/enable - Host IRQ gate for full HIF reset
  *
- * Used only within SPI module for reset operations.
- * These use the kernel's IRQ depth counting, so must be balanced.
- * External modules should NOT call these - IRQ lifecycle is managed
- * by spi_start()/spi_stop().
+ * Called only from spi_hif_reset_tx/rx() (process context).
+ * Uses kernel IRQ depth counting — disable/enable must be balanced.
  */
 static void spi_host_irq_disable(struct nrc_hif_device *hdev)
 {

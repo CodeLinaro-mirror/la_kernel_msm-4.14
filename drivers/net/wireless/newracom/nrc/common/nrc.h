@@ -170,6 +170,22 @@ struct nrc {
 	bool invoke_beacon_loss;
 	struct timer_list dynamic_ps_timer;
 	struct work_struct dynamic_ps_work;
+	/*
+	 * ps_busy_delay_ms - temporary PS sleep entry delay (ms)
+	 *
+	 * Set by operations that need the device to stay awake for a short
+	 * period even after the normal dynamic-PS timeout expires (e.g. BA
+	 * session setup, netlink commands, TX bursts).  When non-zero the
+	 * dynamic-PS work handler re-arms the timer once and then clears it,
+	 * effectively deferring sleep entry by this amount.
+	 *
+	 * This is NOT the base dynamic-PS timeout (hw->conf.dynamic_ps_timeout
+	 * / hdev->ps.timeout).  It is a one-shot busy-guard overlay.
+	 *
+	 * Written from nrc_ps_dyn_start() (any context) and the dynamic_ps_work
+	 * handler (process context) — use atomic_t to avoid data races.
+	 */
+	atomic_t ps_busy_delay_ms;
 
 	/* sync power management operation between
 	 * mac80211 config and host interface

@@ -30,10 +30,10 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 /* Dynamic PS functions - runtime controlled via hdev->ps.supports_dynamic_ps */
 void nrc_ps_dyn_init(struct nrc *nw);
 void nrc_ps_dyn_deinit(struct nrc *nw);
-void nrc_ps_dyn_start(struct nrc *nw);
-void nrc_ps_dyn_start_custom_timeout(struct nrc *nw, int custom_timeout);
-void nrc_ps_dyn_stop(struct nrc *nw);
-void nrc_ps_dyn_start_twt(struct nrc *nw);
+void nrc_ps_dyn_start(struct nrc *nw, int busy_delay_ms,
+		      enum NRC_PS_REASON reason);/* Start PS timer with a busy-guard delay (ms) to defer sleep entry.
+ * Pass 0 for a normal base-timeout start. */
+void nrc_ps_dyn_stop(struct nrc *nw, enum NRC_PS_REASON reason);
 
 int nrc_ps_set_idle_mode(struct nrc *nw, char *msg);
 int nrc_ps_set_idle_mode_delay(struct nrc *nw, char *msg, int delay_ms);

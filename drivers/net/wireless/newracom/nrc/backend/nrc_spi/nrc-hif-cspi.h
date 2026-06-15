@@ -160,6 +160,7 @@ struct nrc_spi_priv {
 	int polling_interval;
 	struct task_struct *polling_kthread;
 	bool irq_requested;
+	void *irq_dev_id; /* saved dev_id for free_irq (priv->hdev may be freed first) */
 
 	/* Core module references */
 	/*

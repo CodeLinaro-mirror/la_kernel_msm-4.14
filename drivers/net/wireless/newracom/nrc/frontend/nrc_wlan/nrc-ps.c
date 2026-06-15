@@ -109,7 +109,8 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 		ieee80211_wake_queues(hw);
 
 		/* Recovery: restart dynamic PS and beacon monitor */
-		nrc_ps_dyn_start_custom_timeout(nw, nw->beacon_timeout + 2000);
+		nrc_ps_dyn_start(nw, nw->beacon_timeout + 2000,
+				 NRC_PS_REASON_TARGET_FAILED_ENTER_PS);
 		if (!nw->params->disable_cqm && nw->associated_vif) {
 			mod_timer(&nw->bcn_mon_timer,
 				  jiffies +
@@ -124,22 +125,24 @@ done:
 
 /* Dynamic PS */
 
-int g_custom_timeout;
-
 /* Work handler for dynamic PS - called in process context */
 static void nrc_ps_dynamic_work(struct work_struct *work)
 {
 	struct nrc *nw = container_of(work, struct nrc, dynamic_ps_work);
 	struct nrc_hif_device *hdev = nw->hdev;
 
-	VBS_PS("PS timer start: to=%dms ex=%dms cu=%dms st=%s",
-	       nw->hw->conf.dynamic_ps_timeout,
-	       nw->params->extra_ps_timeout, g_custom_timeout,
-	       NRC_DRV_STATE_STR(hdev));
+	VBS_PS("PS timer start: to=%dms ex=%dms busy_delay=%dms st=%s",
+	       nw->hdev->ps.timeout, nw->params->extra_ps_timeout,
+	       atomic_read(&nw->ps_busy_delay_ms), NRC_DRV_STATE_STR(hdev));
 
-	if (g_custom_timeout) {
-		g_custom_timeout = 0;
-		nrc_ps_dyn_start(nw);
+	/*
+	 * If a busy-guard delay was requested (e.g. BA setup, netlink cmd),
+	 * clear it and re-arm the timer once to let the operation finish
+	 * before entering sleep.
+	 */
+	if (atomic_read(&nw->ps_busy_delay_ms)) {
+		atomic_set(&nw->ps_busy_delay_ms, 0);
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_DYNAMIC_PS);
 		return;
 	}
 
@@ -154,10 +157,11 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 	    atomic_read(&hdev->mcp_queue_pending)) {
 		DBG_PS("TX active, defer PS (wlan_q=%d/%d mcp_q=%d/%d pending=%d/%d)",
 		       NRC_FRAME_QUEUE_LEN(hdev), NRC_WIM_QUEUE_LEN(hdev),
-		       NRC_MCP_FRAME_QUEUE_LEN(hdev), NRC_MCP_WIM_QUEUE_LEN(hdev),
+		       NRC_MCP_FRAME_QUEUE_LEN(hdev),
+		       NRC_MCP_WIM_QUEUE_LEN(hdev),
 		       atomic_read(&hdev->queue_pending),
 		       atomic_read(&hdev->mcp_queue_pending));
-		nrc_ps_dyn_start(nw);
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_DYNAMIC_PS);
 		return;
 	}
 
@@ -168,7 +172,7 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 
 	if ((int)atomic_read(&hdev->fw.state) == NRC_FW_FAILED) {
 		ERR_PS("FW is in FAILED state, skip PS (will retry via IRQ path)");
-		nrc_ps_dyn_start(nw);
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_DYNAMIC_PS);
 		return;
 	}
 
@@ -183,11 +187,10 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 	}
 
 	/* Use unified PS set mode path */
-	nrc_ps_set_mode(
-		nw, NRC_PARAM_POWER_SAVE(hdev),
-		hdev->params->sleep_duration[0] *
-			(hdev->params->sleep_duration[1] ? 1000 : 1),
-		NULL, NRC_PS_REASON_DRV_DYNAMIC_PS);
+	nrc_ps_set_mode(nw, NRC_PARAM_POWER_SAVE(hdev),
+			hdev->params->sleep_duration[0] *
+				(hdev->params->sleep_duration[1] ? 1000 : 1),
+			NULL, NRC_PS_REASON_DRV_DYNAMIC_PS);
 }
 
 /* Timer callback - runs in atomic context, just schedules work */
@@ -209,7 +212,7 @@ void nrc_ps_dyn_init(struct nrc *nw)
 	if (!nw->hdev->ps.supports_dynamic_ps)
 		return;
 
-	g_custom_timeout = 0;
+	atomic_set(&nw->ps_busy_delay_ms, 0);
 
 	/* Initialize work queue for dynamic PS */
 	INIT_WORK(&nw->dynamic_ps_work, nrc_ps_dynamic_work);
@@ -227,80 +230,89 @@ void nrc_ps_dyn_deinit(struct nrc *nw)
 	if (!nw->hdev->ps.supports_dynamic_ps)
 		return;
 
-	g_custom_timeout = 0;
+	atomic_set(&nw->ps_busy_delay_ms, 0);
 
 	/* Cancel timer and pending work */
 	del_timer_sync(&nw->dynamic_ps_timer);
 	cancel_work_sync(&nw->dynamic_ps_work);
 }
 
-void nrc_ps_dyn_start_custom_timeout(struct nrc *nw, int custom_timeout)
+/**
+ * nrc_ps_dyn_start - Start (or re-arm) the dynamic PS idle timer
+ * @nw:            NRC driver instance
+ * @busy_delay_ms: Minimum ms to stay awake before the idle timer may fire.
+ *                 Pass 0 for a normal base-timeout start (no extra guard).
+ *                 Pass N > 0 when the caller knows an ongoing operation
+ *                 needs at least N ms to complete (e.g. beacon wait, EAPOL).
+ * @reason:        Why PS is being (re-)started; used only for debug logging.
+ *
+ * Single entry point for all dynamic PS timer arming.  Handles two modes:
+ *
+ *  TWT mode (twt_sched && twt_force_sleep):
+ *    Timeout = TWT service period (sp).  hdev->ps.timeout is updated so the
+ *    work handler and debugfs always reflect the active TWT interval.
+ *    busy-guard and scan checks are bypassed — TWT timing is AP-dictated.
+ *
+ *  Normal mode:
+ *    Timeout = max(ps.timeout + extra_ps_timeout, busy_delay_ms).
+ *    If a busy-guard is already active (ps_busy_delay_ms != 0), a plain
+ *    start (busy_delay_ms == 0) is suppressed so the guard is not cancelled
+ *    prematurely.
+ */
+void nrc_ps_dyn_start(struct nrc *nw, int busy_delay_ms,
+		      enum NRC_PS_REASON reason)
 {
+	int base_timeout = nw->hdev->ps.timeout + nw->params->extra_ps_timeout;
 	int timeout;
 
-	if (!nw->hdev->ps.supports_dynamic_ps || !NRC_DRV_IS_READY(nw->hdev) ||
-	    nw->params->power_save == 0 ||
-	    (nw->twt_sched && nw->params->twt_force_sleep) ||
-	    nw->hw->conf.dynamic_ps_timeout <= 0)
+	if (!nw->hdev->ps.supports_dynamic_ps || !NRC_DRV_IS_READY(nw->hdev))
 		return;
 
-	/* Don't start PS timer during scan - need to stay awake for PROBE_RESP */
+	/* TWT force-sleep: timer period is the TWT service period */
+	if (nw->twt_sched && nw->params->twt_force_sleep) {
+		timeout = (int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
+		nw->hdev->ps.timeout = timeout;
+		goto arm_timer;
+	}
+
+	/* Normal dynamic PS guards */
+	if (nw->params->power_save == 0 || nw->hdev->ps.timeout <= 0)
+		return;
+
+	/* Never arm the PS timer during an active scan */
 	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE)
 		return;
 
-	g_custom_timeout = custom_timeout;
+	/* Suppress plain re-arm while a busy-guard is still active */
+	if (busy_delay_ms == 0 && atomic_read(&nw->ps_busy_delay_ms))
+		return;
 
-	if (custom_timeout >
-	    nw->params->extra_ps_timeout + nw->hw->conf.dynamic_ps_timeout) {
-		DBG_STATE("custom timeout is set to %dms", custom_timeout);
-		timeout = custom_timeout;
-	} else {
-		timeout = nw->params->extra_ps_timeout +
-			  nw->hw->conf.dynamic_ps_timeout;
-	}
+	atomic_set(&nw->ps_busy_delay_ms, busy_delay_ms);
+	timeout = busy_delay_ms > base_timeout ? busy_delay_ms : base_timeout;
 
+arm_timer:
+	DBG_PS("dyn_start: t=%d bd=%d r=%d", timeout, busy_delay_ms, reason);
 	mod_timer(&nw->dynamic_ps_timer, jiffies + msecs_to_jiffies(timeout));
 }
 
-void nrc_ps_dyn_start(struct nrc *nw)
+void nrc_ps_dyn_stop(struct nrc *nw, enum NRC_PS_REASON reason)
 {
-	if (g_custom_timeout)
-		return; /* don't rearm until custom_timeout end. */
+	struct nrc_hif_device *hdev = nw->hdev;
 
-	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE)
+	atomic_set(&nw->ps_busy_delay_ms, 0);
+
+	if (!hdev->ps.supports_dynamic_ps)
 		return;
 
-	nrc_ps_dyn_start_custom_timeout(nw, 0);
-}
-
-void nrc_ps_dyn_stop(struct nrc *nw)
-{
-	g_custom_timeout = 0;
-
-	if (!nw->hdev->ps.supports_dynamic_ps)
-		return;
-
-	if (NRC_DRV_IS_READY(nw->hdev) && nw->hw->conf.dynamic_ps_timeout > 0) {
-		DBG_PS("%s Dynamic PS timer off %ul", __func__,
-		       nw->hw->conf.dynamic_ps_timeout);
+	if (NRC_DRV_IS_READY(hdev) && hdev->ps.timeout > 0) {
+		DBG_PS("dyn_stop: timer off r=%d", reason);
 		try_to_del_timer_sync(&nw->dynamic_ps_timer);
 	}
-}
 
-void nrc_ps_dyn_start_twt(struct nrc *nw)
-{
-	int twt_timeout_ms;
-
-	if (!nw->hdev->ps.supports_dynamic_ps || !NRC_DRV_IS_READY(nw->hdev) ||
-	    !nw->twt_sched || !nw->params->twt_force_sleep)
-		return;
-
-	/* Set timeout based on TWT service period */
-	twt_timeout_ms = (int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
-	nw->hw->conf.dynamic_ps_timeout = twt_timeout_ms;
-
-	mod_timer(&nw->dynamic_ps_timer,
-		  jiffies + msecs_to_jiffies(twt_timeout_ms));
+	if (NRC_DRV_IS_ASLEEP(hdev) || hdev->ps.modem_enabled) {
+		DBG_PS("dyn_stop: asleep, wake r=%d", reason);
+		nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL, reason);
+	}
 }
 
 int nrc_ps_set_idle_mode(struct nrc *nw, char *msg)

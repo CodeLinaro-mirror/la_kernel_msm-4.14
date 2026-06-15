@@ -1908,16 +1908,43 @@ void nrc_mac_add_tlv_channel(struct sk_buff *skb,
 }
 #endif /* CONFIG_SUPPORT_CHANNEL_INFO */
 
-static void nrc_mac_config_handle_ps(struct nrc *nw, struct ieee80211_hw *hw)
+/**
+ * nrc_mac_apply_ps - Apply mac80211 PS state to the driver
+ * @nw:         NRC driver state
+ * @ps_on:      true if mac80211 has PS enabled for this VIF
+ * @timeout_ms: dynamic PS timeout from hw->conf.dynamic_ps_timeout
+ *              0 = dynamic PS disabled ("stay awake indefinitely")
+ *
+ * Single entry point for all mac80211-originated PS state changes.
+ * Called from both the config() path (IEEE80211_CONF_CHANGE_PS) and the
+ * bss_info_changed() path (BSS_CHANGED_PS, primary on kernel v6.0+).
+ *
+ * Decision table:
+ *   timeout=0              → stop timer, force wake (PS disabled by mac80211)
+ *   ps_on=true, timeout>0  → sync timeout, start dynamic PS timer
+ *   ps_on=false, timeout>0 → stop timer, wake if currently asleep
+ */
+static void nrc_mac_apply_ps(struct nrc *nw, bool ps_on, int timeout_ms)
 {
 	struct nrc_hif_device *hdev = nw->hdev;
 
-	nw->hdev->ps.timeout = hw->conf.dynamic_ps_timeout;
-
 	DBG(CAT(MAC) | CAT(PS),
-	    "IEEE80211_CONF_CHANGE_PS enabled:%d timeout:%d drv:%s scan_mode=%d",
-	    !!(hw->conf.flags & IEEE80211_CONF_PS), nw->hdev->ps.timeout,
-	    NRC_DRV_STATE_STR(hdev), atomic_read(&nw->scan_mode));
+	    "apply_ps: ps_on=%d timeout=%d drv=%s scan=%d",
+	    ps_on, timeout_ms, NRC_DRV_STATE_STR(hdev),
+	    atomic_read(&nw->scan_mode));
+
+	/*
+	 * timeout=0: mac80211 disables dynamic PS — device must stay WAKE.
+	 * This takes priority over ps_on; stop timer and wake unconditionally.
+	 */
+	if (timeout_ms == 0) {
+		nw->hdev->ps.timeout = 0;
+		nrc_ps_dyn_stop(nw, NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
+		return;
+	}
+
+	/* Sync timeout from mac80211 */
+	nw->hdev->ps.timeout = timeout_ms;
 
 	/* Don't enter PS during scan */
 	if (atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_ACTIVE_SCANNING ||
@@ -1926,22 +1953,39 @@ static void nrc_mac_config_handle_ps(struct nrc *nw, struct ieee80211_hw *hw)
 		return;
 	}
 
-	if (hw->conf.flags & IEEE80211_CONF_PS) {
+	if (ps_on) {
 		/* Already asleep - nothing to do */
-		if (NRC_DRV_IS_ASLEEP(hdev) || nw->hdev->ps.modem_enabled) {
+		if (NRC_DRV_IS_ASLEEP(hdev) || hdev->ps.modem_enabled) {
 			VBS_PS("Already in PS...");
 			return;
 		}
-		/* Start dynamic PS timer for sleep entry */
-		nrc_ps_dyn_start(nw);
+		/*
+		 * PS enabled: defer sleep briefly so any in-flight frames
+		 * complete before the device goes idle.
+		 */
+		nrc_ps_dyn_start(nw, 2000, NRC_PS_REASON_MAC_CONFIG_PS_ENABLED);
 	} else {
-		/* PS disabled by mac80211: stop timer, wake if asleep */
-		nrc_ps_dyn_stop(nw);
-		if (NRC_DRV_IS_ASLEEP(hdev) || nw->hdev->ps.modem_enabled) {
-			nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
-					NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
-		}
+		/* PS disabled: stop timer, wake device if asleep */
+		nrc_ps_dyn_stop(nw, NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
 	}
+}
+
+static void nrc_mac_config_handle_ps(struct nrc *nw, struct ieee80211_hw *hw)
+{
+	bool ps_on = !!(hw->conf.flags & IEEE80211_CONF_PS);
+
+	/*
+	 * Deep sleep is driver-managed: the timer is set from
+	 * nrc_bss_handle_assoc() and must not be cancelled by mac80211
+	 * reporting dynamic_ps_timeout=0 (which it always does for NRC
+	 * deep sleep because SUPPORTS_PS is not set).
+	 */
+	if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
+		DBG_MAC("%s deep-sleep mode — skipping", __func__);
+		return;
+	}
+
+	nrc_mac_apply_ps(nw, ps_on, hw->conf.dynamic_ps_timeout);
 }
 
 static void nrc_mac_config_handle_idle(struct nrc *nw, struct ieee80211_hw *hw)
@@ -2152,6 +2196,214 @@ static void nrc_mac_update_p2p_ps(struct sk_buff *skb,
 /* S1G Short Beacon Interval (in TU) */
 #define DEF_CFG_S1G_SHORT_BEACON_COUNT 10
 
+/* ---------- bss_info_changed helpers ------------------------------------ */
+
+/**
+ * nrc_bss_handle_assoc - Handle BSS_CHANGED_ASSOC
+ *
+ * Calls nrc_bss_assoc() on association, manages the beacon-monitor timer,
+ * and auto-starts the dynamic PS timer for deep-sleep modes.
+ */
+static void nrc_bss_handle_assoc(struct ieee80211_hw *hw,
+				 struct ieee80211_vif *vif,
+				 struct ieee80211_bss_conf *info,
+				 struct sk_buff *skb)
+{
+	struct nrc *nw = hw->priv;
+	struct nrc_vif *i_vif = to_i_vif(vif);
+	bool assoc;
+
+#ifdef CONFIG_USE_VIF_CFG
+	assoc = vif->cfg.assoc;
+#else
+	assoc = info->assoc;
+#endif
+
+	if (assoc) {
+		nrc_bss_assoc(hw, vif, info, skb);
+
+		spin_lock_bh(&nw->vif_lock);
+		nw->associated_vif = vif;
+		if (!nw->params->disable_cqm) {
+			DBG_MAC("mod_timer in %s:%d", __FUNCTION__, __LINE__);
+			mod_timer(&nw->bcn_mon_timer,
+				  jiffies +
+					  msecs_to_jiffies(nw->beacon_timeout));
+		}
+		spin_unlock_bh(&nw->vif_lock);
+
+		/*
+		 * Auto-start PS timer for deep sleep modes.  NRC deep sleep
+		 * is driver-managed and mac80211 may never set
+		 * dynamic_ps_timeout (leaving it 0).  Fall back to 3000 ms
+		 * so deep sleep starts after association regardless.
+		 * Do NOT write hw->conf.dynamic_ps_timeout — that belongs to
+		 * mac80211.
+		 */
+		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
+			nw->hdev->ps.timeout =
+				hw->conf.dynamic_ps_timeout > 0 ?
+				hw->conf.dynamic_ps_timeout : 3000;
+			DBG_MAC("[BSS_CHANGED_ASSOC] Auto PS start (mode=%d), timeout=%d ms",
+				nw->params->power_save, nw->hdev->ps.timeout);
+			nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
+		}
+	} else {
+		spin_lock_bh(&nw->vif_lock);
+		if (!nw->params->disable_cqm) {
+			nw->beacon_timeout = 0;
+			DBG_MAC("del_timer in %s:%d", __FUNCTION__, __LINE__);
+			try_to_del_timer_sync(&nw->bcn_mon_timer);
+			nw->is_bcn_timeout = false;
+		}
+		nw->associated_vif = NULL;
+		spin_unlock_bh(&nw->vif_lock);
+	}
+
+	DBG_MAC("[BSS_CHANGED_ASSOC] associated_vif:%d beacon_timeout:%lu",
+		nw->associated_vif ? i_vif->index : -1, nw->beacon_timeout);
+}
+
+/**
+ * nrc_bss_handle_beacon_int - Handle BSS_CHANGED_BEACON_INT / BEACON_ENABLED
+ * @beacon_enabled_changed: true when BSS_CHANGED_BEACON_ENABLED is also set
+ *
+ * Computes the S1G Short Beacon Interval for AP/MESH and pushes beacon
+ * timing TLVs.  BSS_CHANGED_BEACON_ENABLED is AP/MESH only.
+ */
+static void nrc_bss_handle_beacon_int(struct ieee80211_hw *hw,
+				      struct ieee80211_vif *vif,
+				      struct ieee80211_bss_conf *info,
+				      struct sk_buff *skb,
+				      bool beacon_enabled_changed)
+{
+	struct nrc *nw = hw->priv;
+	struct nrc_vif *i_vif = to_i_vif(vif);
+	u16 bi, short_bi = 0;
+	u8 dtim_period = info->dtim_period;
+
+	DBG_MAC("beacon: %s, interval=%u, dtim_period:%u",
+		info->enable_beacon ? "enabled" : "disabled",
+		info->beacon_int, info->dtim_period);
+
+	nw->beacon_int = bi = info->beacon_int;
+	if (!nw->params->disable_cqm && vif->type == NL80211_IFTYPE_STATION) {
+		nw->beacon_timeout = nw->params->beacon_loss_count * bi;
+		DBG_MAC("[BSS_CHANGED_BEACON_INT] assoc:%d beacon_timeout:%lu",
+			nw->associated_vif ? i_vif->index : -1,
+			nw->beacon_timeout);
+	}
+
+	/*
+	 * S1G Short Beacon Interval: when enable_short_bi is set, the value
+	 * from hostapd/wpa_supplicant is treated as the Short BI and the full
+	 * BI is Short BI * DEF_CFG_S1G_SHORT_BEACON_COUNT (default 10).
+	 * For STA the target extracts the Short BI from received beacons.
+	 */
+	if ((vif->type == NL80211_IFTYPE_AP ||
+	     vif->type == NL80211_IFTYPE_MESH_POINT
+#if defined(CONFIG_SUPPORT_IBSS)
+	     || vif->type == NL80211_IFTYPE_ADHOC
+#endif
+	    ) && nrc_mac_is_s1g(nw->hdev) && nw->params->enable_short_bi) {
+		short_bi = info->beacon_int;
+		/* beacon interval is 16-bit; clamp the multiplied value */
+		if (DEF_CFG_S1G_SHORT_BEACON_COUNT * short_bi <= 65535)
+			bi = DEF_CFG_S1G_SHORT_BEACON_COUNT * short_bi;
+		else
+			bi = (65535 / short_bi) * short_bi;
+	}
+
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BCN_INTV, sizeof(bi), &bi);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SHORT_BCN_INTV,
+				    sizeof(short_bi), &short_bi);
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_DTIM_PERIOD,
+				    sizeof(dtim_period), &dtim_period);
+
+#if defined(CONFIG_SUPPORT_BEACON_BYPASS)
+	if (nw->params->enable_beacon_bypass) {
+		uint8_t enable = (uint8_t)nw->params->enable_beacon_bypass;
+
+		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BEACON_BYPASS,
+					    sizeof(u8), &enable);
+	}
+#endif /* CONFIG_SUPPORT_BEACON_BYPASS */
+
+	if (beacon_enabled_changed)
+		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BEACON_ENABLE,
+					    sizeof(info->enable_beacon),
+					    &info->enable_beacon);
+
+	/* TWT scheduling must start after beacon interval is configured */
+	if (vif->type == NL80211_IFTYPE_AP)
+		nrc_twt_sched_start(nw, vif);
+}
+
+#ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
+/**
+ * nrc_bss_handle_txpower - Handle BSS_CHANGED_TXPOWER
+ */
+static void nrc_bss_handle_txpower(struct ieee80211_hw *hw,
+				   struct ieee80211_bss_conf *info,
+				   struct sk_buff *skb)
+{
+	int txpower = info->txpower;
+	uint16_t txpower_type = info->txpower_type;
+
+	INFO("%s(changed:%s[PW=%d TYPE=%s])", __func__,
+	     "BSS_CHANGED_TXPOWER", txpower,
+	     txpower_type == TXPWR_LIMIT ? "limit" :
+	     txpower_type		 ? "fixed" :
+					   "auto");
+
+#ifdef CONFIG_SUPPORT_IW_IWCONFIG_TXPWR
+	if (txpower < 1 || txpower > 30) {
+		INFO("%s invalid txpower (%d)", __func__, txpower);
+	} else {
+		u32 p = (txpower_type << 16) | txpower;
+
+		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SET_TXPOWER,
+					    sizeof(u32), &p);
+	}
+#endif /* CONFIG_SUPPORT_IW_IWCONFIG_TXPWR */
+}
+#endif /* CONFIG_SUPPORT_AFTER_KERNEL_3_0_36 */
+
+/**
+ * nrc_bss_handle_ps - Handle BSS_CHANGED_PS
+ *
+ * Primary PS update path on kernel v6.0+.  Deep sleep is driver-managed so
+ * this handler is skipped for DEEPSLEEP_TIM / DEEPSLEEP_NONTIM modes to
+ * prevent mac80211 (which always reports dynamic_ps_timeout=0 for NRC deep
+ * sleep) from resetting the timeout installed in nrc_bss_handle_assoc().
+ */
+static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
+			      struct ieee80211_vif *vif,
+			      struct ieee80211_bss_conf *info)
+{
+	struct nrc *nw = hw->priv;
+	bool ps_on;
+
+	if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
+		DBG_MAC("%s(changed:%s) deep-sleep mode — skipping",
+			__func__, "BSS_CHANGED_PS");
+		return;
+	}
+
+#ifdef CONFIG_USE_VIF_CFG
+	ps_on = vif->cfg.ps;
+#else
+	ps_on = info->ps;
+#endif
+
+	DBG_MAC("%s(changed:%s) ps=%d timeout=%d",
+		__func__, "BSS_CHANGED_PS", ps_on,
+		hw->conf.dynamic_ps_timeout);
+	nrc_mac_apply_ps(nw, ps_on, hw->conf.dynamic_ps_timeout);
+}
+
+/* ---------- bss_info_changed dispatcher --------------------------------- */
+
 void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 			      struct ieee80211_vif *vif,
 			      struct ieee80211_bss_conf *info,
@@ -2161,67 +2413,21 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 			      u32 changed)
 #endif
 {
-	struct nrc_vif *i_vif = to_i_vif(vif);
 	struct nrc *nw = hw->priv;
 	struct nrc_hif_device *hdev = nw->hdev;
 	struct sk_buff *skb;
 	int ret;
 
-	//DBG_MAC("%s: changed=0x%x", __func__, changed);
+	DBG_MAC("%s: changed=0x%llx", __func__, (u64)changed);
 
-	if (NRC_DRV_IS_ASLEEP(hdev)) {
+	if (NRC_DRV_IS_ASLEEP(hdev))
 		return;
-	}
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, WIM_MAX_SIZE);
 
-	if (changed & BSS_CHANGED_ASSOC) {
-#ifdef CONFIG_USE_VIF_CFG
-		if (vif->cfg.assoc) {
-#else
-		if (info->assoc) {
-#endif
-			nrc_bss_assoc(hw, vif, info, skb);
+	if (changed & BSS_CHANGED_ASSOC)
+		nrc_bss_handle_assoc(hw, vif, info, skb);
 
-			spin_lock_bh(&nw->vif_lock);
-			nw->associated_vif = vif;
-			if (!nw->params->disable_cqm) {
-				DBG_MAC("mod_timer in %s:%d", __FUNCTION__,
-					__LINE__);
-				mod_timer(&nw->bcn_mon_timer,
-					  jiffies +
-						  msecs_to_jiffies(
-							  nw->beacon_timeout));
-			}
-			spin_unlock_bh(&nw->vif_lock);
-
-			/* Auto-start PS timer on association for deep sleep modes */
-			if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
-				if (hw->conf.dynamic_ps_timeout == 0)
-					hw->conf.dynamic_ps_timeout = 3000;
-				nw->hdev->ps.timeout =
-					hw->conf.dynamic_ps_timeout;
-				DBG_MAC("[BSS_CHANGED_ASSOC] Auto PS start (mode=%d), timeout=%d ms",
-					nw->params->power_save,
-					nw->hdev->ps.timeout);
-				nrc_ps_dyn_start(nw);
-			}
-		} else {
-			spin_lock_bh(&nw->vif_lock);
-			if (!nw->params->disable_cqm) {
-				nw->beacon_timeout = 0;
-				DBG_MAC("del_timer in %s:%d", __FUNCTION__,
-					__LINE__);
-				try_to_del_timer_sync(&nw->bcn_mon_timer);
-				nw->is_bcn_timeout = false;
-			}
-			nw->associated_vif = NULL;
-			spin_unlock_bh(&nw->vif_lock);
-		}
-		DBG_MAC("[BSS_CHANGED_ASSOC] associated_vif:%d beacon_timeout:%lu",
-			nw->associated_vif ? i_vif->index : -1,
-			nw->beacon_timeout);
-	}
 #ifndef CONFIG_S1G_CHANNEL
 	if (changed & BSS_CHANGED_BASIC_RATES) {
 		DBG_MAC("basic_rate: %08x", info->basic_rates);
@@ -2229,101 +2435,23 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 					    sizeof(info->basic_rates),
 					    &info->basic_rates);
 	}
-
 	if (changed & BSS_CHANGED_HT) {
 		DBG_MAC("ht: %08x", info->ht_operation_mode);
-
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_HT_MODE,
 					    sizeof(info->ht_operation_mode),
 					    &info->ht_operation_mode);
 	}
 #endif
+
 	if (changed & BSS_CHANGED_BSSID) {
 		DBG_MAC("bssid=%pM", info->bssid);
-
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BSSID, ETH_ALEN,
 					    (void *)info->bssid);
 	}
 
-	if (changed & BSS_CHANGED_BEACON_INT ||
-	    changed & BSS_CHANGED_BEACON_ENABLED) {
-		/**
-		 * BSS_CHANGED_BEACON_ENABLED flag is used only for AP and MESH.
-		 */
-		u16 bi, short_bi = 0;
-		u8 dtim_period = info->dtim_period;
-
-		DBG_MAC("beacon: %s, interval=%u, dtim_period:%u",
-			info->enable_beacon ? "enabled" : "disabled",
-			info->beacon_int, info->dtim_period);
-
-		nw->beacon_int = bi = info->beacon_int;
-		if (!nw->params->disable_cqm) {
-			if (vif->type == NL80211_IFTYPE_STATION) {
-				nw->beacon_timeout =
-					nw->params->beacon_loss_count * bi;
-				DBG_MAC("[BSS_CHANGED_BEACON_INT] assoc:%d beacon_timeout:%lu",
-					nw->associated_vif ? i_vif->index : -1,
-					nw->beacon_timeout);
-			}
-		}
-		if ((vif->type == NL80211_IFTYPE_AP ||
-		     (vif->type == NL80211_IFTYPE_MESH_POINT)
-#if defined(CONFIG_SUPPORT_IBSS)
-		     || (vif->type == NL80211_IFTYPE_ADHOC)
-#endif
-			     ) &&
-		    nrc_mac_is_s1g(nw->hdev) && nw->params->enable_short_bi) {
-			/**
-			 * AP/MESH : When 'enable_short_bi' is true(AP will send S1G beacons with both(full/minimum) set),
-			 *			the Short Beacon Interval is 'beacon_int' value in hostap/wpa_supplicant conf. file
-			 *			and the Beacon Interval will be 'Short Beacon Interval * 10'.
-			 *			Otherwise, 'beacon_int' is used for the value of Beacon Interval and
-			 *			the Short Beacon Interval is 0.
-			 *     STA : Basically, the beacon_int from mac80211 will be treated as the Beacon Interval in STA.
-			 *			and the Short Beacon Interval value will be extracted from beacons directly in the target
-			 *			after established the Wi-Fi connection.
-			 */
-			short_bi = info->beacon_int;
-			/* beacon interval is 16-bit length */
-			if (DEF_CFG_S1G_SHORT_BEACON_COUNT * short_bi <=
-			    65535) {
-				/* default ratio is 10 */
-				bi = DEF_CFG_S1G_SHORT_BEACON_COUNT * short_bi;
-			} else {
-				/* adjust ratio of s1g bcn and s1g short bcn */
-				bi = (65535 / short_bi) * short_bi;
-			}
-		}
-
-		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BCN_INTV, sizeof(bi),
-					    &bi);
-
-		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SHORT_BCN_INTV,
-					    sizeof(short_bi), &short_bi);
-		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_DTIM_PERIOD,
-					    sizeof(dtim_period), &dtim_period);
-
-#if defined(CONFIG_SUPPORT_BEACON_BYPASS)
-		if (nw->params->enable_beacon_bypass) {
-			uint8_t enable =
-				(uint8_t)nw->params->enable_beacon_bypass;
-			nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BEACON_BYPASS,
-						    sizeof(u8), &enable);
-		}
-#endif /* CONFIG_SUPPORT_BEACON_BYPASS */
-
-		if (changed & BSS_CHANGED_BEACON_ENABLED) {
-			nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BEACON_ENABLE,
-						    sizeof(info->enable_beacon),
-						    &info->enable_beacon);
-		}
-
-		if (vif->type == NL80211_IFTYPE_AP) {
-			/* need to start after setting beacon interval */
-			nrc_twt_sched_start(nw, vif);
-		}
-	}
+	if (changed & (BSS_CHANGED_BEACON_INT | BSS_CHANGED_BEACON_ENABLED))
+		nrc_bss_handle_beacon_int(hw, vif, info, skb,
+					  !!(changed & BSS_CHANGED_BEACON_ENABLED));
 
 	if (changed & BSS_CHANGED_BEACON)
 		nrc_vendor_update_beacon(hw, vif);
@@ -2332,12 +2460,10 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed & BSS_CHANGED_SSID) {
 #ifdef CONFIG_USE_VIF_CFG
 		DBG_MAC("ssid=%s", vif->cfg.ssid);
-
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SSID,
 					    vif->cfg.ssid_len, vif->cfg.ssid);
 #else
 		DBG_MAC("ssid=%s", info->ssid);
-
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SSID, info->ssid_len,
 					    info->ssid);
 #endif
@@ -2354,7 +2480,7 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 		p->use_short_slot = info->use_short_slot;
 	}
 
-	/* TODO: implement! */
+	/* TODO: implement */
 	if (changed & BSS_CHANGED_CQM)
 		DBG_MAC("%s(changed:%s)", __func__, "BSS_CHANGED_CQM");
 	if (changed & BSS_CHANGED_IBSS)
@@ -2363,51 +2489,36 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 		DBG_MAC("%s(changed:%s)", __func__, "BSS_CHANGED_ARP_FILTER");
 	if (changed & BSS_CHANGED_IDLE)
 		DBG_MAC("%s(changed:%s)", __func__, "BSS_CHANGED_IDLE");
+
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
-	if (changed & BSS_CHANGED_TXPOWER) {
-		int txpower = info->txpower;
-		uint16_t txpower_type = info->txpower_type;
-		INFO("%s(changed:%s[PW=%d TYPE=%s])", __func__,
-		     "BSS_CHANGED_TXPOWER", txpower,
-		     txpower_type == TXPWR_LIMIT ? "limit" :
-		     txpower_type		 ? "fixed" :
-						   "auto");
-#ifdef CONFIG_SUPPORT_IW_IWCONFIG_TXPWR
-		if (txpower < 1 || txpower > 30) {
-			INFO("%s invalid txpowr (%d)", __func__, txpower);
-		} else {
-			u32 p = txpower_type;
-			p = (p << 16) | txpower;
-			nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_SET_TXPOWER,
-						    sizeof(u32), &p);
-		}
-#endif /* CONFIG_SUPPORT_IW_IWCONFIG_TXPWR */
-	}
+	if (changed & BSS_CHANGED_TXPOWER)
+		nrc_bss_handle_txpower(hw, info, skb);
+
 	if (changed & BSS_CHANGED_P2P_PS) {
 		DBG_MAC("%s(changed:%s)", __func__, "BSS_CHANGED_P2P_PS");
 		nrc_mac_update_p2p_ps(skb, vif);
 	}
-	if (changed & BSS_CHANGED_BEACON_INFO) {
-		/*
-		 * dtim_period for STA is transferred by this.
-		 * but, the target is getting this info from TIM ie in beacon.
-		 */
+
+	if (changed & BSS_CHANGED_BEACON_INFO)
+		/* dtim_period for STA; target reads it from TIM IE directly */
 		DBG_MAC("%s(changed:%s) dtim_period:%u", __func__,
 			"BSS_CHANGED_BEACON_INFO", info->dtim_period);
-	}
+
 	if (changed & BSS_CHANGED_BANDWIDTH)
 		DBG_MAC("%s(changed:%s)", __func__, "BSS_CHANGED_BANDWIDTH");
 #ifdef CONFIG_SUPPORT_IFTYPE_OCB
 	if (changed & BSS_CHANGED_OCB)
 		DBG_MAC("%s(changed:%s)", __func__, "BSS_CHANGED_OCB");
 #endif
-#endif
+#endif /* CONFIG_SUPPORT_AFTER_KERNEL_3_0_36 */
+
+	if (changed & BSS_CHANGED_PS)
+		nrc_bss_handle_ps(hw, vif, info);
 
 	if (skb->len > sizeof(struct wim)) {
 		ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 		if (ret < 0) {
 			ERR("failed to transmit a wim request (ret=%d)", ret);
-			/* Free SKB on transmission failure */
 			NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false,
 					   false);
 		}
@@ -2930,8 +3041,6 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 	i_sta = to_i_sta(sta);
 	DBG_AMPDU("action: %pM TID(%d)", sta->addr, tid);
 
-	nrc_ps_dyn_start_custom_timeout(nw, 2000); /* addBA timeout is 1sec */
-
 	switch (action) {
 	case IEEE80211_AMPDU_TX_START:
 		DBG_AMPDU("action: TX_START");
@@ -2950,6 +3059,15 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 			ret = -EOPNOTSUPP;
 			goto out;
 		}
+
+		/*
+		 * Freeze dynamic PS during BA session setup: the device must
+		 * stay awake until mac80211 calls back with TX_OPERATIONAL
+		 * (success) or TX_STOP_* (failure/timeout).  No timer-based
+		 * approximation is needed because mac80211 guarantees one of
+		 * those two completion callbacks will follow.
+		 */
+		nrc_ps_dyn_stop(nw, NRC_PS_REASON_DRV_BSS_CONFIG);
 
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_REQUEST;
 		i_sta->tx_ba_session[tid].ba_req_last_jiffies = jiffies;
@@ -2970,10 +3088,14 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 	case IEEE80211_AMPDU_TX_STOP_FLUSH:
 		DBG_AMPDU("action: TX_STOP_FLUSH");
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_CLOSE;
+		/* BA setup failed/flushed: resume normal PS idle timer */
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
 		break;
 	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
 		DBG_AMPDU("action: TX_STOP_FLUSH_CONT");
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_CLOSE;
+		/* BA setup failed/flushed: resume normal PS idle timer */
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
 		break;
 	case IEEE80211_AMPDU_TX_STOP_CONT:
 		DBG_AMPDU("action: TX_STOP_CONT");
@@ -2985,7 +3107,8 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_REJECT;
 		i_sta->tx_ba_session[tid].ba_req_last_jiffies = jiffies;
 		ieee80211_stop_tx_ba_cb_irqsafe(vif, sta->addr, tid);
-		// nrc_hal_ops_set_auto_ba(false);
+		/* BA session ended: resume normal PS idle timer */
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
 		break;
 #endif
 	case IEEE80211_AMPDU_TX_OPERATIONAL:
@@ -2996,8 +3119,12 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 			ret = -EOPNOTSUPP;
 			goto out;
 		}
-
-		// nrc_hal_ops_set_auto_ba(true);
+		/*
+		 * BA session is now fully operational.  Resume the normal
+		 * dynamic PS idle timer so the device can sleep once TX
+		 * traffic settles.
+		 */
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
 		ret = 0;
 		goto out;
 	case IEEE80211_AMPDU_RX_START:
@@ -3163,7 +3290,7 @@ void nrc_mac_scan_completed_work_handler(struct work_struct *work)
 			}
 		}
 
-		nrc_ps_dyn_start(nw);
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
 	}
 
 	kfree(w);
@@ -3238,8 +3365,8 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 {
 	struct nrc *nw = hw->priv;
 	struct nrc_hif_device *hdev = nw->hdev;
-	int scan_to = 30000; /* msec */
 #ifdef CONFIG_USE_SCAN_TIMEOUT
+	int scan_to = 30000; /* msec */
 	struct nrc_vif *i_vif = to_i_vif(vif);
 #endif
 	int ret;
@@ -3293,10 +3420,8 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			}
 		}
 
-		nrc_ps_dyn_stop(nw);
+		nrc_ps_dyn_stop(nw, NRC_PS_REASON_DRV_SCAN_START);
 	}
-
-	scan_to += 120 * req->n_channels;
 
 	nrc_wim_wlan_hw_scan(vif, req, ies);
 
@@ -3601,7 +3726,13 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	//nrc_wim_install_key need to wait to receive fw result
 	//rcu_read_lock();
 
-	nrc_ps_dyn_start_custom_timeout(nw, 2000);
+	/*
+	 * Stop dynamic PS and wake the device for the duration of key
+	 * installation.  The WIM exchange is synchronous; nrc_ps_dyn_start()
+	 * is called at return_with_rcu_unlock to resume the idle timer once
+	 * the operation (success or failure) is complete.
+	 */
+	nrc_ps_dyn_stop(nw, NRC_PS_REASON_DRV_BSS_CONFIG);
 
 	mutex_lock(&nw->state_mtx);
 
@@ -3717,6 +3848,8 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 #endif
 
 return_with_rcu_unlock:
+	/* Key install complete (or aborted): resume normal PS idle timer */
+	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
 	mutex_unlock(&nw->state_mtx);
 	//rcu_read_unlock();
 	return ret;

@@ -326,7 +326,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 		if (NRC_PS_IS_AWAKE(tx.nw->hdev)) {
 			/* without check, ps_timer is expired before wake-up if ps_time is too short (100ms~300ms) */
 			/* after done wake-up, nrc_ps_dyn_start is called */
-			nrc_ps_dyn_start(tx.nw);
+			nrc_ps_dyn_start(tx.nw, 0, NRC_PS_REASON_DRV_TX_WAKEUP);
 		}
 	} //if (tx.nw->vif[vif_id]->type == NL80211_IFTYPE_STATION)
 
@@ -1281,7 +1281,7 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 			DBG_MAC("RX EAPOL(%d), ADDR1: %pM, ADDR2: %pM",
 				eapol_msg, mh->addr1, mh->addr2);
 			/* key exchange and install key */
-			nrc_ps_dyn_start_custom_timeout(nw, 1000);
+			nrc_ps_dyn_start(nw, 1000, NRC_PS_REASON_DRV_RX_WAKEUP);
 		}
 
 		/* During hw_scan, log PROBE_RESP and pass to mac80211.
@@ -1313,7 +1313,7 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 		ieee80211_rx_irqsafe(nw->hw, rx.skb);
 
 		if (ieee80211_is_data(fc))
-			nrc_ps_dyn_start(nw);
+			nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_RX_WAKEUP);
 
 		if (!ieee80211_hw_check(nw->hw, SUPPORTS_PS)) {
 			if (nw->invoke_beacon_loss) {
