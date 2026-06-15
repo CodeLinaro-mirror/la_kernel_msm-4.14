@@ -334,7 +334,17 @@ void nrc_mac_rx_twt_teardown(struct nrc *nw, struct ieee80211_sta *sta,
 
 		DBG_STATE("TWT: re-establishing flowid=%u for %pM after STA cleanup teardown",
 			  flowid, sta->addr);
-		nrc_twt_sched_entry_add(nw, i_sta, flow);
+		if (nrc_twt_sched_entry_add(nw, i_sta, flow) < 0) {
+			/*
+			 * Allocation failed (GFP_ATOMIC under memory pressure)
+			 * or no free scheduler slot.  The AP scheduler has no
+			 * entry for this flow while the STA still considers the
+			 * TWT session active.  The STA will not receive TWT SPs
+			 * and must re-negotiate the session.
+			 */
+			WARN_MAC("TWT: re-establish failed for flowid=%u sta=%pM",
+				 flowid, sta->addr);
+		}
 		i_sta->twt.assoc_flowid = 0;
 	}
 }

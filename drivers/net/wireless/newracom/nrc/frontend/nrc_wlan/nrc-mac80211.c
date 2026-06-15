@@ -1966,17 +1966,20 @@ void nrc_mac_add_tlv_channel(struct sk_buff *skb,
  * nrc_mac_apply_ps - Apply mac80211 PS state to the driver
  * @nw:         NRC driver state
  * @ps_on:      true if mac80211 has PS enabled for this VIF
- * @timeout_ms: dynamic PS timeout from hw->conf.dynamic_ps_timeout
+ * @timeout_ms: PS timeout in ms from hw->conf.dynamic_ps_timeout.
  *              0 = dynamic PS disabled ("stay awake indefinitely")
  *
  * Single entry point for all mac80211-originated PS state changes.
- * Called from both the config() path (IEEE80211_CONF_CHANGE_PS) and the
- * bss_info_changed() path (BSS_CHANGED_PS, primary on kernel v6.0+).
+ * Called from the config() path (IEEE80211_CONF_CHANGE_PS) and the
+ * bss_info_changed() path (BSS_CHANGED_PS).
  *
  * Decision table:
- *   timeout=0              → stop timer, force wake (PS disabled by mac80211)
+ *   timeout=0              → stop timer, force wake (PS disabled)
  *   ps_on=true, timeout>0  → sync timeout, start dynamic PS timer
  *   ps_on=false, timeout>0 → stop timer, wake if currently asleep
+ *
+ * Note: nrc_bss_handle_ps() early-returns for NRC_PS_NONE so this
+ * function is only reached for modem-sleep mode from that path.
  */
 static void nrc_mac_apply_ps(struct nrc *nw, bool ps_on, int timeout_ms)
 {
@@ -1987,13 +1990,24 @@ static void nrc_mac_apply_ps(struct nrc *nw, bool ps_on, int timeout_ms)
 	    atomic_read(&nw->scan_mode));
 
 	/*
-	 * timeout=0: mac80211 disables dynamic PS — device must stay WAKE.
-	 * This takes priority over ps_on; stop timer and wake unconditionally.
+	 * timeout=0 semantics depend on ps_on:
+	 *   ps_on=false, timeout=0 → explicit PS disable; stop timer and wake.
+	 *   ps_on=true,  timeout=0 → "immediate sleep" (e.g. user ran
+	 *       iwconfig power timeout 0 then iw set power_save on).
+	 *       mac80211 sets timeout=0 meaning "no inactivity delay", not
+	 *       "disable PS".  Fall back to the driver default so PS is
+	 *       actually enabled.
 	 */
 	if (timeout_ms == 0) {
-		nw->hdev->ps.timeout = 0;
-		nrc_ps_dyn_stop(nw, NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
-		return;
+		if (!ps_on) {
+			nw->hdev->ps.timeout = 0;
+			nrc_ps_dyn_stop(nw, NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
+			return;
+		}
+		DBG(CAT(MAC) | CAT(PS),
+		    "apply_ps: timeout=0 + ps_on=true → using default %dms",
+		    NRC_PS_DEFAULT_TIMEOUT_MS);
+		timeout_ms = NRC_PS_DEFAULT_TIMEOUT_MS;
 	}
 
 	/* Sync timeout from mac80211 */
@@ -2288,8 +2302,9 @@ static void nrc_bss_handle_assoc(struct ieee80211_hw *hw,
 		/*
 		 * Auto-start PS timer for deep sleep modes.  NRC deep sleep
 		 * is driver-managed and mac80211 may never set
-		 * dynamic_ps_timeout (leaving it 0).  Fall back to 3000 ms
-		 * so deep sleep starts after association regardless.
+		 * dynamic_ps_timeout (leaving it 0).  Fall back to
+		 * NRC_PS_DEFAULT_TIMEOUT_MS so deep sleep starts after
+		 * association regardless.
 		 * Do NOT write hw->conf.dynamic_ps_timeout — that belongs to
 		 * mac80211.
 		 */
@@ -2297,7 +2312,7 @@ static void nrc_bss_handle_assoc(struct ieee80211_hw *hw,
 			nw->hdev->ps.timeout =
 				hw->conf.dynamic_ps_timeout > 0 ?
 					hw->conf.dynamic_ps_timeout :
-					3000;
+					NRC_PS_DEFAULT_TIMEOUT_MS;
 			DBG_MAC("[BSS_CHANGED_ASSOC] Auto PS start (mode=%d), timeout=%d ms",
 				nw->params->power_save, nw->hdev->ps.timeout);
 			nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_DRV_BSS_CONFIG);
@@ -2427,10 +2442,13 @@ static void nrc_bss_handle_txpower(struct ieee80211_hw *hw,
 /**
  * nrc_bss_handle_ps - Handle BSS_CHANGED_PS
  *
- * Primary PS update path on kernel v6.0+.  Deep sleep is driver-managed so
- * this handler is skipped for DEEPSLEEP_TIM / DEEPSLEEP_NONTIM modes to
- * prevent mac80211 (which always reports dynamic_ps_timeout=0 for NRC deep
- * sleep) from resetting the timeout installed in nrc_bss_handle_assoc().
+ * Handles mac80211 PS notifications only for modem-sleep mode (power_save=1).
+ * Skipped for:
+ *   - NRC_PS_NONE: nrc_ps_set_mode() is a no-op when power_save=0, so
+ *     mac80211 PS notifications have no effect on the driver or firmware.
+ *   - NRC_PS_DEEPSLEEP_TIM/NONTIM: driver-managed; mac80211 always reports
+ *     dynamic_ps_timeout=0 for NRC deep sleep which must not override the
+ *     timeout installed in nrc_bss_handle_assoc().
  */
 static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
 			      struct ieee80211_vif *vif,
@@ -2438,6 +2456,12 @@ static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
 {
 	struct nrc *nw = hw->priv;
 	bool ps_on;
+
+	if (nw->params->power_save == NRC_PS_NONE) {
+		DBG_MAC("%s(changed:%s) PS disabled — skipping", __func__,
+			"BSS_CHANGED_PS");
+		return;
+	}
 
 	if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
 		DBG_MAC("%s(changed:%s) deep-sleep mode — skipping", __func__,
@@ -2451,8 +2475,8 @@ static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
 	ps_on = info->ps;
 #endif
 
-	DBG_MAC("%s(changed:%s) ps=%d timeout=%d", __func__, "BSS_CHANGED_PS",
-		ps_on, hw->conf.dynamic_ps_timeout);
+	DBG_MAC("%s(changed:%s) ps=%d timeout=%d", __func__,
+		"BSS_CHANGED_PS", ps_on, hw->conf.dynamic_ps_timeout);
 	nrc_mac_apply_ps(nw, ps_on, hw->conf.dynamic_ps_timeout);
 }
 

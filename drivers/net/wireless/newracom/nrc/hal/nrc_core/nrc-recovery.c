@@ -119,7 +119,16 @@ void nrc_recovery_start(struct nrc_hif_device *hdev, const char *reason)
 	r->last_recovery_jiffies = jiffies;
 	mutex_unlock(&r->lock);
 
-	cancel_delayed_work_sync(&r->time_check_work);
+	/*
+	 * Use non-sync cancel: nrc_recovery_start() may be called from
+	 * within nrc_recovery_time_check_handler (a work_struct handler
+	 * for time_check_work itself).  cancel_delayed_work_sync() would
+	 * try to flush that same work item, causing a recursive lock
+	 * warning and potential deadlock.  The in_recovery flag already
+	 * prevents the handler from triggering a second recovery if it
+	 * somehow fires after this point.
+	 */
+	cancel_delayed_work(&r->time_check_work);
 
 	ERR("recovery: TRIGGERED #%u (reason=%s) "
 		"wim=%u tx=%u wake=%u total=%u",

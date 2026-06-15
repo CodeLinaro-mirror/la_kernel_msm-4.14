@@ -27,6 +27,13 @@ int nrc_ps_set_mode(struct nrc *nw, enum NRC_PS_MODE mode, u64 timeout,
 		    struct cfg80211_wowlan *wowlan,
 		    enum NRC_PS_REASON reason);
 
+/*
+ * Default PS timer timeout (ms) used when mac80211 has not configured
+ * dynamic_ps_timeout (i.e. the value is 0).  Applies to:
+ *   - Deep sleep auto-start after association (nrc_bss_handle_assoc)
+ */
+#define NRC_PS_DEFAULT_TIMEOUT_MS	3000
+
 /* Dynamic PS functions - runtime controlled via hdev->ps.supports_dynamic_ps */
 void nrc_ps_dyn_init(struct nrc *nw);
 void nrc_ps_dyn_deinit(struct nrc *nw);
