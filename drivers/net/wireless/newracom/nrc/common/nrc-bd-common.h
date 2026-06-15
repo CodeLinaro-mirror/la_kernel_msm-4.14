@@ -16,7 +16,10 @@
 struct bd_supp_param {
 	uint8_t num_ch;
 	uint8_t s1g_ch_index[NRC_BD_MAX_CH_LIST];
-	uint16_t nons1g_ch_freq[NRC_BD_MAX_CH_LIST];
+	uint16_t nons1g_ch_freq
+		[NRC_BD_MAX_CH_LIST]; /* NonS1G proxy freq (MHz) — for mac80211 chan matching */
+	uint16_t s1g_ch_freq
+		[NRC_BD_MAX_CH_LIST]; /* S1G freq ×10 (e.g. 9165 = 916.5 MHz) — for display */
 };
 
 #endif /* _NRC_BD_COMMON_H_ */

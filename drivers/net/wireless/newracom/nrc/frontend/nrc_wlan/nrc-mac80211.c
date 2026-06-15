@@ -108,20 +108,16 @@ bool no_convert_usf = false;
 
 char nrc_cc[2];
 
-#define CHAN2G(freq)                             \
-	{                                        \
-		.band = NL80211_BAND_2GHZ,       \
-		.center_freq = (freq),           \
-		.hw_value = ((freq - 2407) / 5), \
-		.max_power = 20,                 \
+#define CHAN2G(freq)                                              \
+	{                                                         \
+		.band = NL80211_BAND_2GHZ, .center_freq = (freq), \
+		.hw_value = ((freq - 2407) / 5), .max_power = 20, \
 	}
 
-#define CHAN5G(freq)                             \
-	{                                        \
-		.band = NL80211_BAND_5GHZ,       \
-		.center_freq = (freq),           \
-		.hw_value = ((freq - 5000) / 5), \
-		.max_power = 20,                 \
+#define CHAN5G(freq)                                              \
+	{                                                         \
+		.band = NL80211_BAND_5GHZ, .center_freq = (freq), \
+		.hw_value = ((freq - 5000) / 5), .max_power = 20, \
 	}
 
 #define NRC_CONFIGURE_FILTERS \
@@ -1025,13 +1021,36 @@ static int nrc_mac_start(struct ieee80211_hw *hw)
 
 	DBG_MAC("%s called", __FUNCTION__);
 #if defined(CONFIG_SUPPORT_BD)
-	/* Case of Invalid board data */
+	/*
+	 * nw->alpha2 is initialised to "99" (the driver sentinel for
+	 * "no CC set yet").  At boot with auto-loaded modules, cfg80211
+	 * calls nrc_reg_notifier("00") which is skipped, so alpha2 stays
+	 * "99" and g_bd_valid stays false.  Detect both "99" and an empty
+	 * string as "unset" and default to "US" so that BD is pushed to FW
+	 * and WLAN can start.
+	 * Under start_modular.py flow this branch never fires because
+	 * 'iw reg set US' runs before hostapd/wpa_supplicant starts.
+	 */
+	if (!nw->alpha2[0] || (nw->alpha2[0] == '9' && nw->alpha2[1] == '9')) {
+		WARN_MAC(
+			"mac_start: no valid CC set (boot auto-load, CC=%c%c); defaulting to US",
+			nw->alpha2[0] ? nw->alpha2[0] : '?',
+			nw->alpha2[1] ? nw->alpha2[1] : '?');
+		nw->alpha2[0] = 'U';
+		nw->alpha2[1] = 'S';
+		nrc_restore_reg_domain(nw);
+	} else {
+		INFO_MAC("mac_start: CC already set to %c%c", nw->alpha2[0],
+			 nw->alpha2[1]);
+	}
+
+	/* BD must be in FW before any WLAN operation */
 	if (!g_bd_valid) {
-		DBG_MAC("@@@@@@@@@ bd(%d) is invalid. Stop MAC START @@@@@@@",
-			g_bd_valid);
-		return -1;
+		ERR_MAC("mac_start: BD not loaded in FW (no valid CC?), blocking");
+		return -EINVAL;
 	}
 #endif
+
 	mutex_lock(&nw->state_mtx);
 
 	if (nrc_idle_mode_get_state(nw)) {
@@ -1231,6 +1250,11 @@ static int nrc_mac_add_interface(struct ieee80211_hw *hw,
 	struct nrc *nw = hw->priv;
 	struct nrc_vif *i_vif = to_i_vif(vif);
 	u64 now = 0, diff = 0;
+
+	/* NOTE: BD gate removed from add_interface — mac80211 can call this before
+ * nrc_mac_start() runs (e.g. start_concurrent.py creates wlan1 before wlan0
+ * is UP).  BD validity is enforced in nrc_mac_start() and nrc_mac_start_ap().
+ */
 
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
 	/* 20190724, jmjang, CB#8781, Gerrit #2200
@@ -1464,6 +1488,7 @@ static void nrc_mac_remove_interface(struct ieee80211_hw *hw,
 	if (vif->type == NL80211_IFTYPE_STATION) {
 		try_to_del_timer_sync(&i_vif->bcn_mon_timer);
 		i_vif->associated = false;
+		i_vif->fw_channel_set = false;
 	}
 
 	/**
@@ -2053,8 +2078,12 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 
 	/* In kernel 6.0+, hw->conf.chandef.chan may be NULL when using channel context */
 	if (!hw->conf.chandef.chan) {
-		DBG_MAC("%s: chandef.chan is NULL, skipping channel configuration",
-			__func__);
+		if (changed & IEEE80211_CONF_CHANGE_CHANNEL)
+			WARN_MAC(
+				"config: channel change requested but chandef.chan is NULL (channel context path?)");
+		else
+			DBG_MAC("%s: chandef.chan is NULL, skipping channel configuration",
+				__func__);
 		goto skip_channel_config;
 	}
 
@@ -2083,21 +2112,11 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 	if (supp_ch_list && supp_ch_list->num_ch) {
 		if (changed & IEEE80211_CONF_CHANGE_CHANNEL) {
 			for (i = 0; i < supp_ch_list->num_ch; i++) {
-#ifdef CONFIG_S1G_CHANNEL
-				if (supp_ch_list->nons1g_ch_freq[i] ==
-				    (hw->conf.chandef.center_freq1) * 10 +
-					    (hw->conf.chandef.freq1_offset) /
-						    100) {
-					supp_ch_flag = true;
-					break;
-				}
-#else
 				if (supp_ch_list->nons1g_ch_freq[i] ==
 				    hw->conf.chandef.chan->center_freq) {
 					supp_ch_flag = true;
 					break;
 				}
-#endif
 			}
 			if (!supp_ch_flag && nw->alpha2[0] != 'U' &&
 			    nw->alpha2[1] != 'S' &&
@@ -2112,10 +2131,16 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 #endif /* CONFIG_SUPPORT_CHANNEL_INFO */
 			}
 			if (!supp_ch_flag) {
-				DBG_MAC("%s: Not supported channel %u",
-					__func__,
+				if (g_bd_valid) {
+					DBG_MAC("%s: Not supported channel %u",
+						__func__,
+						hw->conf.chandef.chan
+							->center_freq);
+					return -EINVAL;
+				}
+				WARN_MAC(
+					"config: channel %u MHz not in BD supp list (BD not valid) — continuing",
 					hw->conf.chandef.chan->center_freq);
-				return -EINVAL;
 			}
 		}
 	}
@@ -2478,10 +2503,14 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 					    (void *)info->bssid);
 	}
 
-	if (changed & (BSS_CHANGED_BEACON_INT | BSS_CHANGED_BEACON_ENABLED))
-		nrc_bss_handle_beacon_int(hw, vif, info, skb,
-					  !!(changed &
-					     BSS_CHANGED_BEACON_ENABLED));
+	if (changed & (BSS_CHANGED_BEACON_INT | BSS_CHANGED_BEACON_ENABLED)) {
+		/*
+		 * BEACON_ENABLE is owned exclusively by start_ap / stop_ap.
+		 * bss_info_changed is the live-reconfiguration path and only
+		 * updates timing parameters (BCN_INTV, SHORT_BCN_INTV, DTIM).
+		 */
+		nrc_bss_handle_beacon_int(hw, vif, info, skb, false);
+	}
 
 	if (changed & BSS_CHANGED_BEACON)
 		nrc_vendor_update_beacon(hw, vif);
@@ -2549,6 +2578,120 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 		ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 		if (ret < 0) {
 			ERR("failed to transmit a wim request (ret=%d)", ret);
+			NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false,
+					   false);
+		}
+	} else {
+		NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false, false);
+	}
+}
+
+/**
+ * nrc_mac_start_ap - mac80211 start_ap callback
+ *
+ * Called by mac80211 after all AP configuration (beacon interval, DTIM,
+ * beacon template) is set in bss_conf and the beacon can be retrieved.
+ * This is the proper place to initialise AP beaconing — mac80211 no longer
+ * delivers BSS_CHANGED_BEACON / BSS_CHANGED_BEACON_ENABLED via
+ * bss_info_changed() for the initial AP start on kernel 5.15+.
+ */
+#ifdef CONFIG_USE_LINK_ID
+static int nrc_mac_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			    struct ieee80211_bss_conf *link_conf)
+#else
+static int nrc_mac_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+#endif
+{
+	struct nrc *nw = hw->priv;
+	struct nrc_hif_device *hdev = nw->hdev;
+	struct ieee80211_bss_conf *info = &vif->bss_conf;
+	struct sk_buff *skb;
+	int ret;
+
+	INFO_STATE("start_ap: vif=%pM beacon_int=%u dtim_period=%u", vif->addr,
+		   info->beacon_int, info->dtim_period);
+
+#if defined(CONFIG_SUPPORT_BD)
+	if (!g_bd_valid) {
+		ERR_STATE("start_ap: BD not loaded in FW, blocking");
+		return -EINVAL;
+	}
+#endif
+
+#if KERNEL_VERSION(6, 9, 0) <= NRC_TARGET_KERNEL_VERSION
+	if (!vif->bss_conf.chanreq.oper.chan) {
+		ERR_STATE(
+			"start_ap: channel not configured (chanreq.oper.chan is NULL)");
+		return -EINVAL;
+	}
+#else
+	if (!vif->bss_conf.chandef.chan) {
+		ERR_STATE(
+			"start_ap: channel not configured (chandef.chan is NULL)");
+		return -EINVAL;
+	}
+#endif
+
+	/* Send beacon template to firmware */
+	ret = nrc_vendor_update_beacon(hw, vif);
+	if (ret) {
+		ERR_STATE("start_ap: failed to update beacon template (ret=%d)",
+			  ret);
+		return ret;
+	}
+
+	/* Send beacon interval, DTIM, and enable beacon */
+	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, WIM_MAX_SIZE);
+	if (!skb)
+		return -ENOMEM;
+
+	nrc_bss_handle_beacon_int(hw, vif, info, skb, true);
+
+	if (skb->len > sizeof(struct wim)) {
+		ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+		if (ret < 0) {
+			ERR_STATE("start_ap: failed WIM request (ret=%d)", ret);
+			NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false,
+					   false);
+			return ret;
+		}
+	} else {
+		NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false, false);
+	}
+
+	return 0;
+}
+
+/**
+ * nrc_mac_stop_ap - mac80211 stop_ap callback
+ *
+ * Called when the AP interface is stopped.  Disables beaconing in firmware.
+ */
+#ifdef CONFIG_USE_LINK_ID
+static void nrc_mac_stop_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			    struct ieee80211_bss_conf *link_conf)
+#else
+static void nrc_mac_stop_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+#endif
+{
+	struct nrc_hif_device *hdev = ((struct nrc *)hw->priv)->hdev;
+	struct sk_buff *skb;
+	u8 beacon_enable = 0;
+
+	INFO_STATE("stop_ap: vif=%pM", vif->addr);
+
+	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, WIM_MAX_SIZE);
+	if (!skb)
+		return;
+
+	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BEACON_ENABLE,
+				    sizeof(beacon_enable), &beacon_enable);
+
+	if (skb->len > sizeof(struct wim)) {
+		int ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+
+		if (ret < 0) {
+			ERR_STATE("stop_ap: failed WIM request (ret=%d)", ret);
 			NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false,
 					   false);
 		}
@@ -3529,6 +3672,65 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		}
 	}
 
+	/*
+	 * In concurrent AP+STA mode, mac80211 may never call
+	 * assign_vif_chanctx() for the STA VIF before it starts scanning
+	 * (the channel is not known until association).  If FW has no channel
+	 * context for this VIF it will ASSERT in lmac_get_phy_txgain() when
+	 * it tries to TX a probe request.
+	 *
+	 * Use fw_channel_set (not chanctx_conf) because mac80211 may assign a
+	 * shared chanctx pointer without calling assign_vif_chanctx() for this
+	 * VIF, leaving FW without the per-VIF channel WIM.
+	 *
+	 * Bootstrap using the concurrent AP VIF's channel — not req->channels[0]
+	 * which may be outside the BD-covered S1G frequency range.
+	 */
+	if (vif->type == NL80211_IFTYPE_STATION &&
+	    !to_i_vif(vif)->fw_channel_set) {
+		struct cfg80211_chan_def ap_def;
+		bool found = false;
+		int vi;
+
+		rcu_read_lock();
+		for (vi = 0; vi < NR_NRC_VIF; vi++) {
+			struct ieee80211_vif *ap_vif = nw->vif[vi];
+			struct ieee80211_chanctx_conf *ctx;
+
+			if (!ap_vif || ap_vif == vif ||
+			    ap_vif->type != NL80211_IFTYPE_AP)
+				continue;
+#ifdef CONFIG_USE_BSS_CHAN_CONF
+			ctx = rcu_dereference(ap_vif->bss_conf.chanctx_conf);
+#else
+			ctx = rcu_dereference(ap_vif->chanctx_conf);
+#endif
+			if (ctx && ctx->def.chan) {
+				ap_def = ctx->def;
+				found = true;
+				break;
+			}
+		}
+		rcu_read_unlock();
+
+		if (found) {
+			struct sk_buff *ch_skb;
+
+			ch_skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET,
+							       WIM_MAX_SIZE);
+			if (ch_skb) {
+				INFO_MAC(
+					"%s: VIF%d no FW channel, bootstrapping from AP ch %d MHz",
+					__func__, to_i_vif(vif)->index,
+					ap_def.chan->center_freq);
+				nrc_mac_add_tlv_channel(ch_skb, &ap_def);
+				nrc_hal_ops_wim_request(ch_skb, 0, 0, false,
+							NULL);
+				to_i_vif(vif)->fw_channel_set = true;
+			}
+		}
+	}
+
 	nrc_wim_wlan_hw_scan(vif, req, ies);
 
 	if (req->n_ssids)
@@ -4067,6 +4269,7 @@ static void nrc_mac_channel_policy(void *data, u8 *mac,
 
 	nrc_mac_add_tlv_channel(skb, chan_to_follow);
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+	to_i_vif(vif)->fw_channel_set = true;
 }
 
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
@@ -4206,6 +4409,7 @@ static int nrc_mac_assign_vif_chanctx(struct ieee80211_hw *hw,
 
 	nrc_mac_add_tlv_channel(skb, &ctx->def);
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+	to_i_vif(vif)->fw_channel_set = true;
 
 	if (vif->type != NL80211_IFTYPE_MONITOR)
 #ifdef CONFIG_SUPPORT_ITERATE_INTERFACE
@@ -4286,6 +4490,7 @@ static int nrc_mac_switch_vif_chanctx(struct ieee80211_hw *hw,
 				    &param);
 #endif /* !defined(CONFIG_S1G_CHANNEL) */
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
+	to_i_vif(vif)->fw_channel_set = true;
 
 #ifdef CONFIG_SUPPORT_ITERATE_INTERFACE
 	ieee80211_iterate_interfaces(nw->hw, IEEE80211_IFACE_ITER_ACTIVE,
@@ -4686,6 +4891,8 @@ static const struct ieee80211_ops nrc_mac80211_ops = {
 	.config = nrc_mac_config,
 	.configure_filter = nrc_mac_configure_filter,
 	.bss_info_changed = nrc_mac_bss_info_changed,
+	.start_ap = nrc_mac_start_ap,
+	.stop_ap = nrc_mac_stop_ap,
 #ifdef CONFIG_USE_TXQ
 	.wake_tx_queue = nrc_wake_tx_queue,
 #endif
@@ -4770,14 +4977,15 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 	const struct s1g_channel_table *cc_table;
 #endif /* CONFIG_S1G_CHANNEL */
 
-	DBG_MAC("info: cfg80211 regulatory domain callback for %c%c",
-		request->alpha2[0], request->alpha2[1]);
-	DBG_MAC("request->initiator:%d", request->initiator);
+	INFO_MAC("reg_notifier: CC=%c%c initiator=%d", request->alpha2[0],
+		 request->alpha2[1], request->initiator);
 	nrc_cc[0] = request->alpha2[0];
 	nrc_cc[1] = request->alpha2[1];
 	if ((request->alpha2[0] == '0' && request->alpha2[1] == '0') ||
 	    (request->alpha2[0] == '9' && request->alpha2[1] == '9')) {
-		DBG_MAC("CC is 00 or 99, skip loading BD and setting CC");
+		INFO_MAC(
+			"reg_notifier: CC=%c%c skipped (no valid country set yet - boot auto-load?)",
+			request->alpha2[0], request->alpha2[1]);
 		return;
 	}
 
@@ -4819,6 +5027,9 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 	nw->alpha2[0] = request->alpha2[0];
 	nw->alpha2[1] = request->alpha2[1];
 
+	INFO_MAC("reg_notifier: CC=%c%c applied to FW (initiator=%d)",
+		 nw->alpha2[0], nw->alpha2[1], request->initiator);
+
 	skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
 #ifdef CONFIG_S1G_CHANNEL
 	nrc_set_s1g_country(nrc_cc);
@@ -4839,6 +5050,9 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 
 #if defined(CONFIG_SUPPORT_BD)
+	/* BD is now in FW — unlock WLAN operations */
+	g_bd_valid = true;
+
 	/* Free bd_param after skb transmission to ensure safe memory access */
 	if (bd_param) {
 		kfree(bd_param);
@@ -4858,6 +5072,21 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 		(struct s1g_channel_table *)nrc_get_current_s1g_cc_table());
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 #endif /* CONFIG_S1G_CHANNEL */
+}
+
+/**
+ * nrc_mac_bd_invalidate - Mark BD as not loaded in FW.
+ *
+ * Called before any FW restart (WDT, module reload) to reset the BD gate.
+ * All WLAN operations (start, add_interface, start_ap) are blocked until
+ * nrc_restore_reg_domain() successfully re-sends the BD to FW.
+ */
+void nrc_mac_bd_invalidate(void)
+{
+#if defined(CONFIG_SUPPORT_BD)
+	g_bd_valid = false;
+	INFO_MAC("BD invalidated — WLAN ops blocked until BD re-sent to FW");
+#endif
 }
 
 /**
@@ -6235,7 +6464,12 @@ int nrc_register_hw(struct nrc *nw, struct nrc_hif_device *hdev)
 	nw->alpha2[1] = '9';
 
 #if defined(CONFIG_SUPPORT_BD)
-	g_bd_valid = true;
+	/*
+	 * BD is not in FW at init — it is sent by nrc_reg_notifier() when
+	 * a valid country code is received.  Keep g_bd_valid = false until
+	 * the first successful nrc_reg_notifier() call sets it to true.
+	 */
+	g_bd_valid = false;
 #endif
 
 	if (nrc_mac_is_s1g(nw->hdev)) {

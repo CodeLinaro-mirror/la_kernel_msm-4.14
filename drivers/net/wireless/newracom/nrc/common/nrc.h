@@ -264,6 +264,9 @@ struct nrc_vif {
 	u16 aid;
 	u32 cipher_pairwise;
 
+	/* true once a WIM_CMD_SET channel TLV has been sent to FW for this VIF */
+	bool fw_channel_set;
+
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
 	/* P2p client NoA */
 	struct ieee80211_noa_data noa;
@@ -297,8 +300,7 @@ static inline bool nrc_has_associated_sta_vif(struct nrc *nw)
 	int i;
 
 	for (i = 0; i < NR_NRC_VIF; i++) {
-		if (nw->vif[i] &&
-		    nw->vif[i]->type == NL80211_IFTYPE_STATION &&
+		if (nw->vif[i] && nw->vif[i]->type == NL80211_IFTYPE_STATION &&
 		    to_i_vif(nw->vif[i])->associated)
 			return true;
 	}

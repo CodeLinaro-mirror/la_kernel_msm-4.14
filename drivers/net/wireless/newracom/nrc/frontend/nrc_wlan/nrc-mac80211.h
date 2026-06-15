@@ -84,10 +84,12 @@ void beacon_loss_check_work_handler(struct work_struct *work);
 struct net_device *nrc_get_intf_by_name(const char *intf_name);
 
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
-void nrc_mac_tx_process(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
+void nrc_mac_tx_process(struct ieee80211_hw *hw,
+			struct ieee80211_tx_control *control,
 			struct sk_buff *skb, bool from_mac80211);
 #else
-void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb, bool from_mac80211);
+void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
+			bool from_mac80211);
 #endif
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO
 #ifdef CONFIG_USE_LINK_ID
@@ -183,6 +185,15 @@ void nrc_cleanup_ba_session_all(struct nrc *nw);
 
 int nrc_mac_restart(struct nrc *nw);
 int nrc_nw_restart_wlan(struct nrc *nw);
+
+/**
+ * nrc_mac_bd_invalidate - Mark BD as not loaded in FW.
+ *
+ * Call this before any FW restart (WDT recovery, module reload) to ensure
+ * nrc_mac_start(), nrc_mac_add_interface(), and nrc_mac_start_ap() block
+ * all WLAN operations until nrc_restore_reg_domain() re-sends the BD.
+ */
+void nrc_mac_bd_invalidate(void);
 
 bool nrc_idle_mode_get_state(struct nrc *nw);
 void nrc_idle_mode_set_state(struct nrc *nw, bool enable);

@@ -41,6 +41,7 @@
 #if defined(CONFIG_S1G_CHANNEL)
 #include "nrc-s1g.h"
 #endif
+
 #include "nrc-hal-core-interface.h"
 #include "nrc-stats.h"
 #include "nrc-debug.h"
@@ -408,6 +409,89 @@ DEFINE_SIMPLE_ATTRIBUTE(nrc_debugfs_expected_tput,
 			nrc_debugfs_expected_tput_read,
 			nrc_debugfs_expected_tput_write, "%llu\n");
 
+#if defined(CONFIG_SUPPORT_BD)
+static int nrc_debugfs_channel_map_show(struct seq_file *s, void *unused)
+{
+	const struct bd_supp_param *supp;
+	struct nrc *nw = s->private;
+	uint8_t active_ch = 0;
+	int i;
+
+	if (!nw || !nw->hw)
+		return -EINVAL;
+
+	supp = nrc_hal_ops_bd_get_supp_ch_list();
+	if (!supp) {
+		seq_puts(s, "BD channel list not available\n");
+		return 0;
+	}
+
+	/* Find active S1G channel: match NonS1G proxy freq to BD ch list */
+	if (nw->hw->conf.chandef.chan) {
+		u32 center_freq = nw->hw->conf.chandef.chan->center_freq;
+
+		for (i = 0; i < supp->num_ch; i++) {
+			if (supp->nons1g_ch_freq[i] == center_freq) {
+				active_ch = supp->s1g_ch_index[i];
+				break;
+			}
+		}
+	}
+
+	seq_puts(s, "S1G Channel Map\n");
+	seq_puts(s, "-----------------------------------\n");
+	seq_printf(s, "  %-8s  %-12s  %s\n", "S1G-CH", "S1G(MHz)", "Status");
+	seq_puts(s, "-----------------------------------\n");
+
+	for (i = 0; i < supp->num_ch; i++) {
+		bool active = (active_ch && active_ch == supp->s1g_ch_index[i]);
+		uint16_t freq = supp->s1g_ch_freq[i];
+
+		seq_printf(s, "  %-8u  %u.%u%*s  %s\n", supp->s1g_ch_index[i],
+			   freq / 10, freq % 10, freq % 10 ? 9 : 10, "",
+			   active ? "<-- active" : "");
+	}
+
+	seq_puts(s, "-----------------------------------\n");
+	if (active_ch) {
+		int idx = -1;
+
+		for (i = 0; i < supp->num_ch; i++) {
+			if (supp->s1g_ch_index[i] == active_ch) {
+				idx = i;
+				break;
+			}
+		}
+		if (idx >= 0) {
+			uint16_t freq = supp->s1g_ch_freq[idx];
+
+			seq_printf(s, "Active: S1G ch %u  (%u.%u MHz)\n",
+				   active_ch, freq / 10, freq % 10);
+		} else {
+			seq_printf(s, "Active: S1G ch %u\n", active_ch);
+		}
+	} else {
+		seq_puts(s, "Active: no channel configured\n");
+	}
+
+	return 0;
+}
+
+static int nrc_debugfs_channel_map_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nrc_debugfs_channel_map_show,
+			   inode->i_private);
+}
+
+static const struct file_operations nrc_debugfs_channel_map_fops = {
+	.owner = THIS_MODULE,
+	.open = nrc_debugfs_channel_map_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+#endif /* CONFIG_SUPPORT_BD */
+
 static struct dentry *twt_debugfs_root;
 static struct dentry *apf_debugfs_root;
 
@@ -442,6 +526,12 @@ void nrc_init_debugfs(struct nrc *nw)
 	nrc_debugfs_create_file("expected_tput", &nrc_debugfs_expected_tput);
 	debugfs_create_file("info", 0444, nw->debugfs, nw,
 			    &nrc_debugfs_wlan_info_fops);
+
+#if defined(CONFIG_SUPPORT_BD)
+	/* BD channel map: S1G channel index -> NonS1G proxy freq, with active channel marker */
+	debugfs_create_file("channel_map", 0444, nw->debugfs, nw,
+			    &nrc_debugfs_channel_map_fops);
+#endif
 
 	/* Note: Loopback (hspi) test moved to nrc_core module
 	 * Access via /sys/kernel/debug/nrc_core/loopback/

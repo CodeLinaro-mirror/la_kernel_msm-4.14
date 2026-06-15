@@ -41,15 +41,14 @@
 #include "nrc-init.h"
 
 /* EU countries (27) + GB, SA for S1G channel compatibility */
-const char *const eu_countries_cc[] = {
-	"AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR",
-	"HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO",
-	"SE", "SI", "SK", "GB", "SA", NULL
-};
+const char *const eu_countries_cc[] = {"AT", "BE", "BG", "CY", "CZ", "DE",
+				       "DK", "EE", "ES", "FI", "FR", "GR",
+				       "HR", "HU", "IE", "IT", "LT", "LU",
+				       "LV", "MT", "NL", "PL", "PT", "RO",
+				       "SE", "SI", "SK", "GB", "SA", NULL};
 EXPORT_SYMBOL(eu_countries_cc);
 
 #if defined(CONFIG_SUPPORT_BD)
-
 #define NRC_BD_FILE_MAX_LENGTH 4096
 #define NRC_BD_MAX_DATA_LENGTH 546
 #define NRC_BD_HEADER_LENGTH 16
@@ -313,30 +312,54 @@ static void *nrc_dump_load(struct nrc_hif_device *hdev, int len)
 static uint16_t nrc_get_non_s1g_freq(uint8_t cc_index, uint8_t s1g_ch_index)
 {
 	int i;
-	uint16_t ret = 0;
+
+	if (cc_index < 1 || cc_index >= CC_MAX) {
+		ERR_BD("invalid cc_index %u", cc_index);
+		return 0;
+	}
 
 	g_bd_ch_table_base = &g_bd_ch_table[cc_index - 1][0];
 	for (i = 0; i < NRC_BD_MAX_CH_LIST; i++) {
-		if (s1g_ch_index == g_bd_ch_table_base[i].s1g_freq_index) {
-#ifdef CONFIG_S1G_CHANNEL
-			ret = g_bd_ch_table_base[i].s1g_freq;
-#else
-			ret = g_bd_ch_table_base[i].nons1g_freq;
-#endif /* #ifdef CONFIG_S1G_CHANNEL */
-			break;
-		}
+		if (s1g_ch_index == g_bd_ch_table_base[i].s1g_freq_index)
+			return g_bd_ch_table_base[i].nons1g_freq;
 	}
-	return ret;
+	return 0;
+}
+
+static uint16_t nrc_get_s1g_freq(uint8_t cc_index, uint8_t s1g_ch_index)
+{
+	int i;
+
+	if (cc_index < 1 || cc_index >= CC_MAX) {
+		ERR_BD("invalid cc_index %u", cc_index);
+		return 0;
+	}
+
+	g_bd_ch_table_base = &g_bd_ch_table[cc_index - 1][0];
+	for (i = 0; i < NRC_BD_MAX_CH_LIST; i++) {
+		if (s1g_ch_index == g_bd_ch_table_base[i].s1g_freq_index)
+			return g_bd_ch_table_base[i].s1g_freq;
+	}
+	return 0;
 }
 
 static bool nrc_set_supp_ch_list(struct wim_bd_param *bd)
 {
 	int i, j;
 	bool ret = false;
-	int length = (int)bd->length - 4;
-	uint8_t *pos = bd->value;
-	uint8_t cc_idx = bd->type;
+	int length;
+	uint8_t *pos;
+	uint8_t cc_idx;
 	uint8_t s1g_ch_idx = 0;
+
+	if (!bd) {
+		ERR_BD("bd is NULL");
+		return false;
+	}
+
+	length = (int)bd->length - 4;
+	pos = bd->value;
+	cc_idx = (uint8_t)bd->type;
 
 	memset(&g_supp_ch_list, 0, sizeof(struct bd_supp_param));
 
@@ -360,13 +383,16 @@ static bool nrc_set_supp_ch_list(struct wim_bd_param *bd)
 		s1g_ch_idx = g_supp_ch_list.s1g_ch_index[j];
 		g_supp_ch_list.nons1g_ch_freq[j] =
 			nrc_get_non_s1g_freq(cc_idx, s1g_ch_idx);
+		g_supp_ch_list.s1g_ch_freq[j] =
+			nrc_get_s1g_freq(cc_idx, s1g_ch_idx);
 	}
 
 #if BD_DEBUG
 	DBG_ST("Supported Channel(%u) Index", g_supp_ch_list.num_ch);
 	for (i = 0; i < g_supp_ch_list.num_ch; i++) {
-		DBG_ST("%u %u", g_supp_ch_list.s1g_ch_index[i],
-		       g_supp_ch_list.nons1g_ch_freq[i]);
+		DBG_ST("ch %u  S1G %u.%u MHz", g_supp_ch_list.s1g_ch_index[i],
+		       g_supp_ch_list.s1g_ch_freq[i] / 10,
+		       g_supp_ch_list.s1g_ch_freq[i] % 10);
 	}
 #endif
 
@@ -384,6 +410,11 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 	struct wim_bd_param *bd_sel;
 	bool check_bd_flag = false;
 	uint16_t target_version;
+
+	if (!hdev || !country_code) {
+		ERR_BD("invalid argument: hdev=%p cc=%p", hdev, country_code);
+		return NULL;
+	}
 
 	if (!g_bd_size)
 		return NULL;
@@ -415,8 +446,9 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 		country_code[0] = 'E';
 		country_code[1] = 'U';
 	} else {
-		DBG_STATE("[ERR] Invalid country code(%c%c). Set default value(%d)",
-		       country_code[0], country_code[1], cc_index);
+		DBG_STATE(
+			"[ERR] Invalid country code(%c%c). Set default value(%d)",
+			country_code[0], country_code[1], cc_index);
 		return NULL;
 	}
 
@@ -479,7 +511,9 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 						   (bd->data[5 + len + 4 * i]
 						    << 8));
 
-				for (j = 0; j < bd_sel->length - 2 && j < WIM_MAX_BD_DATA_LEN; j++) {
+				for (j = 0; j < bd_sel->length - 2 &&
+					    j < WIM_MAX_BD_DATA_LEN;
+				     j++) {
 					bd_sel->value[j] =
 						bd->data[8 + len + 4 * i + j];
 				}
@@ -525,12 +559,19 @@ int nrc_check_bd(struct nrc_hif_device *hdev)
 	struct kstat *stat;
 	char *buf;
 	size_t length;
+	int ret;
+	char filepath[64];
 #if KERNEL_VERSION(5, 10, 0) <= NRC_TARGET_KERNEL_VERSION
 	int rc;
 #endif
+#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
+	mm_segment_t old_fs;
+#endif
 
-	int ret;
-	char filepath[64];
+	if (!hdev || !hdev->params) {
+		ERR_BD("invalid argument: hdev=%p", hdev);
+		return -EINVAL;
+	}
 	/*
 	 * function force_uaccess_begin(), force_uaccess_end() and type mm_segment_t
 	 * are removed in 5.18
@@ -539,7 +580,6 @@ int nrc_check_bd(struct nrc_hif_device *hdev)
 	 * (https://patchwork.kernel.org/project/linux-arm-kernel/patch/20201001141233.119343-11-arnd@arndb.de/)
 	 */
 #if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-	mm_segment_t old_fs;
 #if KERNEL_VERSION(5, 0, 0) > NRC_TARGET_KERNEL_VERSION
 	old_fs = get_fs();
 	set_fs(get_ds());

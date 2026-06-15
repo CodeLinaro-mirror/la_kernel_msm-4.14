@@ -930,6 +930,33 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 	nrc_vcmd_backup_set_wdt_flag(0);
 	nrc_vcmd_backup_set_wdt_flag(1);
 	ret = nrc_mac_restart(nw);
+
+	/*
+	 * FW has rebooted — BD is no longer loaded.  Invalidate the BD gate
+	 * so that nrc_mac_start(), nrc_mac_add_interface(), and start_ap()
+	 * block any WLAN operation until nrc_restore_reg_domain() re-sends
+	 * the BD to the freshly booted FW.
+	 *
+	 * nrc_restore_reg_domain() → nrc_hal_ops_wim_request() is synchronous
+	 * (blocks until FW ACKs the WIM).  By the time ieee80211_restart_hw()
+	 * schedules its reconfig work, g_bd_valid is already true and FW has
+	 * a valid BD, preventing the "api: invalid bd" FW ASSERT.
+	 */
+	nrc_mac_bd_invalidate();
+
+	/*
+	 * If alpha2 is "99" (driver sentinel for "no CC set yet"), default to
+	 * "US" so that nrc_restore_reg_domain() can push a valid BD to FW.
+	 * This handles WDT at cold boot before 'iw reg set' is called.
+	 */
+	if (nw->alpha2[0] == '9' && nw->alpha2[1] == '9') {
+		WARN_MAC(
+			"wdt_recovery: no valid CC set (alpha2=99); defaulting to US");
+		nw->alpha2[0] = 'U';
+		nw->alpha2[1] = 'S';
+	}
+	nrc_restore_reg_domain(nw);
+
 	if (ret == 1) {
 		DBG_STATE("Restart hw because target reset by WDT");
 		ieee80211_restart_hw(nw->hw);
@@ -937,9 +964,6 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 
 	/* Re-enable TX queues stopped during WDT expiry handling */
 	ieee80211_wake_queues(nw->hw);
-
-	/* Re-send country code / board data to FW after WDT recovery */
-	nrc_restore_reg_domain(nw);
 	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_HAL_CALLBACK);
 
 	return 0;
