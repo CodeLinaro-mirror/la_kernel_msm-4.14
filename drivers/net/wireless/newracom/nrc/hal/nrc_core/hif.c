@@ -129,7 +129,6 @@ struct nrc_hif_device *nrc_hif_alloc(struct device *dev, void *priv,
 	nrc_ps_lock_init(&hdev->ps);
 	hdev->ps.mode = NRC_PS_NONE;
 	hdev->ps.state = NRC_PS_STATE_WAKE;
-	hdev->ps.enabled = false;
 	hdev->ps.modem_enabled = false;
 	hdev->ps.timeout = 0;
 	hdev->ps.last_sleep_timeout_ms = 0;

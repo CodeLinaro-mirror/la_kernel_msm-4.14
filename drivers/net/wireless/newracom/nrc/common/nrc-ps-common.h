@@ -68,6 +68,7 @@ enum NRC_PS_REASON {
 	NRC_PS_REASON_HAL_PS_DYNAMIC, /* HAL: Dynamic PS work */
 	NRC_PS_REASON_HAL_TX_TIMEOUT, /* HAL: TX timeout recovery */
 	NRC_PS_REASON_HAL_TX_WAKEUP, /* HAL: TX data in deepsleep */
+	NRC_PS_REASON_HAL_PS_RECONFIG, /* HAL: PS mode/timeout reconfig */
 	NRC_PS_REASON_HAL_SHUTDOWN, /* HAL: SPI shutdown */
 
 	/* User space commands */
@@ -131,7 +132,6 @@ typedef struct {
 	enum NRC_PS_MODE mode;
 	enum NRC_PS_STATE state;
 	/* Legacy power management fields (moved from hdev <- nw) */
-	bool enabled; // hw->conf.flags & IEEE80211_CONF_PS
 	bool modem_enabled;
 	int timeout; // hw->conf.dynamic_ps_timeout
 	/*
@@ -259,6 +259,8 @@ static inline const char *nrc_ps_reason_str(enum NRC_PS_REASON reason)
 		return "HAL_TX_TIMEOUT";
 	case NRC_PS_REASON_HAL_TX_WAKEUP:
 		return "HAL_TX_WAKEUP";
+	case NRC_PS_REASON_HAL_PS_RECONFIG:
+		return "HAL_PS_RECONFIG";
 	case NRC_PS_REASON_HAL_SHUTDOWN:
 		return "HAL_SHUTDOWN";
 	case NRC_PS_REASON_USER_NETLINK_CMD:

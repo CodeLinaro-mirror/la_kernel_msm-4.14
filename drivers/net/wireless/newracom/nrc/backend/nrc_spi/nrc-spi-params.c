@@ -109,6 +109,6 @@ void nrc_spi_params_init(void)
 {
 	/* Set default values if not specified */
 	// if (spi_gpio_irq == -1) {
-	// 	ERR_SPI("SPI: Using default GPIO IRQ configuration");
+	// 	ERR("SPI: Using default GPIO IRQ configuration");
 	// }
 }

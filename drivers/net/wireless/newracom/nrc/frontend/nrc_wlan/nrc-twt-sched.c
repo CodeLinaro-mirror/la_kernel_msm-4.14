@@ -184,11 +184,11 @@ static struct twt_sched_entry *find_unused_twt_entry(struct nrc_twt_sched *s,
 		}
 		break;
 	default:
-		ERR_WLAN("Invalid algo: %d", s->algo);
+		ERR("Invalid algo: %d", s->algo);
 		return NULL;
 	}
 
-	ERR_WLAN("No more unused entry, Total used: %u", s->alloc_num);
+	ERR("No more unused entry, Total used: %u", s->alloc_num);
 	return NULL;
 
 found:
@@ -505,7 +505,7 @@ int nrc_twt_sched_entry_add(struct nrc *nw, struct nrc_sta *sta,
 	/* set max multi shorter than bss max idle */
 	bss_max_idle = ((u64)sta->max_idle.idle_period << 10) * 1000;
 	if (bss_max_idle != 0 && bss_max_idle < flow_interval) {
-		ERR_WLAN(
+		ERR(
 			"TWT Interval must be shorter than BSS Max Idle (bss:%llu, int:%llu)\n",
 			bss_max_idle, flow_interval);
 		while (multi > 1) {
@@ -519,7 +519,7 @@ int nrc_twt_sched_entry_add(struct nrc *nw, struct nrc_sta *sta,
 	}
 
 	if (multi > MAX_MULTI) {
-		ERR_WLAN("The max supported multiple is over (%llu)", multi);
+		ERR("The max supported multiple is over (%llu)", multi);
 		multi = MAX_MULTI;
 		ret = 1;
 		goto done;
@@ -549,7 +549,7 @@ int nrc_twt_sched_entry_add(struct nrc *nw, struct nrc_sta *sta,
 	fentry = (struct twt_flow_entry *)kzalloc(sizeof(struct twt_flow_entry),
 						  GFP_KERNEL);
 	if (!fentry) {
-		ERR_WLAN("alloc failed");
+		ERR("alloc failed");
 		ret = -1;
 		goto done;
 	}
@@ -588,7 +588,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 
 	ret = twt_param_check(&sp, &num, &interval, num_in_group);
 	if (ret) {
-		ERR_WLAN(
+		ERR(
 			"Invalid TWT Params (Interval: %llu, Service Period: %llu, Service Number: %u Group Number: %u)\n",
 			interval, sp, num, num_in_group);
 		goto fail;
@@ -603,7 +603,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 
 	ret = cal_twt_interval(interval, &mantissa, &exponent);
 	if (ret) {
-		ERR_WLAN(
+		ERR(
 			"Invalid TWT Params Size (Interval: %llu, Service Period: %llu, Service Number: %u Group Number: %u)\n",
 			interval, sp, num, num_in_group);
 		goto fail;
@@ -617,7 +617,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 	entries = (struct twt_sched_entry *)kzalloc(
 		sizeof(*entries) * (num / num_in_group), GFP_KERNEL);
 	if (!entries) {
-		ERR_WLAN("alloc failed");
+		ERR("alloc failed");
 		goto fail;
 	}
 	for (i = 0; i < num / num_in_group; i++) {
@@ -628,7 +628,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 	twt_sched =
 		(struct nrc_twt_sched *)kzalloc(sizeof(*twt_sched), GFP_KERNEL);
 	if (!twt_sched) {
-		ERR_WLAN("alloc failed");
+		ERR("alloc failed");
 		goto fail;
 	}
 
@@ -640,7 +640,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 	twt_sched->exponent = exponent;
 	twt_sched->max_num_in_group = num_in_group;
 	if (algo >= TWT_SCHED_ALGO_MAX) {
-		ERR_WLAN("sched algo %d not supported", algo);
+		ERR("sched algo %d not supported", algo);
 		goto fail;
 	} else {
 		twt_sched->algo = algo;
@@ -668,7 +668,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 fail:
 	kfree(entries);
 	kfree(twt_sched);
-	ERR_WLAN("Failed to initialize TWT, disabled");
+	ERR("Failed to initialize TWT, disabled");
 	return NULL;
 }
 
@@ -714,7 +714,7 @@ int nrc_twt_sched_start(struct nrc *nw, struct ieee80211_vif *vif)
 	}
 
 	if (bss_max_idle != 0 && bss_max_idle < twt_sched->interval) {
-		ERR_WLAN(
+		ERR(
 			"Failed to start TWT. BSS Max Idle (%llu) < TWT Interval (%llu)\n",
 			bss_max_idle, twt_sched->interval);
 		goto unlock;
@@ -722,7 +722,7 @@ int nrc_twt_sched_start(struct nrc *nw, struct ieee80211_vif *vif)
 
 	twt_sched->start_tsf = twt_sched->tsf = twt_get_tsf(nw, vif);
 	if (twt_sched->start_tsf == 0) {
-		ERR_WLAN("Failed to get start TSF");
+		ERR("Failed to get start TSF");
 		goto unlock;
 	}
 

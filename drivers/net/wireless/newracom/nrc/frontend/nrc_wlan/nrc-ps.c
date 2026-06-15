@@ -177,26 +177,17 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 		return;
 	}
 
-	if (hdev->ps.enabled) {
-		if (NRC_DRV_IS_ASLEEP(nw->hdev)) {
-			/*
-			 * if the current state is already NRC_DRV_PS,
-			 * there's nothing to do in here even if mac80211 notifies wake-up.
-			 * the actual action to wake up for target will be done by
-			 * nrc_wake_tx_queue() with changing gpio signal.
-			 * (when driver receives a data frame.)
-			 */
-			DBG_PS("Target is already in deepsleep...");
-			return;
-		}
-
-		/* Use unified PS set mode path */
-		nrc_ps_set_mode(
-			nw, NRC_PARAM_POWER_SAVE(hdev),
-			hdev->params->sleep_duration[0] *
-				(hdev->params->sleep_duration[1] ? 1000 : 1),
-			NULL, NRC_PS_REASON_DRV_DYNAMIC_PS);
+	if (NRC_DRV_IS_ASLEEP(nw->hdev)) {
+		DBG_PS("Target is already in deepsleep...");
+		return;
 	}
+
+	/* Use unified PS set mode path */
+	nrc_ps_set_mode(
+		nw, NRC_PARAM_POWER_SAVE(hdev),
+		hdev->params->sleep_duration[0] *
+			(hdev->params->sleep_duration[1] ? 1000 : 1),
+		NULL, NRC_PS_REASON_DRV_DYNAMIC_PS);
 }
 
 /* Timer callback - runs in atomic context, just schedules work */
@@ -248,6 +239,7 @@ void nrc_ps_dyn_start_custom_timeout(struct nrc *nw, int custom_timeout)
 	int timeout;
 
 	if (!nw->hdev->ps.supports_dynamic_ps || !NRC_DRV_IS_READY(nw->hdev) ||
+	    nw->params->power_save == 0 ||
 	    (nw->twt_sched && nw->params->twt_force_sleep) ||
 	    nw->hw->conf.dynamic_ps_timeout <= 0)
 		return;
@@ -345,7 +337,7 @@ void nrc_ps_set_idle_mode_work_handler(struct work_struct *work)
 	if (!mutex_trylock(&nw->state_mtx)) {
 		/* need to wait until receiving wim resp
 		 * or other threads process ps */
-		WARN_WLAN("idle_mode_work_handler: not handled");
+		WRN("idle_mode_work_handler: not handled");
 		return;
 	}
 

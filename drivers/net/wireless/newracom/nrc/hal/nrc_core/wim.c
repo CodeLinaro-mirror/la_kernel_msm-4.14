@@ -42,6 +42,9 @@
 #endif
 #include "hif.h"
 #include "nrc-tx.h"
+#ifdef CONFIG_SUPPORT_RECOVERY
+#include "nrc-recovery.h"
+#endif
 
 static void nrc_wim_skb_bind_vif(struct sk_buff *skb, struct ieee80211_vif *vif)
 {
@@ -826,6 +829,9 @@ int nrc_wim_request(struct sk_buff *skb, u16 cmd, int timeout,
 		NRC_WIM_RESP_UNLOCK(hdev, cmd);
 
 		ret = -ETIMEDOUT;
+#ifdef CONFIG_SUPPORT_RECOVERY
+		nrc_recovery_inc(hdev, NRC_RECOVERY_WIM_ERR);
+#endif
 		goto free_skb;
 	}
 
@@ -885,6 +891,9 @@ int nrc_wim_request(struct sk_buff *skb, u16 cmd, int timeout,
 	NRC_SKB_TRACK_WIM_FREE(hdev, skb, cmd, 0, false, false);
 
 	*skb_resp = resp;
+#ifdef CONFIG_SUPPORT_RECOVERY
+	nrc_recovery_zero(hdev, NRC_RECOVERY_WIM_ERR);
+#endif
 	return 0;
 
 free_skb:

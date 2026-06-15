@@ -29,6 +29,7 @@ enum nrc_hal_event_type {
 	NRC_HAL_EVT_TARGET_NOTI_W_DISABLE_ASSERTED, /* W_DISABLE asserted - connection loss */
 	NRC_HAL_EVT_TARGET_NOTI_TWT_SERVICE, /* TWT service notification */
 	NRC_HAL_EVT_TARGET_NOTI_TWT_QUIET, /* TWT quiet notification */
+	NRC_HAL_EVT_RECOVERY_TRIGGER, /* SW error recovery trigger */
 
 	NRC_HAL_EVT_MAX
 };

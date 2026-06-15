@@ -61,6 +61,9 @@ static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event);
 static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event);
 static int
 nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event);
+#ifdef CONFIG_SUPPORT_RECOVERY
+static int nrc_wlan_handle_recovery_trigger(struct nrc_hal_event_data *event);
+#endif
 
 /**
  * nrc_wlan_handle_spi_irq - Handle SPI interrupt event
@@ -71,7 +74,7 @@ nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event);
 int nrc_wlan_handle_spi_irq(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_WLAN("Invalid event data for SPI IRQ");
+		ERR("Invalid event data for SPI IRQ");
 		return -EINVAL;
 	}
 
@@ -97,19 +100,19 @@ int nrc_wlan_handle_rx_ready(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 	hdev = nw->hdev;
 
 	if (!event || !event->data) {
-		ERR_WLAN("Invalid event data for RX ready");
+		ERR("Invalid event data for RX ready");
 		return -EINVAL;
 	}
 
 	skb = (struct sk_buff *)event->data;
 	if (!skb || skb->len < sizeof(struct hif)) {
-		ERR_WLAN("Invalid SKB in RX ready event");
+		ERR("Invalid SKB in RX ready event");
 		return -EINVAL;
 	}
 
@@ -123,7 +126,7 @@ int nrc_wlan_handle_rx_ready(struct nrc_hal_event_data *event)
 	WARN_ON(skb->len != hif->len + sizeof(*hif));
 
 	if (NRC_HIF_DRV_STATE(hdev) < NRC_DRV_START) {
-		ERR_WLAN(
+		ERR(
 			"WLAN RX: Driver not ready (state=%d), dropping packet\n",
 			NRC_HIF_DRV_STATE(hdev));
 		/* Error drop: driver not ready, use actual hif type */
@@ -155,7 +158,7 @@ int nrc_wlan_handle_rx_ready(struct nrc_hal_event_data *event)
 #endif
 
 	default:
-		ERR_WLAN(
+		ERR(
 			"WLAN: Unknown HIF packet type %u forwarded from HAL\n",
 			hif->type);
 		/* Error drop: unknown packet type, but use actual type value */
@@ -175,7 +178,7 @@ int nrc_wlan_handle_rx_ready(struct nrc_hal_event_data *event)
 int nrc_wlan_handle_tx_complete(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_WLAN("Invalid event data for TX complete");
+		ERR("Invalid event data for TX complete");
 		return -EINVAL;
 	}
 
@@ -191,7 +194,7 @@ int nrc_wlan_handle_tx_complete(struct nrc_hal_event_data *event)
 int nrc_wlan_handle_error(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_WLAN("Invalid event data for error");
+		ERR("Invalid event data for error");
 		return -EINVAL;
 	}
 
@@ -211,13 +214,13 @@ static int nrc_wlan_handle_connection_loss(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 	hdev = nw->hdev;
 
 	if (!event) {
-		ERR_WLAN("Invalid event for connection loss");
+		ERR("Invalid event for connection loss");
 		return -EINVAL;
 	}
 
@@ -247,7 +250,7 @@ static int nrc_wlan_handle_wake_done(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 	hdev = nw->hdev;
@@ -300,7 +303,7 @@ static int nrc_wlan_handle_ps_enter_failed(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 	hdev = nw->hdev;
@@ -331,12 +334,12 @@ nrc_wlan_handle_ps_dyn_start_custom_timeout(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 
 	if (!event) {
-		ERR_WLAN(
+		ERR(
 			"Invalid event for PS dynamic start with custom timeout");
 		return -EINVAL;
 	}
@@ -362,7 +365,7 @@ static int nrc_wlan_handle_kick_txq(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 
@@ -382,7 +385,7 @@ static int nrc_wlan_handle_cleanup_txq_all(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 
@@ -415,18 +418,18 @@ static int nrc_wlan_handle_free_skb(struct nrc_hal_event_data *event)
 	struct nrc_hif_device *hdev = nw->hdev;
 
 	if (!nrc_wlan_is_initialized()) {
-		ERR_WLAN("WLAN not initialized");
+		ERR("WLAN not initialized");
 		return -EINVAL;
 	}
 
 	if (!event || !event->data) {
-		ERR_WLAN("Invalid event data");
+		ERR("Invalid event data");
 		return -EINVAL;
 	}
 
 	skb = (struct sk_buff *)event->data;
 	if (!skb || skb->len < sizeof(struct hif)) {
-		ERR_WLAN("Invalid SKB in event");
+		ERR("Invalid SKB in event");
 		return -EINVAL;
 	}
 
@@ -457,7 +460,7 @@ static int nrc_wlan_hal_callback_handler(struct nrc_hal_event_data *hal_event)
 	int ret = 0;
 
 	if (!hal_event) {
-		ERR_WLAN("Invalid HAL event data");
+		ERR("Invalid HAL event data");
 		return -EINVAL;
 	}
 
@@ -511,8 +514,13 @@ static int nrc_wlan_hal_callback_handler(struct nrc_hal_event_data *hal_event)
 	case NRC_HAL_EVT_TARGET_NOTI_TWT_QUIET:
 		ret = nrc_wlan_handle_twt_quiet(hal_event);
 		break;
+#ifdef CONFIG_SUPPORT_RECOVERY
+	case NRC_HAL_EVT_RECOVERY_TRIGGER:
+		ret = nrc_wlan_handle_recovery_trigger(hal_event);
+		break;
+#endif
 	default:
-		ERR_WLAN("Unknown HAL event type %d", hal_event->type);
+		ERR("Unknown HAL event type %d", hal_event->type);
 		ret = -EINVAL;
 		break;
 	}
@@ -527,7 +535,7 @@ static void nrc_wim_event_enqueue(struct nrc *nw, struct ieee80211_vif *vif,
 
 	w = kzalloc(sizeof(*w), GFP_KERNEL);
 	if (!w) {
-		ERR_WLAN("Failed to alloc memory in %s", __FUNCTION__);
+		ERR("Failed to alloc memory in %s", __FUNCTION__);
 		return;
 	}
 	/* free w in the handler function */
@@ -567,7 +575,7 @@ static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *hal_event)
 	u16 wim_cmd, wim_event;
 
 	if (!skb || skb->len < sizeof(struct hif) + sizeof(struct wim)) {
-		ERR_WLAN("Invalid WIM event SKB");
+		ERR("Invalid WIM event SKB");
 		if (skb) {
 			struct nrc *nw = nrc_wlan_get_nw();
 			struct nrc_hif_device *hdev = nw ? nw->hdev : NULL;
@@ -587,7 +595,7 @@ static int nrc_wlan_handle_wim_event(struct nrc_hal_event_data *hal_event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No network device for WIM event processing");
+		ERR("No network device for WIM event processing");
 		skb_push(skb, sizeof(*hif)); /* Restore HIF header */
 		/* Error drop: no network device, use hif type from restored header */
 		NRC_SKB_TRACK_FREE(NULL, skb, hif->type, true, false);
@@ -693,7 +701,7 @@ int nrc_wlan_handle_reg_notifier(struct nrc_hal_event_data *event)
 	struct nrc *nw = nrc_hal_core_get_nw();
 
 	if (!nw || !nw->hw) {
-		ERR_WLAN("Network device not available for reg notifier");
+		ERR("Network device not available for reg notifier");
 		return -ENODEV;
 	}
 
@@ -713,7 +721,7 @@ int nrc_wlan_callback_init(void)
 	ret = nrc_hal_register_callback(NRC_FRONTEND_WLAN,
 					nrc_wlan_hal_callback_handler);
 	if (ret) {
-		ERR_WLAN("Failed to register HAL callback: %d", ret);
+		ERR("Failed to register HAL callback: %d", ret);
 		return ret;
 	}
 
@@ -740,7 +748,7 @@ static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 
@@ -762,7 +770,7 @@ static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event)
 {
 	struct nrc *nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 
@@ -787,7 +795,7 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No nw available");
+		ERR("No nw available");
 		return -EINVAL;
 	}
 	hdev = nw->hdev;
@@ -812,3 +820,38 @@ static int nrc_wlan_handle_fw_ready_from_wdt(struct nrc_hal_event_data *event)
 
 	return 0;
 }
+
+#ifdef CONFIG_SUPPORT_RECOVERY
+/**
+ * nrc_wlan_handle_recovery_trigger - Handle software recovery trigger from HAL
+ * @event: HAL event data containing recovery reason string
+ *
+ * Called when HAL recovery engine detects error threshold exceeded or WDT bark.
+ * Sends NL_CMD_RECOVERY netlink notification to user-space.
+ * User-space daemon (recoveryd.py) performs the actual rmmod/insmod restart.
+ *
+ * Module parameter 'recovery' controls behavior:
+ *   0 (monitor): Netlink notification only — user-space decides
+ *   1 (auto):    Netlink notification — user-space daemon auto-restarts
+ */
+static int nrc_wlan_handle_recovery_trigger(struct nrc_hal_event_data *event)
+{
+	struct nrc *nw;
+	const char *reason = (const char *)event->data;
+
+	nw = nrc_wlan_get_nw();
+	if (!nw) {
+		ERR("recovery: No nw available");
+		return -EINVAL;
+	}
+
+	ERR("recovery: triggered (reason=%s, mode=%s)",
+		 reason ? reason : "unknown",
+		 (nw->params && nw->params->recovery) ? "auto" : "monitor");
+
+	/* Notify user-space via netlink — actual restart happens there */
+	nrc_netlink_trigger_recovery(nw);
+
+	return 0;
+}
+#endif

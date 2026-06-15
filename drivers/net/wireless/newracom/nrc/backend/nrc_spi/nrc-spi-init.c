@@ -123,14 +123,14 @@ static int nrc_cspi_probe(struct spi_device *spi)
 
 	priv = nrc_cspi_alloc(spi);
 	if (IS_ERR(priv)) {
-		ERR_SPI("Failed to nrc_cspi_alloc");
+		ERR("Failed to nrc_cspi_alloc");
 		complete(&spi_probe_done);
 		return PTR_ERR(priv);
 	}
 
 	ret = nrc_cspi_gpio_alloc(spi);
 	if (ret) {
-		ERR_SPI("Failed to nrc_cspi_gpio_alloc");
+		ERR("Failed to nrc_cspi_gpio_alloc");
 		goto err_cspi_free;
 	}
 
@@ -141,7 +141,7 @@ static int nrc_cspi_probe(struct spi_device *spi)
 	/* Register SPI device for HAL layer to discover */
 	ret = nrc_spi_register_device(spi, priv, nrc_spi_get_hif_ops());
 	if (ret) {
-		ERR_SPI("Failed to register SPI device for HAL layer");
+		ERR("Failed to register SPI device for HAL layer");
 		goto err_gpio_free;
 	}
 
@@ -288,15 +288,13 @@ static int __init nrc_cspi_init(void)
 #endif
 	int ret = 0;
 
-	// DBG_STATE("NRC SPI module initializing...");
-
 	/* Initialize SPI parameters */
 	nrc_spi_params_init();
 
 #ifndef CONFIG_SPI_USE_DT
 	spi = nrc_create_spi_device();
 	if (IS_ERR(spi)) {
-		ERR_SPI("Failed to nrc_create_spi_dev");
+		ERR("Failed to nrc_create_spi_dev");
 		goto out;
 	}
 	g_spi_dev = spi;
@@ -304,8 +302,8 @@ static int __init nrc_cspi_init(void)
 
 	ret = spi_register_driver(&nrc_cspi_driver);
 	if (ret) {
-		ERR_SPI("Failed to register SPI driver(%s): %d",
-			nrc_cspi_driver.driver.name, ret);
+		ERR("Failed to register SPI driver(%s): %d",
+		    nrc_cspi_driver.driver.name, ret);
 		goto unregister_device;
 	}
 
@@ -318,14 +316,14 @@ static int __init nrc_cspi_init(void)
 	 */
 	if (!wait_for_completion_timeout(&spi_probe_done,
 					 msecs_to_jiffies(5000))) {
-		ERR_SPI("SPI device probe timed out — no matching device found");
+		ERR("SPI device probe timed out — no matching device found");
 		spi_unregister_driver(&nrc_cspi_driver);
 		ret = -ENODEV;
 		goto unregister_device;
 	}
 
 	if (!g_spi_priv) {
-		ERR_SPI("SPI device probe failed");
+		ERR("SPI device probe failed");
 		spi_unregister_driver(&nrc_cspi_driver);
 		ret = -ENODEV;
 		goto unregister_device;

@@ -65,7 +65,7 @@ int nrc_wlan_post_hal_init(bool restart)
 	/* Get network device from WLAN layer (early HAL init) */
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No network device available from WLAN early init");
+		ERR("No network device available from WLAN early init");
 		return -ENODEV;
 	}
 
@@ -74,20 +74,20 @@ int nrc_wlan_post_hal_init(bool restart)
 	/* Get HIF device allocated during HAL probe */
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	/* Check HAL availability */
 	if (!nrc_hal_core_get_ops()) {
-		ERR_WLAN("WLAN: HAL operations not available");
+		ERR("WLAN: HAL operations not available");
 		return -ENODEV;
 	}
 
 	/* Start network device through HAL ops */
 	ret = nrc_hal_ops_nw_start();
 	if (ret) {
-		ERR_WLAN("WLAN: Failed to start network device: %d", ret);
+		ERR("WLAN: Failed to start network device: %d", ret);
 		/* GPIO cleanup is now handled in SPI stop function */
 		return ret;
 	}
@@ -118,14 +118,14 @@ int nrc_wlan_post_hal_init(bool restart)
 	/* Initialize statistics subsystem */
 	ret = nrc_stats_init();
 	if (ret) {
-		ERR_WLAN("WLAN: Failed to initialize statistics");
+		ERR("WLAN: Failed to initialize statistics");
 		return ret;
 	}
 
 	/* Initialize netlink interface */
 	ret = nrc_netlink_init(nw);
 	if (ret) {
-		ERR_WLAN("WLAN: Failed to initialize netlink");
+		ERR("WLAN: Failed to initialize netlink");
 		nrc_stats_deinit();
 		return ret;
 	}
@@ -143,7 +143,7 @@ int nrc_wlan_post_hal_init(bool restart)
 		/* Register hardware with IEEE80211 subsystem */
 		ret = nrc_register_hw(nw, hdev);
 		if (ret) {
-			ERR_WLAN("WLAN: Failed to register hardware");
+			ERR("WLAN: Failed to register hardware");
 			goto err_netlink_cleanup;
 		}
 
@@ -180,7 +180,7 @@ void nrc_wlan_post_hal_cleanup(bool restart)
 	/* Get network device from WLAN layer */
 	nw = nrc_wlan_get_nw();
 	if (!nw) {
-		ERR_WLAN("No network device available for cleanup");
+		ERR("No network device available for cleanup");
 		return;
 	}
 

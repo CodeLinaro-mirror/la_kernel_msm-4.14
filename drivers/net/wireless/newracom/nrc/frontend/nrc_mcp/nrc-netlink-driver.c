@@ -83,26 +83,26 @@ int send_to_netlink(int id, struct sk_buff *skb, struct nrc_hif_device *hdev,
 
 	/* Validate input parameters */
 	if (!skb || !skb->data) {
-		ERR_MCP("send_to_netlink: Invalid SKB: skb=%p, data=%p", skb,
+		ERR("send_to_netlink: Invalid SKB: skb=%p, data=%p", skb,
 			skb ? skb->data : NULL);
 		return -EINVAL;
 	}
 
 	if (id < 0 || id >= CHAN_ID_MAX) {
-		ERR_MCP("send_to_netlink: Invalid channel ID: %d (max: %d)", id,
+		ERR("send_to_netlink: Invalid channel ID: %d (max: %d)", id,
 			CHAN_ID_MAX);
 		goto cleanup;
 	}
 
 	/* Check if netlink family is initialized */
 	if (!nrc_family[id].name[0]) {
-		ERR_MCP("send_to_netlink: Family %d not initialized", id);
+		ERR("send_to_netlink: Family %d not initialized", id);
 		goto cleanup;
 	}
 
 	/* Check if user is connected */
 	if (!user_info[id].portid) {
-		ERR_MCP("send_to_netlink: No user connected to channel %d", id);
+		ERR("send_to_netlink: No user connected to channel %d", id);
 		goto cleanup;
 	}
 

@@ -45,6 +45,9 @@
 #include "nrc-ps.h"
 #include "wim.h"
 #include "hif.h"
+#ifdef CONFIG_SUPPORT_RECOVERY
+#include "nrc-recovery.h"
+#endif
 
 /*
  * LEGACY CODE - Kept for historical reference only
@@ -143,6 +146,9 @@ static enum nrc_xmit_result nrc_hif_xmit_skb(struct nrc_hif_device *hdev,
 	if (ret < 0) {
 		if (ret == -1) {
 			ERR_HIF("HIF: xmit wait timeout, requeue skb");
+#ifdef CONFIG_SUPPORT_RECOVERY
+			nrc_recovery_inc(hdev, NRC_RECOVERY_TX_ERR);
+#endif
 			return XMIT_REQUEUE;
 		}
 		ERR_HIF("HIF: xmit wait interrupted (%d), free skb", ret);
@@ -179,6 +185,11 @@ static enum nrc_xmit_result nrc_hif_xmit_skb(struct nrc_hif_device *hdev,
 	}
 
 	nrc_hif_free_skb(hdev, skb);
+#ifdef CONFIG_SUPPORT_RECOVERY
+	nrc_recovery_zero(hdev, NRC_RECOVERY_TX_ERR);
+	/* TX success means FW is alive — reset WDT like RX path does */
+	nrc_recovery_wdt_kick(hdev);
+#endif
 	return XMIT_OK;
 }
 

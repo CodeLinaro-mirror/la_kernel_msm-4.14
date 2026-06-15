@@ -51,6 +51,9 @@
 #include "nrc-bd.h"
 #endif
 #include "nrc-tx.h"
+#ifdef CONFIG_SUPPORT_RECOVERY
+#include "nrc-recovery.h"
+#endif
 
 /**
  * nrc_init_credit_queue - Initialize credit queue management in struct nrc
@@ -267,6 +270,24 @@ skip_fw_download:
 
 	/* Initialization complete - transition to operational state */
 	NRC_HIF_SET_DRV_STATE(hdev, NRC_DRV_RUNNING);
+
+#ifdef CONFIG_SUPPORT_RECOVERY
+	/* Initialize or reset recovery engine based on start type.
+	 * First start: full init. Restart after recovery: reset counters only.
+	 * Error counting is always active for monitoring via debugfs. */
+	if (!hdev->recovery)
+		nrc_recovery_init(hdev);
+	else
+		nrc_recovery_reset(hdev);
+
+	/* Start FW watchdog only when recovery=1 (daemon will handle restart).
+	 * With recovery=0, WDT bark would send netlink with no listener. */
+	if (hdev->params && hdev->params->recovery > 0) {
+		nrc_recovery_wdt_init(hdev, NRC_RECOVERY_WDT_PERIOD_MS);
+		nrc_recovery_wdt_kick(hdev);
+	}
+#endif
+
 	INFO("HAL started successfully (DRV_RUNNING)");
 
 	return 0;
@@ -329,6 +350,13 @@ int nrc_nw_stop(void)
 
 	INFO("Stopping HAL");
 
+#ifdef CONFIG_SUPPORT_RECOVERY
+	/* Stop FW watchdog before shutdown */
+	nrc_recovery_wdt_clear(hdev);
+	/* Disable recovery before shutdown to prevent new triggers */
+	nrc_recovery_deinit(hdev);
+#endif
+
 	/* 1. Send WIM_CMD_STOP while state is still RUNNING
 	 * This ensures the command is accepted and processed by FW */
 	if (NRC_FW_IS_STARTED(hdev)) {
@@ -347,7 +375,6 @@ int nrc_nw_stop(void)
 	 *    which are set once at hw registration and restored via association) */
 	hdev->ps.state = NRC_PS_STATE_WAKE;
 	hdev->ps.mode = NRC_PS_NONE;
-	hdev->ps.enabled = false;
 	hdev->ps.modem_enabled = false;
 	hdev->ps.wake_pending = false;
 	complete_all(&hdev->wake_done);
@@ -407,6 +434,13 @@ int nrc_hal_fw_init(struct nrc_hif_device *hdev)
 	/* Initialize firmware capabilities */
 	hdev->fw.use_ext_lna = false;
 	hdev->fw.recovery_wdt = NULL;
+
+#ifdef CONFIG_SUPPORT_RECOVERY
+	/* Initialize restart mutual exclusion */
+	mutex_init(&hdev->restart_mtx);
+	hdev->restarting = false;
+	init_completion(&hdev->restart_done);
+#endif
 
 	return 0;
 }

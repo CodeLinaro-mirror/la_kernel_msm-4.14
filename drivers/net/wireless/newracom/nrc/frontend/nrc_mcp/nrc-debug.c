@@ -102,14 +102,14 @@ void nrc_init_debugfs(struct mcp_priv *mcp)
 {
 #ifdef CONFIG_DEBUG_FS
 	if (!mcp) {
-		ERR_MCP("Invalid MCP device for debugfs");
+		ERR("Invalid MCP device for debugfs");
 		return;
 	}
 
 	/* Create MCP debugfs root directory for future MCP-specific entries */
 	mcp_debugfs_root = debugfs_create_dir("nrc_mcp", NULL);
 	if (!mcp_debugfs_root) {
-		ERR_MCP("Failed to create MCP debugfs root");
+		ERR("Failed to create MCP debugfs root");
 		return;
 	}
 

@@ -138,12 +138,26 @@ static const char *const nrc_debug_category_names[] = {
 #define VBS_SLOT(fmt, ...) VBS(CAT(SLOT), fmt, ##__VA_ARGS__)
 #define VBS_BUS(fmt, ...) VBS(CAT(BUS), fmt, ##__VA_ARGS__)
 
-/* INFO level macros - informational messages (shown by default) */
+/* ── Level-based macros (no category tag) ──────────────────────────── */
+
+/* INFO level - informational messages (shown by default) */
 #define INFO(fmt, ...)                                                \
 	nrc_dbg_level(NRC_DBG_LEVEL_INFO, NRC_DBG_BASIC, "Info " fmt, \
 		      ##__VA_ARGS__)
 
-/* Category-based helper macros using category name array */
+/* WRN level - warning messages with function:line
+ * Note: Cannot use 'WARN' - conflicts with kernel's WARN(condition, fmt...)
+ * in asm-generic/bug.h
+ */
+#define WRN(fmt, ...) \
+	nrc_dbg_warn("Warning %s:%d " fmt, __func__, __LINE__, ##__VA_ARGS__)
+
+/* ERR level - error messages with function:line */
+#define ERR(fmt, ...) \
+	nrc_dbg_err("Error %s:%d " fmt, __func__, __LINE__, ##__VA_ARGS__)
+
+/* ── Category-based macros (adds [Category] tag) ──────────────────── */
+
 #define INFO_CAT(c, fmt, ...)                                                 \
 	nrc_dbg_info("Info [%s] " fmt, nrc_debug_category_names[NRC_DBG_##c], \
 		     ##__VA_ARGS__)
@@ -156,18 +170,6 @@ static const char *const nrc_debug_category_names[] = {
 #define ERR_CAT(c, fmt, ...)                                                   \
 	nrc_dbg_err("Error [%s] %s:%d " fmt,                                   \
 		    nrc_debug_category_names[NRC_DBG_##c], __func__, __LINE__, \
-		    ##__VA_ARGS__)
-
-/* Legacy string-based macros - deprecated, use _CAT versions */
-#define INFo(category, fmt, ...) \
-	nrc_dbg_info("Info [" category "] " fmt "", ##__VA_ARGS__)
-
-#define WARn(category, fmt, ...)                                       \
-	nrc_dbg_warn("Warning [" category "] %s:%d " fmt "", __func__, \
-		     __LINE__, ##__VA_ARGS__)
-
-#define ERR(category, fmt, ...)                                               \
-	nrc_dbg_err("Error [" category "] %s:%d " fmt "", __func__, __LINE__, \
 		    ##__VA_ARGS__)
 
 /* Category-specific info macros - Common categories only */

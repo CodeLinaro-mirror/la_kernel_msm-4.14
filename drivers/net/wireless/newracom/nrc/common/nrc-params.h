@@ -168,6 +168,9 @@ struct nrc_params {
 
 	/* MCP Priority Control */
 	bool mcp_priority;
+
+	/* Recovery mode: 0=monitor only, 1=auto-recovery */
+	int recovery;
 };
 
 /**

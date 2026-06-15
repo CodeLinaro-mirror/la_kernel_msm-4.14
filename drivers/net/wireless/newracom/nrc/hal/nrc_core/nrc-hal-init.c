@@ -56,7 +56,7 @@ static int nrc_hal_register_ops(struct nrc_hal_ops *ops)
 
 	mutex_lock(&hal_ops_mutex);
 	if (g_hal_ops) {
-		ERR_HAL("HAL ops already registered");
+		ERR("HAL ops already registered");
 		ret = -EEXIST;
 	} else {
 		g_hal_ops = ops;

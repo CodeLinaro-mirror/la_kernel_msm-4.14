@@ -44,6 +44,10 @@
 
 #include "nrc-debug-common.h"
 
+#ifdef CONFIG_SUPPORT_RECOVERY
+#include "nrc-recovery.h"
+#endif
+
 /*
  * ============================================================================
  * PS Timing Recording Functions (for debugfs monitoring)
@@ -378,6 +382,9 @@ int nrc_ps_request_wake_sync(struct nrc_hif_device *hdev, int timeout_ms,
 			ERR_PS("TIMEOUT(%dms) waiting for FW_READY! Target failed to wake up.",
 			       timeout_ms);
 			nrc_ps_handle_event(hdev, &timeout_event);
+#ifdef CONFIG_SUPPORT_RECOVERY
+			nrc_recovery_inc(hdev, NRC_RECOVERY_WAKEUP_ERR);
+#endif
 			return -ETIMEDOUT;
 		}
 	}
@@ -385,6 +392,9 @@ int nrc_ps_request_wake_sync(struct nrc_hif_device *hdev, int timeout_ms,
 	DBG_PS("Sync wake done (%d, %s)", timeout_ms,
 	       nrc_ps_reason_str(reason));
 
+#ifdef CONFIG_SUPPORT_RECOVERY
+	nrc_recovery_zero(hdev, NRC_RECOVERY_WAKEUP_ERR);
+#endif
 	return 0;
 }
 
@@ -433,6 +443,9 @@ void nrc_ps_handle_fw_ready(void)
 				    hdev->ps.pending_wake_reason :
 				    NRC_PS_REASON_TARGET_FW_READY,
 			    0);
+
+	/* Resume WDT after wake */
+	nrc_recovery_wdt_set_suspended(hdev, false);
 
 	/* Signal completion for synchronous waiters */
 	complete_all(&hdev->wake_done);
@@ -548,8 +561,24 @@ int nrc_hal_ps_request_sleep(enum NRC_PS_MODE mode, u64 timeout,
 
 	/* Check if already asleep */
 	if (hdev->ps.state == NRC_PS_STATE_SLEEP) {
-		VBS_PS("Already in sleep state, skip");
-		return 0;
+		if (hdev->ps.mode != mode ||
+		    hdev->ps.last_sleep_timeout_ms != (u64)timeout) {
+			INFO_PS("PS reconfig in sleep: %s(%llu) -> %s(%llu), waking",
+				nrc_ps_mode_str(hdev->ps.mode),
+				hdev->ps.last_sleep_timeout_ms,
+				nrc_ps_mode_str(mode), (u64)timeout);
+			ret = nrc_ps_request_wake_sync(
+				hdev, 5000,
+				NRC_PS_REASON_HAL_PS_RECONFIG);
+			if (ret < 0) {
+				ERR_PS("Wake for reconfig failed (ret=%d)",
+				       ret);
+				return ret;
+			}
+		} else {
+			VBS_PS("Already in sleep state, skip");
+			return 0;
+		}
 	}
 
 	/* Reject PS if FW is not running */
@@ -649,6 +678,9 @@ sleep_done:
 	} else if (mode >= NRC_PS_DEEPSLEEP_TIM) {
 		nrc_hif_ops_rx_thread_suspend();
 	}
+
+	/* Suspend WDT during sleep to prevent keep-alive TX waking target */
+	nrc_recovery_wdt_set_suspended(hdev, true);
 
 	/* Final transition to SLEEP state */
 	event_data.event = NRC_PS_EVT_SLEEP_DONE;

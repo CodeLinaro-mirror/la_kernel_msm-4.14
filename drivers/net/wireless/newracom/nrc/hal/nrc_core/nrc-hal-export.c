@@ -126,7 +126,7 @@ int nrc_hal_core_nw_init(struct nrc *nw, struct nrc_hif_device *hdev)
 	int ret;
 
 	if (!hdev) {
-		ERR_HAL("Invalid parameters for HAL-CORE initialization");
+		ERR("Invalid parameters for HAL-CORE initialization");
 		return -EINVAL;
 	}
 
@@ -152,7 +152,7 @@ int nrc_hal_core_nw_init(struct nrc *nw, struct nrc_hif_device *hdev)
 	/* Initialize HAL firmware */
 	ret = nrc_hal_fw_init(hdev);
 	if (ret) {
-		ERR_HAL("Failed to initialize HAL firmware: %d", ret);
+		ERR("Failed to initialize HAL firmware: %d", ret);
 		mutex_lock(&nw_mutex);
 		g_nw_from_wlan = NULL;
 		mutex_unlock(&nw_mutex);
@@ -199,7 +199,7 @@ void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev, struct nrc *nw)
 
 	if (count < 0) {
 		/* Should not happen - reset to 0 */
-		ERR_HAL("frontend_count went negative, resetting to 0");
+		ERR("frontend_count went negative, resetting to 0");
 		atomic_set(&hdev->frontend_count, 0);
 		return;
 	}

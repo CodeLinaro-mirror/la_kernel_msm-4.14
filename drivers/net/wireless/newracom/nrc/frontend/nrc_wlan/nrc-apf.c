@@ -59,7 +59,7 @@ static bool nrc_apf_is_supported(struct nrc *nw)
 
 	max_len = nrc_apf_get_maxlen(nw);
 	if (max_len <= 0) {
-		ERR_WLAN("Operation not supported in current firmware");
+		ERR("Operation not supported in current firmware");
 		return false;
 	}
 
@@ -126,7 +126,7 @@ int nrc_apf_set_packet_filter(struct nrc *nw, u8 *program, size_t len)
 	max_len = nrc_apf_get_maxlen(nw);
 
 	if (len > max_len) {
-		ERR_WLAN("The length value(%zu) exceeds the filter size(%d)",
+		ERR("The length value(%zu) exceeds the filter size(%d)",
 			 len, max_len);
 		return -EMSGSIZE;
 	}
@@ -159,7 +159,7 @@ int nrc_apf_read_packet_filter(struct nrc *nw, u32 src_offset, u8 *host_dst,
 	max_len = nrc_apf_get_maxlen(nw);
 
 	if (src_offset >= max_len) {
-		ERR_WLAN("The offset value(%u) exceeds the filter size(%u)",
+		ERR("The offset value(%u) exceeds the filter size(%u)",
 			 src_offset, max_len);
 		return -EINVAL;
 	}
@@ -354,7 +354,7 @@ static ssize_t nrc_apf_set_packet_filter_write(struct file *file,
 	}
 
 	if (ret < 0) {
-		ERR_WLAN("Failed to write packet filter");
+		ERR("Failed to write packet filter");
 		goto done;
 	}
 
@@ -401,7 +401,7 @@ static ssize_t nrc_apf_read_packet_filter_read(struct file *file,
 	ret = nrc_apf_read_packet_filter(nw, apf_read_offset, text,
 					 apf_read_len);
 	if (ret < 0) {
-		ERR_WLAN("Failed to read packet filter");
+		ERR("Failed to read packet filter");
 		goto done;
 	}
 
@@ -439,7 +439,7 @@ static ssize_t nrc_apf_read_packet_filter_write(struct file *file,
 
 	ret = sscanf(buf, "%u %u", &apf_read_offset, &apf_read_len);
 	if (ret != 2) {
-		ERR_WLAN("Invalid format, expected format 'offset len'");
+		ERR("Invalid format, expected format 'offset len'");
 		return -EINVAL;
 	}
 
@@ -471,7 +471,7 @@ static int nrc_apf_enable_read(void *data, u64 *val)
 
 	ret = nrc_apf_get_enable(nw, &enable);
 	if (ret < 0) {
-		ERR_WLAN("Failed to read enable");
+		ERR("Failed to read enable");
 		goto done;
 	}
 
@@ -495,7 +495,7 @@ static int nrc_apf_enable_write(void *data, u64 val)
 
 	ret = nrc_apf_set_enable(nw, val);
 	if (ret < 0) {
-		ERR_WLAN("Failed to write enable");
+		ERR("Failed to write enable");
 		goto done;
 	}
 

@@ -926,12 +926,12 @@ static int capi_sta_send_addba(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
@@ -956,7 +956,7 @@ static int capi_sta_send_addba(struct sk_buff *skb, struct genl_info *info)
 					    &param);
 #endif
 	if (!param.done)
-		ERR_WLAN("WFA_CAPI: failed to send ADDBA");
+		ERR("WFA_CAPI: failed to send ADDBA");
 
 	return capi_sta_reply(NL_WFA_CAPI_SEND_ADDBA, info,
 			      param.done ? NL_WFA_CAPI_RESP_OK :
@@ -1012,12 +1012,12 @@ static int capi_sta_send_delba(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
@@ -1042,7 +1042,7 @@ static int capi_sta_send_delba(struct sk_buff *skb, struct genl_info *info)
 					    &param);
 #endif
 	if (!param.done)
-		ERR_WLAN("WFA_CAPI: failed to send DELBA");
+		ERR("WFA_CAPI: failed to send DELBA");
 
 	return capi_sta_reply(NL_WFA_CAPI_SEND_DELBA, info,
 			      param.done ? NL_WFA_CAPI_RESP_OK :
@@ -1065,12 +1065,12 @@ static int capi_bss_max_idle_offset(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
@@ -1137,12 +1137,12 @@ static int capi_bss_max_idle(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
@@ -1321,7 +1321,7 @@ static int test_mmic_failure(struct sk_buff *skb, struct genl_info *info)
 #endif
 
 	if (!param.done)
-		ERR_WLAN("WFA_CAPI: failed to generate MMIC failure");
+		ERR("WFA_CAPI: failed to generate MMIC failure");
 
 	return capi_sta_reply(NL_TEST_MMIC_FAILURE, info,
 			      param.done ? NL_WFA_CAPI_RESP_NONE :
@@ -1401,17 +1401,17 @@ static int nrc_shell_run_simple(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR_WLAN("%s Can't send command", __func__);
+		ERR("%s Can't send command", __func__);
 		return -EIO;
 	}
 
@@ -1463,17 +1463,17 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR_WLAN("%s Can't send command", __func__);
+		ERR("%s Can't send command", __func__);
 		return -EIO;
 	}
 
@@ -1499,7 +1499,7 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 		cmd = nla_data(info->attrs[NL_SHELL_RUN_CMD]);
 
 	if (!nrc_shell_try_acquire()) {
-		ERR_WLAN("nrc_shell_run: busy, rejecting concurrent request");
+		ERR("nrc_shell_run: busy, rejecting concurrent request");
 		strcpy(cmd_resp, "Failed");
 		nla_put_string(msg, NL_SHELL_RUN_CMD_RESP, cmd_resp);
 		genlmsg_end(msg, hdr);
@@ -1572,17 +1572,17 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(hdev)) {
-		ERR_WLAN(
+		ERR(
 			"[Error] the target device cannot respond while deep sleep.");
 		return -EIO;
 	}
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR_WLAN("%s Can't send command", __func__);
+		ERR("%s Can't send command", __func__);
 		return -EIO;
 	}
 
@@ -1608,7 +1608,7 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 		cmd = nla_data(info->attrs[NL_SHELL_RUN_CMD_RAW]);
 
 	if (!nrc_shell_try_acquire()) {
-		ERR_WLAN("nrc_shell_run_raw: busy, rejecting concurrent request");
+		ERR("nrc_shell_run_raw: busy, rejecting concurrent request");
 		strcpy(cmd_resp, "Failed");
 		nla_put_string(msg, NL_SHELL_RUN_CMD_RESP_RAW, cmd_resp);
 		genlmsg_end(msg, hdr);
@@ -1679,14 +1679,14 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	memset(cmd_resp, 0x0, sizeof(cmd_resp));
 
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR_WLAN("%s Can't send command", __func__);
+		ERR("%s Can't send command", __func__);
 		return -EIO;
 	}
 
@@ -1813,14 +1813,14 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	memset(cmd_resp, 0x0, sizeof(cmd_resp));
 
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR_WLAN("%s Can't send command", __func__);
+		ERR("%s Can't send command", __func__);
 		return -EIO;
 	}
 
@@ -1853,7 +1853,7 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 	DBG_CAPI("%s %s", __func__, cmd);
 
 	if (cmd_to_argc_argv(cmd, &argc, &argv) == -1) {
-		ERR_WLAN("Failed to convert string to argc and argv");
+		ERR("Failed to convert string to argc and argv");
 		nlmsg_free(msg);
 		return -EBUSY;
 	}
@@ -1942,7 +1942,7 @@ static int nl_apf_set_enable(struct sk_buff *skb, struct genl_info *info)
 	int enable;
 
 	if (NRC_DRV_IS_NOT_RUNNING(nrc_nw->hdev)) {
-		ERR_WLAN("the target device cannot respond while deep sleep");
+		ERR("the target device cannot respond while deep sleep");
 		return -EIO;
 	}
 
@@ -1998,7 +1998,7 @@ static int nl_apf_get_enable(struct sk_buff *skb, struct genl_info *info)
 	int enable;
 
 	if (NRC_DRV_IS_NOT_RUNNING(nrc_nw->hdev)) {
-		ERR_WLAN("the target device cannot respond while deep sleep");
+		ERR("the target device cannot respond while deep sleep");
 		return -EIO;
 	}
 
@@ -2045,7 +2045,7 @@ static int nl_apf_get_cap(struct sk_buff *skb, struct genl_info *info)
 	void *hdr;
 
 	if (NRC_DRV_IS_NOT_RUNNING(nrc_nw->hdev)) {
-		ERR_WLAN("the target device cannot respond while deep sleep");
+		ERR("the target device cannot respond while deep sleep");
 		return -EIO;
 	}
 
@@ -2114,7 +2114,7 @@ static int nl_apf_set_filter(struct sk_buff *skb, struct genl_info *info)
 	struct apf_filter *filter;
 
 	if (NRC_DRV_IS_NOT_RUNNING(nrc_nw->hdev)) {
-		ERR_WLAN("the target device cannot respond while deep sleep");
+		ERR("the target device cannot respond while deep sleep");
 		return -EIO;
 	}
 
@@ -2182,7 +2182,7 @@ static int nl_apf_get_filter(struct sk_buff *skb, struct genl_info *info)
 	struct apf_filter *filter;
 
 	if (NRC_DRV_IS_NOT_RUNNING(nrc_nw->hdev)) {
-		ERR_WLAN("the target device cannot respond while deep sleep");
+		ERR("the target device cannot respond while deep sleep");
 		return -EIO;
 	}
 
@@ -2254,7 +2254,7 @@ static int nrc_mic_scan(struct sk_buff *skb, struct genl_info *info)
 
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
@@ -2314,7 +2314,7 @@ static int nrc_inject_frame(struct sk_buff *skb, struct genl_info *info)
 
 	buffer = dev_alloc_skb(nrc_nw->hw->extra_tx_headroom + length);
 	if (!buffer) {
-		ERR_WLAN("Failed to allocate SKB for frame injection");
+		ERR("Failed to allocate SKB for frame injection");
 		return -ENOMEM;
 	}
 	/* Track FRAME SKB allocation (TX path) */
@@ -2426,7 +2426,7 @@ static int nrc_auto_ba_toggle(struct sk_buff *skb, struct genl_info *info)
 	else
 		nw->params->ampdu_mode = NRC_AMPDU_MANUAL;
 
-	INFO_WLAN("Auto BA session feature %s",
+	INFO("Auto BA session feature %s",
 		  (nw->params->ampdu_mode == NRC_AMPDU_AUTO) ? "ON" : "OFF");
 
 	return 0;
@@ -2761,7 +2761,7 @@ int nrc_netlink_init(struct nrc *nw)
 #endif
 
 	if (rc) {
-		ERR_WLAN(
+		ERR(
 			"genl_register_family_with_ops_groups() is failed (%d).",
 			rc);
 		return -EINVAL;
@@ -2770,7 +2770,7 @@ int nrc_netlink_init(struct nrc *nw)
 	rc = netlink_register_notifier(&nl_umac_netlink_notifier);
 
 	if (rc) {
-		ERR_WLAN("netlink_register_notifier() is failed (%d).", rc);
+		ERR("netlink_register_notifier() is failed (%d).", rc);
 		genl_unregister_family(&nrc_nl_fam);
 		return -EINVAL;
 	}

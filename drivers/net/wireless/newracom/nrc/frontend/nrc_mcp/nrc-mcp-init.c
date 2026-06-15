@@ -49,13 +49,13 @@ static struct mcp_priv *nrc_mcp_alloc(struct device *dev,
 	struct mcp_priv *mcp;
 
 	if (!dev || !hdev) {
-		ERR_MCP("Invalid device or HIF device");
+		ERR("Invalid device or HIF device");
 		return NULL;
 	}
 
 	mcp = kzalloc(sizeof(struct mcp_priv), GFP_KERNEL);
 	if (!mcp) {
-		ERR_MCP("Failed to allocate MCP structure");
+		ERR("Failed to allocate MCP structure");
 		return NULL;
 	}
 
@@ -104,28 +104,28 @@ static int nrc_mcp_module_init(void)
 
 	/* Check if HAL is available */
 	if (!nrc_hal_core_is_init()) {
-		ERR_MCP("HAL core not initialized");
+		ERR("HAL core not initialized");
 		return -ENODEV;
 	}
 
 	/* Get HAL operations */
 	hal_ops = nrc_hal_core_get_ops();
 	if (!hal_ops) {
-		ERR_MCP("HAL operations not available");
+		ERR("HAL operations not available");
 		return -ENODEV;
 	}
 
 	/* Get HIF device from HAL */
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_MCP("HIF device not available");
+		ERR("HIF device not available");
 		return -ENODEV;
 	}
 
 	/* Create virtual device for MCP logging */
 	g_mcp_virtual_dev = root_device_register("nrc-mcp");
 	if (IS_ERR(g_mcp_virtual_dev)) {
-		ERR_MCP("Failed to register virtual device");
+		ERR("Failed to register virtual device");
 		g_mcp_virtual_dev = NULL;
 		/* Continue without device - will use pr_info */
 	}
@@ -133,7 +133,7 @@ static int nrc_mcp_module_init(void)
 	/* 1. Allocate MCP device structure */
 	g_mcp_dev = nrc_mcp_alloc(nrc_hal_core_get_dev(), hdev);
 	if (!g_mcp_dev) {
-		ERR_MCP("Failed to allocate MCP device");
+		ERR("Failed to allocate MCP device");
 		ret = -ENOMEM;
 		goto err_unregister_dev;
 	}
@@ -144,21 +144,21 @@ static int nrc_mcp_module_init(void)
 	/* Initialize MCP callback system */
 	ret = nrc_mcp_callback_init();
 	if (ret) {
-		ERR_MCP("Failed to initialize callback system: %d", ret);
+		ERR("Failed to initialize callback system: %d", ret);
 		goto err_free_mcp;
 	}
 
 	/* 2. Initialize HAL core with MCP device (allocates hdev->fw.priv if needed) */
 	ret = nrc_hal_core_nw_init(NULL, hdev);
 	if (ret) {
-		ERR_MCP("Failed to initialize HAL core: %d", ret);
+		ERR("Failed to initialize HAL core: %d", ret);
 		goto err_cleanup_callback;
 	}
 
 	/* 3. Initialize netlink interface */
 	ret = netlink_driver_init(hdev);
 	if (ret) {
-		ERR_MCP("Failed to initialize netlink interface: %d", ret);
+		ERR("Failed to initialize netlink interface: %d", ret);
 		goto err_cleanup_hal;
 	}
 
@@ -166,7 +166,7 @@ static int nrc_mcp_module_init(void)
 	if (!hdev->started) {
 		ret = nrc_hal_ops_nw_start();
 		if (ret) {
-			ERR_MCP("Failed to start network device: %d", ret);
+			ERR("Failed to start network device: %d", ret);
 			goto err_cleanup_netlink;
 		}
 	}

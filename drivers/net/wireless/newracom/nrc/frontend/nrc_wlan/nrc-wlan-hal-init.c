@@ -66,7 +66,7 @@ int nrc_wlan_hal_early_init(void)
 
 	/* Check if HAL core is initialized and ready */
 	if (!nrc_hal_core_is_init()) {
-		ERR_WLAN(
+		ERR(
 			"HAL Core is not initialized. Please load nrc_core module first.");
 		return -ENODEV;
 	}
@@ -74,14 +74,14 @@ int nrc_wlan_hal_early_init(void)
 	/* Get HIF device allocated during HAL probe */
 	hdev = nrc_hal_core_get_hdev();
 	if (!hdev) {
-		ERR_WLAN("HIF device not available from HAL");
+		ERR("HIF device not available from HAL");
 		return -ENODEV;
 	}
 
 	/* Allocate MAC80211 hardware in WLAN layer */
 	g_hw = nrc_mac_alloc_hw(sizeof(struct nrc), NRC_DRIVER_NAME);
 	if (!g_hw) {
-		ERR_WLAN("Failed to allocate MAC80211 hardware");
+		ERR("Failed to allocate MAC80211 hardware");
 		return -ENOMEM;
 	}
 
@@ -100,7 +100,7 @@ int nrc_wlan_hal_early_init(void)
 	/* Initialize WLAN-specific components first - better for parameter dependency */
 	ret = nrc_wlan_nw_init(g_nw);
 	if (ret) {
-		ERR_WLAN("WLAN initialization failed: %d", ret);
+		ERR("WLAN initialization failed: %d", ret);
 		nrc_wlan_nw_deinit(g_nw);
 		nrc_mac_free_hw(g_hw);
 		g_nw = NULL;
@@ -111,7 +111,7 @@ int nrc_wlan_hal_early_init(void)
 	/* Initialize HAL with network device after WLAN preparation */
 	ret = nrc_hal_core_nw_init(g_nw, hdev);
 	if (ret) {
-		ERR_WLAN("HAL initialization failed: %d", ret);
+		ERR("HAL initialization failed: %d", ret);
 		nrc_hal_core_nw_cleanup(hdev, g_nw);
 		nrc_wlan_nw_deinit(g_nw);
 		nrc_mac_free_hw(g_hw);
@@ -205,7 +205,7 @@ int nrc_wlan_nw_init(struct nrc *nw)
 	int ret;
 
 	if (!nw) {
-		ERR_WLAN("Invalid network device for WLAN initialization");
+		ERR("Invalid network device for WLAN initialization");
 		return -EINVAL;
 	}
 
@@ -223,7 +223,7 @@ int nrc_wlan_nw_init(struct nrc *nw)
 	/* Initialize WLAN-specific workqueues if needed */
 	ret = nrc_wlan_workqueue_init(nw);
 	if (ret) {
-		ERR_WLAN("Failed to initialize WLAN workqueues: %d", ret);
+		ERR("Failed to initialize WLAN workqueues: %d", ret);
 		return ret;
 	}
 
@@ -237,7 +237,7 @@ int nrc_wlan_nw_init(struct nrc *nw)
 void nrc_wlan_nw_deinit(struct nrc *nw)
 {
 	if (!nw) {
-		ERR_WLAN("Invalid network device for WLAN cleanup");
+		ERR("Invalid network device for WLAN cleanup");
 		return;
 	}
 

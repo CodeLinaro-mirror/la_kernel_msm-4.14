@@ -366,8 +366,8 @@ static void force_sw_enc_mode_by_sta_type(struct nrc *nw,
 		}
 		break;
 	default:
-		ERR_WLAN("Unknown Newracom IEEE80211 chipset %04x",
-			 nw->hdev->chip_id);
+		ERR("Unknown Newracom IEEE80211 chipset %04x",
+		    nw->hdev->chip_id);
 		BUG();
 	}
 }
@@ -1270,9 +1270,8 @@ static int nrc_mac_add_interface(struct ieee80211_hw *hw,
 				   11) { /* 7393 type, Use BK1, BE1,... */
 				vif->cab_queue = 10;
 			} else {
-				ERR_WLAN("Invalid Chip ID(0x%x), queues:%d",
-					 nw->hdev->chip_id,
-					 nw->hdev->hw_queues);
+				ERR("Invalid Chip ID(0x%x), queues:%d",
+				    nw->hdev->chip_id, nw->hdev->hw_queues);
 				BUG();
 			}
 		}
@@ -1302,13 +1301,13 @@ static int nrc_mac_add_interface(struct ieee80211_hw *hw,
 			vif->hw_queue[IEEE80211_AC_BK] = 6;
 			break;
 		default:
-			ERR_WLAN("Invalid Chip ID(0x%x), queues:%d",
-				 nw->hdev->chip_id, nw->hdev->hw_queues);
+			ERR("Invalid Chip ID(0x%x), queues:%d",
+			    nw->hdev->chip_id, nw->hdev->hw_queues);
 			BUG();
 		}
 	}
 	if (i_vif->index > 1) {
-		ERR_WLAN("Invalid Vif Index(%d)", i_vif->index);
+		ERR("Invalid Vif Index(%d)", i_vif->index);
 		BUG();
 	}
 	DBG_MAC("%s: VIF%d's hwqueue:%d", __func__, i_vif->index,
@@ -1500,7 +1499,7 @@ static void prepare_deauth_sta(void *data, struct ieee80211_sta *sta)
 #endif
 
 	if (!sta || !vif) {
-		WARN_WLAN("Invalid argument");
+		WRN("Invalid argument");
 		return;
 	}
 
@@ -1535,9 +1534,8 @@ static void prepare_deauth_sta(void *data, struct ieee80211_sta *sta)
 		nrc_mac_tx_process(hw, skb, false);
 #endif
 	} else {
-		ERR_WLAN(
-			"(AP Recovery) Failed to create TX deauth for STA(%pM)",
-			sta->addr);
+		ERR("(AP Recovery) Failed to create TX deauth for STA(%pM)",
+		    sta->addr);
 	}
 
 	++total_sta;
@@ -1563,6 +1561,14 @@ int nrc_mac_restart(struct nrc *nw)
 				mdelay(300);
 				nrc_cancel_hw_scan(nw->hw, nw->vif[i]);
 				ieee80211_connection_loss(nw->vif[i]);
+
+				/*
+				 * Reset associated_vif on recovery restart.
+				 * If bss_info_changed fails (e.g., wakeup failure
+				 * during recovery), associated_vif would remain
+				 * stale, blocking sched_scan after restart.
+				 */
+				nw->associated_vif = NULL;
 				if (!is_relay) {
 					nrc_vcmd_backup_init_info(i, nw);
 					return 0;
@@ -1682,7 +1688,7 @@ int nrc_nw_restart_wlan(struct nrc *nw)
 	/* 4. Start (Reset → Probe → FW Download → FW Start) */
 	ret = nrc_hal_ops_nw_start();
 	if (ret) {
-		ERR_WLAN("Restart failed at nw_start: %d", ret);
+		ERR("Restart failed at nw_start: %d", ret);
 		mutex_unlock(&nw->state_mtx);
 		return ret;
 	}
@@ -1902,10 +1908,62 @@ void nrc_mac_add_tlv_channel(struct sk_buff *skb,
 }
 #endif /* CONFIG_SUPPORT_CHANNEL_INFO */
 
+static void nrc_mac_config_handle_ps(struct nrc *nw, struct ieee80211_hw *hw)
+{
+	struct nrc_hif_device *hdev = nw->hdev;
+
+	nw->hdev->ps.timeout = hw->conf.dynamic_ps_timeout;
+
+	DBG(CAT(MAC) | CAT(PS),
+	    "IEEE80211_CONF_CHANGE_PS enabled:%d timeout:%d drv:%s scan_mode=%d",
+	    !!(hw->conf.flags & IEEE80211_CONF_PS), nw->hdev->ps.timeout,
+	    NRC_DRV_STATE_STR(hdev), atomic_read(&nw->scan_mode));
+
+	/* Don't enter PS during scan */
+	if (atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_ACTIVE_SCANNING ||
+	    atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_PASSIVE_SCANNING) {
+		VBS_PS("Skip PS during scan");
+		return;
+	}
+
+	if (hw->conf.flags & IEEE80211_CONF_PS) {
+		/* Already asleep - nothing to do */
+		if (NRC_DRV_IS_ASLEEP(hdev) || nw->hdev->ps.modem_enabled) {
+			VBS_PS("Already in PS...");
+			return;
+		}
+		/* Start dynamic PS timer for sleep entry */
+		nrc_ps_dyn_start(nw);
+	} else {
+		/* PS disabled by mac80211: stop timer, wake if asleep */
+		nrc_ps_dyn_stop(nw);
+		if (NRC_DRV_IS_ASLEEP(hdev) || nw->hdev->ps.modem_enabled) {
+			nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
+					NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
+		}
+	}
+}
+
+static void nrc_mac_config_handle_idle(struct nrc *nw, struct ieee80211_hw *hw)
+{
+	DBG_MAC("IEEE80211_CONF_CHANGE_IDLE");
+
+	cancel_delayed_work_sync(&nw->idle_work);
+
+	if (hw->conf.flags & IEEE80211_CONF_IDLE) {
+		nrc_idle_mode_set_state(nw, true);
+		nrc_ps_set_idle_mode(nw, "mac config");
+	} else {
+		DBG_STATE("Changing to Active");
+		nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
+				NRC_PS_REASON_MAC_IDLE_EXIT);
+		nrc_idle_mode_set_state(nw, false);
+	}
+}
+
 static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 {
 	struct nrc *nw = hw->priv;
-	struct nrc_hif_device *hdev = nw->hdev;
 	struct sk_buff *skb;
 	int ret = 0;
 	struct ieee80211_channel ch = {
@@ -2026,112 +2084,12 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 skip_channel_config:
 	mutex_lock(&nw->state_mtx);
 
-	if (changed & IEEE80211_CONF_CHANGE_PS) {
-		nw->hdev->ps.enabled = (hw->conf.flags & IEEE80211_CONF_PS);
-		nw->hdev->ps.timeout = hw->conf.dynamic_ps_timeout;
-
-		DBG(CAT(MAC) | CAT(PS),
-		    "CONF_CHANGE ps:%s timeout:%d drv:%s scan_mode=%d",
-		    nw->hdev->ps.enabled ? "enabled" : "disabled",
-		    nw->hdev->ps.timeout, NRC_DRV_STATE_STR(hdev),
-		    atomic_read(&nw->scan_mode));
-
-		/* CRITICAL: Don't enter PS during scan - we need to stay awake
-		 * to receive PROBE_RESP frames. Skip PS processing if scanning.
-		 */
-		if (atomic_read(&nw->scan_mode) ==
-			    NRC_SCAN_MODE_ACTIVE_SCANNING ||
-		    atomic_read(&nw->scan_mode) ==
-			    NRC_SCAN_MODE_PASSIVE_SCANNING) {
-			VBS_PS("Skip PS during scan");
-			goto ps_skip;
-		}
-
-		if (hdev->ps.enabled) /* busy time, increase ps time temporarily */
-			nrc_ps_dyn_start_custom_timeout(nw, 2000);
-
-		if (NRC_DRV_IS_ASLEEP(hdev) || nw->hdev->ps.modem_enabled) {
-			/**
-			 * [NRC_PS_DEEPSLEEP_* ONLY]
-			 * if the current state is already NRC_DRV_PS,
-			 * there's nothing to do in here even if mac80211 notifies wake-up.
-			 * the actual action to wake up for target will be done by
-			 * nrc_wake_tx_queue() with changing gpio signal.
-			 * (when driver receives a data frame.)
-			 */
-			if (nw->hdev->ps.enabled || nrc_idle_mode_get_state(nw))
-				VBS_PS("Already in PS...");
-			else {
-				nrc_ps_set_mode(
-					nw, NRC_PS_NONE, 2000, NULL,
-					NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
-			}
-
-			goto ps_skip;
-		}
-
-		if (ieee80211_hw_check(hw, SUPPORTS_DYNAMIC_PS)) {
-			if (hw->conf.dynamic_ps_timeout > 0) {
-				if (nw->hdev->ps.enabled) {
-					nrc_ps_dyn_start(nw);
-					goto ps_skip;
-				} else {
-					if (nw->params->power_save >=
-					    NRC_PS_DEEPSLEEP_TIM)
-						goto ps_skip;
-				}
-			} else {
-				goto ps_skip;
-			}
-		} else if (ieee80211_hw_check(hw, SUPPORTS_PS)) {
-			if (!nw->hdev->ps.enabled) {
-				if (nw->params->power_save >=
-				    NRC_PS_DEEPSLEEP_TIM)
-					goto ps_skip;
-			}
-		}
-
-		if (nw->hdev->ps.enabled &&
-		    nw->params->power_save > NRC_PS_NONE) {
-			u64 ps_duration = 0;
-
-			if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
-				ps_duration = nw->params->sleep_duration[0] *
-					      (nw->params->sleep_duration[1] ?
-						       1000 :
-						       1);
-
-				ieee80211_stop_queues(nw->hw);
-#ifdef CONFIG_USE_TXQ
-				nrc_cleanup_txq_all(nw);
-#endif
-			}
-
-			ret = nrc_ps_set_mode(
-				nw, nw->params->power_save, ps_duration, NULL,
-				NRC_PS_REASON_MAC_CONFIG_PS_ENABLED);
-		}
-	}
-
-ps_skip:
+	if (changed & IEEE80211_CONF_CHANGE_PS)
+		nrc_mac_config_handle_ps(nw, hw);
 
 	if (nw->params->idle_mode && (changed & IEEE80211_CONF_CHANGE_IDLE) &&
-	    atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE) {
-		DBG_MAC("%s: changed: IEEE80211_CONF_CHANGE_IDLE",
-			__FUNCTION__);
-
-		cancel_delayed_work_sync(&nw->idle_work);
-
-		if (hw->conf.flags & IEEE80211_CONF_IDLE) {
-			nrc_idle_mode_set_state(nw, true);
-			nrc_ps_set_idle_mode(nw, "mac config");
-		} else {
-			DBG_STATE("Changing to Active");
-			nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
-					NRC_PS_REASON_MAC_IDLE_EXIT);
-			nrc_idle_mode_set_state(nw, false);
-		}
-	}
+	    atomic_read(&nw->scan_mode) == NRC_SCAN_MODE_IDLE)
+		nrc_mac_config_handle_idle(nw, hw);
 
 	mutex_unlock(&nw->state_mtx);
 
@@ -2237,20 +2195,14 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 			}
 			spin_unlock_bh(&nw->vif_lock);
 
-			/*
-			 * NonTIM mode: Auto-enable PS on association
-			 * Kernel 6.0+ may not properly trigger IEEE80211_CONF_CHANGE_PS
-			 * via iwconfig, so we manually enable PS here.
-			 */
-			if (nw->hdev->ps.supports_dynamic_ps &&
-			    nw->params->power_save >= NRC_PS_DEEPSLEEP_NONTIM &&
-			    !nw->hdev->ps.enabled) {
-				nw->hdev->ps.enabled = true;
+			/* Auto-start PS timer on association for deep sleep modes */
+			if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
 				if (hw->conf.dynamic_ps_timeout == 0)
 					hw->conf.dynamic_ps_timeout = 3000;
 				nw->hdev->ps.timeout =
 					hw->conf.dynamic_ps_timeout;
-				DBG_MAC("[BSS_CHANGED_ASSOC] NonTIM auto PS enabled, timeout=%d ms",
+				DBG_MAC("[BSS_CHANGED_ASSOC] Auto PS start (mode=%d), timeout=%d ms",
+					nw->params->power_save,
 					nw->hdev->ps.timeout);
 				nrc_ps_dyn_start(nw);
 			}
@@ -2454,8 +2406,7 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 	if (skb->len > sizeof(struct wim)) {
 		ret = nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 		if (ret < 0) {
-			ERR_WLAN("failed to transmit a wim request (ret=%d)",
-				 ret);
+			ERR("failed to transmit a wim request (ret=%d)", ret);
 			/* Free SKB on transmission failure */
 			NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, false,
 					   false);
@@ -2970,18 +2921,8 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 
 	// DBG_MAC("%s called", __FUNCTION__);
 
-	if (nw->hdev->ampdu_supported && !nw->ampdu_started) {
-		if (ieee80211_start_tx_ba_session(sta, 0, 0) < 0) {
-			ERR_WLAN("can't start ampdu");
-			ret = -EOPNOTSUPP;
-			goto out;
-		} else {
-			nw->ampdu_started = true;
-		}
-	}
-
 	if (!sta || tid >= NRC_MAX_TID) {
-		ERR_WLAN("sta is NULL");
+		ERR("sta is NULL");
 		ret = -EOPNOTSUPP;
 		goto out;
 	}
@@ -3013,6 +2954,17 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		i_sta->tx_ba_session[tid].state = IEEE80211_BA_REQUEST;
 		i_sta->tx_ba_session[tid].ba_req_last_jiffies = jiffies;
 		ieee80211_start_tx_ba_cb_irqsafe(vif, sta->addr, tid);
+#ifdef CONFIG_SUPPORT_AMPDU_TX_DELAY_ADDBA
+		/*
+		 * Kernel >= 6.2: returning 0 from TX_START makes mac80211
+		 * send ADDBA immediately in the same call stack, which races
+		 * with concurrent ieee80211_stop_tx_ba_session() setting
+		 * WANT_STOP via sta->lock (no wiphy lock needed). Use
+		 * DELAY_ADDBA to defer ADDBA to the callback work path
+		 * which checks STOPPING/WANT_STOP gracefully.
+		 */
+		ret = IEEE80211_AMPDU_TX_START_DELAY_ADDBA;
+#endif
 		break;
 #ifdef CONFIG_SUPPORT_AFTER_KERNEL_3_0_36
 	case IEEE80211_AMPDU_TX_STOP_FLUSH:
@@ -3054,7 +3006,7 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		i_sta->rx_ba_session[tid].buf_size = buf_size;
 		i_sta->rx_ba_session[tid].started = true;
 		if (nw->ampdu_reject) {
-			ERR_WLAN("Reject AMPDU");
+			ERR("Reject AMPDU");
 			ret = -EOPNOTSUPP;
 			goto out;
 		}
@@ -3064,7 +3016,7 @@ static int nrc_mac_ampdu_action(struct ieee80211_hw *hw,
 		DBG_AMPDU("action: RX_STOP");
 		i_sta->rx_ba_session[tid].started = false;
 		if (nw->ampdu_reject) {
-			ERR_WLAN("Reject AMPDU");
+			ERR("Reject AMPDU");
 			ret = -EOPNOTSUPP;
 			goto out;
 		}
@@ -3265,7 +3217,7 @@ void nrc_mac_cancel_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 		ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
 				      NRC_PS_REASON_DRV_SCAN_ABORT);
 		if (ret == -1) {
-			ERR_WLAN("Failed to wake to cancel scan");
+			ERR("Failed to wake to cancel scan");
 		}
 	}
 
@@ -3296,14 +3248,14 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	DBG_MAC("%s: called", __FUNCTION__);
 
 	if (NRC_HIF_DRV_STATE(nw->hdev) == NRC_DRV_REBOOT) {
-		ERR_WLAN(":%s Scan Cancelled, (reason:reboot)", __func__);
+		ERR(":%s Scan Cancelled, (reason:reboot)", __func__);
 		ret = -EBUSY;
 		goto out;
 	}
 
 	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE) {
-		ERR_WLAN("The scan is in progress...(%s)",
-			 nrc_mac_scan_status_str(atomic_read(&nw->scan_mode)));
+		ERR("The scan is in progress...(%s)",
+		    nrc_mac_scan_status_str(atomic_read(&nw->scan_mode)));
 		ret = -EBUSY;
 		goto out;
 	}
@@ -3313,7 +3265,7 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
 				      NRC_PS_REASON_DRV_SCAN_START);
 		if (ret == -1) {
-			ERR_WLAN("Failed to wake to scan");
+			ERR("Failed to wake to scan");
 			ret = -EBUSY;
 			goto out_idle;
 		}
@@ -3643,7 +3595,7 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 
 	/* if not use HW SECURITY of VIF , return 1 */
 	if (!(nw->hdev->cap.vif_caps[vif_id].cap_mask & WIM_SYSTEM_CAP_HWSEC)) {
-		ERR_WLAN("failed to set caps");
+		ERR("failed to set caps");
 		return 1;
 	}
 	//nrc_wim_install_key need to wait to receive fw result
@@ -3744,13 +3696,13 @@ static int nrc_mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 
 	ret = nrc_wim_wlan_install_key(cmd, vif, sta, key);
 	if (ret < 0) {
-		ERR_WLAN("Failed to install key in HW");
+		ERR("Failed to install key in HW");
 		ret = -EINVAL;
 		goto return_with_rcu_unlock;
 	}
 
 	if (0xDEAD == ret) {
-		ERR_WLAN("Failed to tx EAPOL M4");
+		ERR("Failed to tx EAPOL M4");
 		ieee80211_hw_set(
 			hw, SW_CRYPTO_CONTROL); /* Disable fallback to SW */
 		ret = -EINVAL;
@@ -4243,8 +4195,8 @@ static int nrc_set_frag_threshold(struct ieee80211_hw *hw, u32 value)
 	DBG_MAC("Fragmentation Threshold: %d", nw->frag_threshold);
 
 	if (nw->frag_threshold >= MPDU_LEN_THRESHOLD) {
-		ERR_WLAN("Frag threshold value must be smaller than %d",
-			 MPDU_LEN_THRESHOLD);
+		ERR("Frag threshold value must be smaller than %d",
+		    MPDU_LEN_THRESHOLD);
 		return -EINVAL;
 	}
 
@@ -4317,21 +4269,21 @@ static int nrc_mac_sched_scan_start(struct ieee80211_hw *hw,
 	}
 
 	if (!nrc_idle_mode_get_state(nw)) {
-		ERR_WLAN("Not idle state");
+		ERR("Not idle state");
 		ret = -EBUSY;
 		goto out;
 	}
 
 	if (req->n_match_sets <= 0) {
-		ERR_WLAN("invalid number of matchsets specified: %d",
-			 req->n_match_sets);
+		ERR("invalid number of matchsets specified: %d",
+		    req->n_match_sets);
 		ret = -EINVAL;
 		goto out;
 	}
 
 	if (atomic_read(&nw->scan_mode) != NRC_SCAN_MODE_IDLE) {
-		ERR_WLAN("The scan is in progress...(%s)",
-			 nrc_mac_scan_status_str(atomic_read(&nw->scan_mode)));
+		ERR("The scan is in progress...(%s)",
+		    nrc_mac_scan_status_str(atomic_read(&nw->scan_mode)));
 		ret = -EBUSY;
 		goto out;
 	}
@@ -4342,21 +4294,21 @@ static int nrc_mac_sched_scan_start(struct ieee80211_hw *hw,
 		ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
 				      NRC_PS_REASON_DRV_SCAN_START);
 		if (ret == -1) {
-			ERR_WLAN("Failed to wake to sched scan");
+			ERR("Failed to wake to sched scan");
 			ret = -EBUSY;
 			goto out_idle;
 		}
 	}
 
 	if (NRC_DRV_IS_NOT_RUNNING(nw->hdev)) {
-		ERR_WLAN("Not running state");
+		ERR("Not running state");
 		ret = -EBUSY;
 		goto out;
 	}
 
 	ret = nrc_wim_wlan_sched_scan_start(vif, req, ies);
 	if (ret != 0) {
-		ERR_WLAN("nrc_wim_sched_scan_start failed");
+		ERR("nrc_wim_sched_scan_start failed");
 		ret = -EBUSY;
 		goto out_idle;
 	}
@@ -4384,14 +4336,14 @@ static int nrc_mac_sched_scan_stop(struct ieee80211_hw *hw,
 	ret = nrc_ps_set_mode(nw, NRC_PS_NONE, 2000, NULL,
 			      NRC_PS_REASON_DRV_SCAN_ABORT);
 	if (ret == -1) {
-		ERR_WLAN("Failed to wake to stop sched scan");
+		ERR("Failed to wake to stop sched scan");
 		ret = -EBUSY;
 		goto out;
 	}
 
 	ret = nrc_wim_wlan_sched_scan_stop(vif);
 	if (ret != 0) {
-		ERR_WLAN("nrc_wim_sched_scan_stop failed");
+		ERR("nrc_wim_sched_scan_stop failed");
 		ret = -EBUSY;
 		goto out;
 	}
@@ -4612,7 +4564,7 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BD, sizeof(*bd_param),
 					    bd_param);
 	} else {
-		ERR_WLAN("fail to load board data on target");
+		ERR("fail to load board data on target");
 	}
 #endif /* defined(CONFIG_SUPPORT_BD) */
 
@@ -5823,21 +5775,28 @@ int nrc_register_hw(struct nrc *nw, struct nrc_hif_device *hdev)
 		ieee80211_hw_set(hw, SUPPORTS_PS);
 
 		/*
-		 * Driver-managed dynamic PS (supports_dynamic_ps) is enabled when:
-		 * - Kernel < 6.0: mac80211 SUPPORTS_DYNAMIC_PS works properly
-		 * - NonTIM mode: Always use driver timer (mac80211 PS doesn't work well)
+		 * Dynamic PS timer: controls idle-to-sleep transition.
+		 * Currently all PS modes use driver-managed timer unconditionally.
+		 * If per-mode control is needed later, enable NRC_PS_PER_MODE_DYN
+		 * to restore the original kernel-version/mode-based logic.
 		 */
+#if defined(NRC_PS_PER_MODE_DYN)
+		/* Per-mode dynamic PS: only enable for specific conditions */
 #if NRC_TARGET_KERNEL_VERSION < KERNEL_VERSION(6, 0, 0)
 		if (!nw->params->nullfunc_enable) {
 			nw->hdev->ps.supports_dynamic_ps = true;
 			ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
 		}
 #endif
-		/* NonTIM mode: Always enable driver-managed dynamic PS */
-		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_NONTIM) {
+		if (nw->params->power_save >= NRC_PS_DEEPSLEEP_TIM) {
 			nw->hdev->ps.supports_dynamic_ps = true;
 			ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
 		}
+#else
+		/* All PS modes: always use driver-managed dynamic PS timer */
+		nw->hdev->ps.supports_dynamic_ps = true;
+		ieee80211_hw_set(hw, SUPPORTS_DYNAMIC_PS);
+#endif
 
 		/* Initialize dynamic PS timer (checks supports_dynamic_ps internally) */
 		nrc_ps_dyn_init(nw);
@@ -6046,7 +6005,7 @@ int nrc_register_hw(struct nrc *nw, struct nrc_hif_device *hdev)
 
 	ret = ieee80211_register_hw(hw);
 	if (ret < 0) {
-		ERR_WLAN("ieee80211_register_hw failed (%d)", ret);
+		ERR("ieee80211_register_hw failed (%d)", ret);
 		/* Don't free hw here - let cleanup functions handle it */
 		return ret;
 	}

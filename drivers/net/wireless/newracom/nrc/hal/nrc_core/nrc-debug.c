@@ -188,7 +188,7 @@ static int nrc_debugfs_debug_level_read(void *data, u64 *val)
 static int nrc_debugfs_debug_level_write(void *data, u64 val)
 {
 	if (val >= NRC_DBG_LEVEL_MAX) {
-		ERR_HAL("Invalid debug level %llu (max=%d)", val,
+		ERR("Invalid debug level %llu (max=%d)", val,
 			NRC_DBG_LEVEL_MAX - 1);
 		return -EINVAL;
 	}
@@ -757,8 +757,8 @@ static int ps_control_show(struct seq_file *m, void *v)
 		   nrc_ps_state_str(hdev->ps.state));
 	seq_printf(m, "Mode:                 %s\n",
 		   nrc_ps_mode_str(hdev->ps.mode));
-	seq_printf(m, "PS Enabled:           %s\n",
-		   hdev->ps.enabled ? "Yes" : "No");
+	seq_printf(m, "PS Configured:        %s\n",
+		   hdev->params->power_save > 0 ? "Yes" : "No");
 	seq_printf(m, "Modem Enabled:        %s\n",
 		   hdev->ps.modem_enabled ? "Yes" : "No");
 	seq_printf(m, "Supports Dynamic PS:  %s\n",
@@ -847,27 +847,35 @@ static ssize_t ps_control_write(struct file *file, const char __user *user_buf,
 			ret = nrc_hal_ps_request_wake(
 				timeout, NRC_PS_REASON_USER_DEBUG_WAKE);
 			if (ret < 0) {
-				ERR_HAL("Wake request failed: %d", ret);
+				ERR("Wake request failed: %d", ret);
 				return ret;
 			}
 		} else if (strcmp(cmd, "sleep") == 0) {
 			/* Sleep command */
 			if (sscanf(buf, "%15s %d %d", cmd, &mode, &timeout) <
 			    3) {
-				ERR_HAL("Invalid sleep command format");
+				ERR("Invalid sleep command format");
 				return -EINVAL;
 			}
 
-			/* Check if PS is enabled */
-			if (!hdev->ps.enabled) {
-				ERR_HAL("Power Save is disabled. Cannot enter sleep mode.");
-				ERR_HAL("Enable PS first via WLAN configuration (e.g., iw dev wlan0 set power_save on)");
+			/* Check if PS is configured */
+			if (hdev->params->power_save == 0) {
+				ERR("Power Save is disabled (power_save=0). Cannot enter sleep mode.");
 				return -EPERM;
 			}
 
 			if (mode < 0 || mode >= NRC_PS_MAX) {
-				ERR_HAL("Invalid PS mode: %d", mode);
+				ERR("Invalid PS mode: %d", mode);
 				return -EINVAL;
+			}
+
+			/* Update params so dynamic PS timer uses new config */
+			hdev->params->power_save = mode;
+			if (timeout > 0) {
+				hdev->params->sleep_duration[0] =
+					timeout / 1000;
+				hdev->params->sleep_duration[1] =
+					(timeout >= 1000) ? 1 : 0;
 			}
 
 			INFO("PS Control: Sleep request (mode=%s, timeout=%d ms)",
@@ -876,7 +884,7 @@ static ssize_t ps_control_write(struct file *file, const char __user *user_buf,
 				mode, timeout, NULL,
 				NRC_PS_REASON_USER_DEBUG_SLEEP);
 			if (ret < 0) {
-				ERR_HAL("Sleep request failed: %d", ret);
+				ERR("Sleep request failed: %d", ret);
 				return ret;
 			}
 		} else if (strcmp(cmd, "reset") == 0) {
@@ -899,11 +907,11 @@ static ssize_t ps_control_write(struct file *file, const char __user *user_buf,
 
 			INFO("PS state forcibly reset to WAKE");
 		} else {
-			ERR_HAL("Unknown command: %s", cmd);
+			ERR("Unknown command: %s", cmd);
 			return -EINVAL;
 		}
 	} else {
-		ERR_HAL("Invalid command format");
+		ERR("Invalid command format");
 		return -EINVAL;
 	}
 
@@ -999,14 +1007,14 @@ static ssize_t fw_control_write(struct file *file, const char __user *user_buf,
 			     nrc_fw_state_str(hw_state));
 		} else if (strcmp(cmd, "unload") == 0) {
 			/* Unload command - future implementation */
-			ERR_HAL("FW Control: Unload command not yet implemented");
+			ERR("FW Control: Unload command not yet implemented");
 			return -ENOSYS;
 		} else {
-			ERR_HAL("FW Control: Unknown command '%s'", cmd);
+			ERR("FW Control: Unknown command '%s'", cmd);
 			return -EINVAL;
 		}
 	} else {
-		ERR_HAL("FW Control: Invalid command format");
+		ERR("FW Control: Invalid command format");
 		return -EINVAL;
 	}
 
@@ -1021,6 +1029,158 @@ static const struct file_operations fw_control_ops = {
 	.llseek = seq_lseek,
 	.release = single_release,
 };
+
+/* ===========================================================================
+ * Recovery Status Debugfs
+ * =========================================================================== */
+#ifdef CONFIG_SUPPORT_RECOVERY
+#include "nrc-recovery.h"
+
+static int nrc_debugfs_recovery_show(struct seq_file *s, void *unused)
+{
+	struct nrc_hif_device *hdev = s->private;
+	struct nrc_recovery *r;
+	unsigned long elapsed_ms;
+
+	if (!hdev)
+		return -EINVAL;
+
+	r = hdev->recovery;
+
+	seq_puts(s, "=== NRC Recovery Status ===\n");
+	if (!r) {
+		seq_puts(s, "  not initialized\n");
+		return 0;
+	}
+	seq_printf(s, "enabled       : %s\n", r->enabled ? "yes" : "no");
+	seq_printf(s, "mode          : %s\n",
+		   (hdev->params && hdev->params->recovery) ?
+			   "auto-recovery" : "monitor");
+	seq_printf(s, "in_recovery   : %s\n", r->in_recovery ? "yes" : "no");
+	seq_printf(s, "recovery_count: %u\n", r->recovery_count);
+
+	if (r->last_recovery_jiffies) {
+		elapsed_ms = jiffies_to_msecs(jiffies - r->last_recovery_jiffies);
+		seq_printf(s, "last_recovery : %lu.%03lu sec ago\n",
+			   elapsed_ms / 1000, elapsed_ms % 1000);
+	} else {
+		seq_puts(s, "last_recovery : never\n");
+	}
+
+	seq_puts(s, "\n--- Error Counters (consecutive) ---\n");
+	seq_printf(s, "wim_err       : %u / %u (threshold)\n",
+		   r->err[NRC_RECOVERY_WIM_ERR],
+		   NRC_RECOVERY_ERR_THRESHOLD + 1);
+	seq_printf(s, "tx_err        : %u / %u\n",
+		   r->err[NRC_RECOVERY_TX_ERR],
+		   NRC_RECOVERY_ERR_THRESHOLD + 1);
+	seq_printf(s, "wakeup_err    : %u / %u\n",
+		   r->err[NRC_RECOVERY_WAKEUP_ERR],
+		   NRC_RECOVERY_ERR_THRESHOLD + 1);
+	seq_printf(s, "total_err     : %u / %u\n",
+		   r->total_err, NRC_RECOVERY_TOTAL_THRESHOLD + 1);
+
+	seq_puts(s, "\n--- Configuration ---\n");
+	seq_printf(s, "err_threshold : %u (per-type consecutive)\n",
+		   NRC_RECOVERY_ERR_THRESHOLD + 1);
+	seq_printf(s, "total_threshold: %u (aggregate)\n",
+		   NRC_RECOVERY_TOTAL_THRESHOLD + 1);
+	seq_printf(s, "time_window   : %u ms (%s)\n",
+		   NRC_RECOVERY_TIME_WINDOW_MS,
+		   NRC_RECOVERY_TIME_WINDOW_MS ? "enabled" : "disabled");
+
+	seq_puts(s, "\n--- Mutual Exclusion ---\n");
+	seq_printf(s, "restarting    : %s\n",
+		   hdev->restarting ? "yes" : "no");
+
+	seq_puts(s, "\n--- FW Alive Check ---\n");
+	if (hdev->fw.recovery_wdt) {
+		struct nrc_recovery_wdt *wdt = hdev->fw.recovery_wdt;
+
+		seq_printf(s, "alive_check   : %s\n",
+			   wdt->enable ? "yes" : "no");
+		seq_printf(s, "check_period  : %d ms\n", wdt->period);
+	} else {
+		seq_puts(s, "alive_check   : no (not initialized)\n");
+	}
+
+	return 0;
+}
+
+static int nrc_debugfs_recovery_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, nrc_debugfs_recovery_show, inode->i_private);
+}
+
+static ssize_t nrc_debugfs_recovery_write(struct file *file,
+					  const char __user *user_buf,
+					  size_t count, loff_t *ppos)
+{
+	struct seq_file *s = file->private_data;
+	struct nrc_hif_device *hdev = s->private;
+	char buf[32];
+	size_t len;
+	int i;
+
+	if (!hdev)
+		return -EINVAL;
+
+	len = min(count, sizeof(buf) - 1);
+	if (copy_from_user(buf, user_buf, len))
+		return -EFAULT;
+	buf[len] = '\0';
+
+	if (sysfs_streq(buf, "reset")) {
+		nrc_recovery_reset(hdev);
+		INFO("recovery: counters reset via debugfs");
+	} else if (sysfs_streq(buf, "trigger")) {
+		INFO("recovery: manual trigger via debugfs");
+		nrc_recovery_start(hdev, "manual_trigger");
+	} else if (sysfs_streq(buf, "show")) {
+		nrc_recovery_show(hdev);
+	} else if (sysfs_streq(buf, "test1")) {
+		/* Scenario 1: Per-error consecutive threshold (WIM x4) */
+		INFO("recovery: [TEST1] WIM consecutive threshold");
+		nrc_recovery_reset(hdev);
+		for (i = 0; i <= NRC_RECOVERY_ERR_THRESHOLD; i++)
+			nrc_recovery_inc(hdev, NRC_RECOVERY_WIM_ERR);
+	} else if (sysfs_streq(buf, "test2")) {
+		/* Scenario 2: Total aggregate threshold (mixed errors) */
+		INFO("recovery: [TEST2] aggregate threshold");
+		nrc_recovery_reset(hdev);
+		for (i = 0; i <= NRC_RECOVERY_TOTAL_THRESHOLD; i++)
+			nrc_recovery_inc(hdev, i % NRC_RECOVERY_ERR_MAX);
+	} else if (sysfs_streq(buf, "test3")) {
+		/* Scenario 3: FW alive check timeout (suspend kicks → natural timeout) */
+		INFO("recovery: [TEST3] FW alive check timeout test");
+		nrc_recovery_wdt_set_suspended(hdev, true);
+	} else if (sysfs_streq(buf, "test4")) {
+		/* Scenario 4: Self-recovery verification (no trigger) */
+		INFO("recovery: [TEST4] self-recovery check");
+		nrc_recovery_reset(hdev);
+		nrc_recovery_inc(hdev, NRC_RECOVERY_WIM_ERR);
+		nrc_recovery_inc(hdev, NRC_RECOVERY_TX_ERR);
+		nrc_recovery_show(hdev);
+		nrc_recovery_zero(hdev, NRC_RECOVERY_WIM_ERR);
+		nrc_recovery_zero(hdev, NRC_RECOVERY_TX_ERR);
+		nrc_recovery_show(hdev);
+		INFO("recovery: [TEST4] counters should be zero");
+	} else if (sysfs_streq(buf, "wdt_resume")) {
+		nrc_recovery_wdt_set_suspended(hdev, false);
+	}
+
+	return count;
+}
+
+static const struct file_operations recovery_status_ops = {
+	.owner = THIS_MODULE,
+	.open = nrc_debugfs_recovery_open,
+	.read = seq_read,
+	.write = nrc_debugfs_recovery_write,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+#endif /* CONFIG_SUPPORT_RECOVERY */
 
 #endif /* CONFIG_DEBUG_FS */
 
@@ -1037,7 +1197,7 @@ void nrc_core_init_debugfs(struct nrc_hif_device *hdev)
 	/* Create debugfs root directory for core module */
 	nrc_core_debugfs_root = debugfs_create_dir("nrc_core", NULL);
 	if (!nrc_core_debugfs_root) {
-		ERR_HAL("Failed to create nrc_core debugfs directory");
+		ERR("Failed to create nrc_core debugfs directory");
 		return;
 	}
 
@@ -1068,6 +1228,12 @@ void nrc_core_init_debugfs(struct nrc_hif_device *hdev)
 	/* Create FW control debugfs entry */
 	debugfs_create_file("fw_control", 0664, nrc_core_debugfs_root, hdev,
 			    &fw_control_ops);
+
+#ifdef CONFIG_SUPPORT_RECOVERY
+	/* Create recovery status debugfs entry */
+	debugfs_create_file("recovery", 0664, nrc_core_debugfs_root, hdev,
+			    &recovery_status_ops);
+#endif
 
 	/* Create loopback test directory and entries */
 	loopback_debugfs_root =

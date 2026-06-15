@@ -358,7 +358,7 @@ void nrc_mac_tx_process(struct ieee80211_hw *hw, struct sk_buff *skb,
 	return;
 
 txh_out:
-	ERR_WLAN("TX:dropping packet - reason:%s fc:0x%04x addr1:%pM addr2:%pM len:%u drv_state:%d",
+	ERR("TX:dropping packet - reason:%s fc:0x%04x addr1:%pM addr2:%pM len:%u drv_state:%d",
 		 drop_reason ? drop_reason : "unknown",
 		 le16_to_cpu(mh->frame_control),
 		 mh->addr1, mh->addr2, tx.skb ? tx.skb->len : 0,
@@ -530,20 +530,20 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 	VBS_AMPDU("Start BA %pM TID:%d", qmh->addr1, tid);
 
 	if (nw->frag_threshold != -1) { /* Fragmentation enabled by iwconfig */
-		ERR_WLAN(
+		ERR(
 			"Since fragmentation enabled by iwconfig, ignore to setup BA session");
 		return;
 	}
 
 	/* tid range : 0 ~ 7 */
 	if (tid < 0 || tid >= NRC_MAX_TID) {
-		ERR_WLAN("Invalid TID(%d) with peer %pM", tid, qmh->addr1);
+		ERR("Invalid TID(%d) with peer %pM", tid, qmh->addr1);
 		return;
 	}
 	rcu_read_lock();
 	peer_sta = ieee80211_find_sta(vif, qmh->addr1);
 	if (!peer_sta) {
-		ERR_WLAN("Fail to set up BA. Fail to find peer_sta (%pM)",
+		ERR("Fail to set up BA. Fail to find peer_sta (%pM)",
 			 qmh->addr1);
 		goto out;
 	}
@@ -555,7 +555,7 @@ static void setup_ba_session(struct nrc *nw, struct ieee80211_vif *vif,
 #endif /* #ifdef CONFIG_S1G_CHANNEL */
 	i_sta = to_i_sta(peer_sta);
 	if (!i_sta) {
-		ERR_WLAN("Fail to set up BA. Fail to find nrc_sta (%pM)",
+		ERR("Fail to set up BA. Fail to find nrc_sta (%pM)",
 			 qmh->addr1);
 		goto out;
 	}
@@ -1322,7 +1322,7 @@ int nrc_mac_rx(struct nrc *nw, struct sk_buff *skb)
 			}
 		}
 	} else {
-		ERR_WLAN("RX handler error (%d)", rx.result);
+		ERR("RX handler error (%d)", rx.result);
 		NRC_SKB_TRACK_FREE(nw->hdev, skb, HIF_TYPE_FRAME, true, false);
 	}
 
@@ -1383,7 +1383,7 @@ static int rx_h_decrypt(struct nrc_trx_data *rx)
 				return 0;
 			}
 		}
-		WARN_WLAN("key is NULL");
+		WRN("key is NULL");
 		return 0;
 	}
 

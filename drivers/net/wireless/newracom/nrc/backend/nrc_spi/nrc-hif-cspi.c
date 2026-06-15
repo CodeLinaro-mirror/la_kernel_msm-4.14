@@ -79,27 +79,27 @@ static inline void spi_forward_rx_packet(struct nrc_hif_device *hdev,
 static bool spi_check_core_refs(struct nrc_spi_priv *priv, const char *caller)
 {
 	if (!priv) {
-		ERR_SPI("SPI: %s - Invalid priv pointer", caller);
+		ERR("SPI: %s - Invalid priv pointer", caller);
 		return false;
 	}
 
 	/* Enhanced pointer validation */
 	if (!priv->hdev) {
-		ERR_SPI("%s: Core module hdev is NULL", caller);
+		ERR("%s: Core module hdev is NULL", caller);
 		return false;
 	}
 
 	/* Check for invalid low-memory addresses */
 	if ((unsigned long)priv->hdev < PAGE_SIZE) {
-		ERR_SPI("%s: Core module hdev in invalid low memory (hdev=%p)",
-			caller, priv->hdev);
+		ERR("%s: Core module hdev in invalid low memory (hdev=%p)",
+		    caller, priv->hdev);
 		return false;
 	}
 
 	/* Validate kernel virtual address range */
 	if (!virt_addr_valid(priv->hdev)) {
-		ERR_SPI("%s: Core module hdev not in valid kernel address space (hdev=%p)",
-			caller, priv->hdev);
+		ERR("%s: Core module hdev not in valid kernel address space (hdev=%p)",
+		    caller, priv->hdev);
 		return false;
 	}
 
@@ -259,9 +259,9 @@ static int _c_spi_read_regs(struct spi_device *spi, u8 addr, u8 *buf,
 	if (status < 0) {
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
-			ERR_SPI("reading spi failed(%zd) (ps=%s, drv=%s).",
-				status, NRC_PS_STATE_STR(priv->hdev),
-				NRC_DRV_STATE_STR(priv->hdev));
+			ERR("reading spi failed(%zd) (ps=%s, drv=%s).", status,
+			    NRC_PS_STATE_STR(priv->hdev),
+			    NRC_DRV_STATE_STR(priv->hdev));
 		}
 		return status;
 	}
@@ -271,8 +271,8 @@ static int _c_spi_read_regs(struct spi_device *spi, u8 addr, u8 *buf,
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
 			WARN_ON_ONCE(1);
-			ERR_SPI("SPI ACK is invalid (PS state: %s)",
-				NRC_PS_STATE_STR(priv->hdev));
+			ERR("SPI ACK is invalid (PS state: %s)",
+			    NRC_PS_STATE_STR(priv->hdev));
 		}
 		/* During sleep polling (SLEEPING state), invalid ACK is expected */
 		return -EIO;
@@ -318,9 +318,9 @@ static int _c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data)
 	if (status < 0) {
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
-			ERR_SPI("writing spi failed(%zd) (ps=%s, drv=%s).",
-				status, NRC_PS_STATE_STR(priv->hdev),
-				NRC_DRV_STATE_STR(priv->hdev));
+			ERR("writing spi failed(%zd) (ps=%s, drv=%s).", status,
+			    NRC_PS_STATE_STR(priv->hdev),
+			    NRC_DRV_STATE_STR(priv->hdev));
 		}
 		return status;
 	}
@@ -329,7 +329,8 @@ static int _c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data)
 	/* In case of spi reset, skip a process for confirming spi ack */
 	if (C_SPI_WDATA(data) != 0xC8) {
 		if (rx[7] != C_SPI_ACK) {
-			if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
+			if (priv && priv->hdev &&
+			    !NRC_PS_IS_ASLEEP(priv->hdev) &&
 			    !NRC_PS_IS_SLEEPING(priv->hdev)) {
 				/*
 				 * Both TIM and NonTIM deep sleep wake via 0xDC (FW reload path).
@@ -337,12 +338,14 @@ static int _c_spi_write_reg(struct spi_device *spi, u8 addr, u8 data)
 				 * respond with a valid SPI ACK. Suppress WARN_ON for both modes.
 				 */
 				if (NRC_PS_IS_DEEPSLEEP(priv->hdev)) {
-					VBS_SPI("SPI ACK missing (rx[7]=0x%02x, PS state: %s) - deep sleep wake race",
-						rx[7], NRC_PS_STATE_STR(priv->hdev));
+					VBS_BUS("SPI ACK missing (rx[7]=0x%02x, PS state: %s) - deep sleep wake race",
+						rx[7],
+						NRC_PS_STATE_STR(priv->hdev));
 				} else {
 					WARN_ON_ONCE(1);
-					ERR_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s)",
-						rx[7], NRC_PS_STATE_STR(priv->hdev));
+					ERR("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s)",
+					    rx[7],
+					    NRC_PS_STATE_STR(priv->hdev));
 				}
 			}
 			return -EIO;
@@ -411,7 +414,7 @@ static ssize_t _c_spi_read(struct spi_device *spi, u8 *buf, ssize_t size)
 	if (status < 0) {
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
-			ERR_SPI("reading spi failed(%zd).", status);
+			ERR("reading spi failed(%zd).", status);
 		}
 		goto error_cleanup;
 	}
@@ -421,8 +424,8 @@ static ssize_t _c_spi_read(struct spi_device *spi, u8 *buf, ssize_t size)
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
 			WARN_ON_ONCE(1);
-			ERR_SPI("SPI ACK is invalid (PS state: %s)",
-				NRC_PS_STATE_STR(priv->hdev));
+			ERR("SPI ACK is invalid (PS state: %s)",
+			    NRC_PS_STATE_STR(priv->hdev));
 		}
 		status = -EIO;
 		goto error_cleanup;
@@ -503,7 +506,7 @@ static ssize_t _c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 	if (status < 0) {
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
-			ERR_SPI("writing spi failed(%zd).", status);
+			ERR("writing spi failed(%zd).", status);
 		}
 		goto error_cleanup;
 	}
@@ -513,8 +516,8 @@ static ssize_t _c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size)
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
 			WARN_ON_ONCE(1);
-			ERR_SPI("SPI ACK is invalid (PS state: %s)",
-				NRC_PS_STATE_STR(priv->hdev));
+			ERR("SPI ACK is invalid (PS state: %s)",
+			    NRC_PS_STATE_STR(priv->hdev));
 		}
 		status = -EIO;
 		goto error_cleanup;
@@ -610,7 +613,7 @@ ssize_t c_spi_xmit(struct spi_device *spi, u8 *buf, ssize_t size)
 	if (status < 0) {
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
 		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
-			ERR_SPI("writing spi failed(%zd).", status);
+			ERR("writing spi failed(%zd).", status);
 		}
 		return status;
 	}
@@ -629,12 +632,12 @@ ssize_t c_spi_xmit(struct spi_device *spi, u8 *buf, ssize_t size)
 			 * For other modes: Log as error with stack trace for investigation.
 			 */
 			if (NRC_PS_IS_DEEPSLEEP(priv->hdev)) {
-				VBS_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s) - deep sleep transition",
+				VBS_BUS("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s) - deep sleep transition",
 					rx[7], NRC_PS_STATE_STR(priv->hdev));
 			} else {
 				WARN_ON_ONCE(1);
-				ERR_SPI("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s)",
-					rx[7], NRC_PS_STATE_STR(priv->hdev));
+				ERR("SPI ACK is invalid (rx[7]=0x%02x, PS state: %s)",
+				    rx[7], NRC_PS_STATE_STR(priv->hdev));
 			}
 		}
 		return -EIO;
@@ -667,7 +670,7 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 
 	/* Check if core module references are valid */
 	if (!spi_check_core_refs(priv, __func__)) {
-		ERR_SPI("Core module references invalid, abort RX");
+		ERR("Core module references invalid, abort RX");
 		goto fail;
 	}
 
@@ -692,7 +695,7 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 					kthread_should_stop() ||
 					kthread_should_park()));
 	if (ret < 0) {
-		ERR_SPI("wait_event_interruptible error (%d)", ret);
+		ERR("wait_event_interruptible error (%d)", ret);
 		goto fail;
 	}
 
@@ -722,11 +725,11 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	if (c_spi_num_slots(hdev, RX_SLOT) > 32) {
 		SLOT_SYNC_UNLOCK();
 		if (cnt1++ < 10) {
-			ERR_SPI("!!!!! garbage rx data");
+			ERR("!!!!! garbage rx data");
 			spi_hif_reset_rx(hdev);
 		}
-		ERR_SPI("rxslot:(h=%d,t=%d)", hdev->slot[RX_SLOT].head,
-			hdev->slot[RX_SLOT].tail);
+		ERR("rxslot:(h=%d,t=%d)", hdev->slot[RX_SLOT].head,
+		    hdev->slot[RX_SLOT].tail);
 		goto fail;
 	}
 	cnt1 = 0;
@@ -735,7 +738,7 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	skb = dev_alloc_skb(hdev->slot[RX_SLOT].size * hdev->max_slot_num);
 	if (!skb) {
 		SLOT_SYNC_UNLOCK();
-		ERR_SPI("Failed to allocate RX SKB");
+		ERR("Failed to allocate RX SKB");
 		goto fail;
 	}
 
@@ -753,8 +756,8 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	SLOT_SYNC_UNLOCK();
 	if (size < 0) {
 		hdev->slot[RX_SLOT].tail--;
-		ERR_SPI("Failed to read first slot (ps=%s, drv=%s)",
-			NRC_PS_STATE_STR(hdev), NRC_DRV_STATE_STR(hdev));
+		ERR("Failed to read first slot (ps=%s, drv=%s)",
+		    NRC_PS_STATE_STR(hdev), NRC_DRV_STATE_STR(hdev));
 		goto fail;
 	}
 
@@ -762,8 +765,8 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	hif = (void *)skb->data;
 
 	if (hif->type >= HIF_TYPE_MAX || hif->len == 0) {
-		ERR_SPI("rxslot:(h=%d,t=%d)", hdev->slot[RX_SLOT].head,
-			hdev->slot[RX_SLOT].tail);
+		ERR("rxslot:(h=%d,t=%d)", hdev->slot[RX_SLOT].head,
+		    hdev->slot[RX_SLOT].tail);
 		print_hex_dump(KERN_DEBUG, "rxskb ", DUMP_PREFIX_NONE, 16, 1,
 			       skb->data, 480, false);
 		spi_hif_reset_rx(hdev);
@@ -780,8 +783,8 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 			dev_alloc_skb(hdev->slot[RX_SLOT].size * (nr_slot + 1));
 
 		if (!skb2) {
-			ERR_SPI("Failed to allocate larger RX SKB (nr_slot=%d)",
-				nr_slot);
+			ERR("Failed to allocate larger RX SKB (nr_slot=%d)",
+			    nr_slot);
 			goto fail;
 		}
 
@@ -849,7 +852,7 @@ static struct sk_buff *spi_rx_skb(struct spi_device *spi,
 	if (c_spi_num_slots(hdev, RX_SLOT) > 32) {
 		SLOT_SYNC_UNLOCK();
 		// if (cnt2++ < 10) {
-		// 	ERR_SPI("@@@@@@ garbage rx data");
+		// 	ERR("@@@@@@ garbage rx data");
 		// }
 		spi_hif_reset_rx(hdev);
 		ERR_HIF("rxslot:(h=%d,t=%d)", hdev->slot[RX_SLOT].head,
@@ -886,7 +889,7 @@ int spi_read_sys_reg(struct spi_device *spi, struct spi_sys_reg *sys)
 			      sizeof(struct spi_sys_reg));
 
 	if (ret) {
-		ERR_SPI("Fail to c_spi_read_regs");
+		ERR("Fail to c_spi_read_regs");
 		return -1;
 	}
 
@@ -937,7 +940,7 @@ static int spi_loopback(struct nrc_hif_device *hdev, struct spi_device *spi,
 
 	skb = dev_alloc_skb(hdev->slot[RX_SLOT].size * lb_cnt);
 	if (!skb) {
-		ERR_SPI("Failed to allocate credit skb");
+		ERR("Failed to allocate credit skb");
 		goto end;
 	}
 
@@ -1062,8 +1065,7 @@ static inline void spi_forward_rx_packet(struct nrc_hif_device *hdev,
 	} else {
 		struct hif *hif = (struct hif *)skb->data;
 
-		ERR_SPI("[RX] Core refs not ready, dropping packet (%s)",
-			caller);
+		ERR("[RX] Core refs not ready, dropping packet (%s)", caller);
 		/* Error drop: use tracking free to match allocation */
 		NRC_SKB_TRACK_FREE(hdev, skb, hif->type, true, false);
 	}
@@ -1087,7 +1089,7 @@ int spi_rx_thread(void *data)
 			ret = spi_loopback(hdev, spi, priv,
 					   hdev->params->lb_count);
 			if (ret <= 0)
-				ERR_SPI("loopback error: %d", ret);
+				ERR("loopback error: %d", ret);
 			continue;
 		}
 
@@ -1500,7 +1502,7 @@ static void spi_update_credits(struct spi_device *spi,
 
 	/* 2. Prepare and send credit report SKB back to HAL */
 	if (!spi_check_core_refs(priv, __func__)) {
-		ERR_SPI("Invalid core module references");
+		ERR("Invalid core module references");
 		return;
 	}
 
@@ -1512,7 +1514,7 @@ static void spi_update_credits(struct spi_device *spi,
 
 	skb = dev_alloc_skb(size);
 	if (!skb) {
-		ERR_SPI("Failed to allocate credit skb");
+		ERR("Failed to allocate credit skb");
 		return;
 	}
 	NRC_SKB_TRACK_ALLOC(hdev, skb, HIF_TYPE_WIM, true, false);
@@ -1538,7 +1540,7 @@ static void spi_update_credits(struct spi_device *spi,
 		if (i >= ARRAY_SIZE(hdev->credit.front) ||
 		    i >= ARRAY_SIZE(hdev->credit.rear) ||
 		    i >= ARRAY_SIZE(hdev->credit.credit_max)) {
-			ERR_SPI("Credit index %d out of bounds", i);
+			ERR("Credit index %d out of bounds", i);
 			break;
 		}
 
@@ -1791,10 +1793,9 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	 * causing a deadlock. Instead, set flags here and call after unlock.
 	 */
 	if (c_spi_num_slots(hdev, TX_SLOT) > 33) {
-		WARN_SPI("TX_gap:%u head:%u vs tail:%u (ps=%s)",
-			 c_spi_num_slots(hdev, TX_SLOT),
-			 hdev->slot[TX_SLOT].head, hdev->slot[TX_SLOT].tail,
-			 NRC_PS_STATE_STR(hdev));
+		WRN("TX_gap:%u head:%u vs tail:%u (ps=%s)",
+		    c_spi_num_slots(hdev, TX_SLOT), hdev->slot[TX_SLOT].head,
+		    hdev->slot[TX_SLOT].tail, NRC_PS_STATE_STR(hdev));
 		hdev->slot[TX_SLOT].tail = hdev->slot[TX_SLOT].head;
 		if (NRC_PS_IS_AWAKE(hdev))
 			need_tx_reset = true;
@@ -1802,10 +1803,9 @@ int spi_update_status(struct nrc_hif_device *hdev)
 
 	/* RX gap > 33 means tail has wrapped around head */
 	if (c_spi_num_slots(hdev, RX_SLOT) > 33) {
-		WARN_SPI("RX_gap:%u head:%u vs tail:%u (ps=%s)",
-			 c_spi_num_slots(hdev, RX_SLOT),
-			 hdev->slot[RX_SLOT].head, hdev->slot[RX_SLOT].tail,
-			 NRC_PS_STATE_STR(hdev));
+		WRN("RX_gap:%u head:%u vs tail:%u (ps=%s)",
+		    c_spi_num_slots(hdev, RX_SLOT), hdev->slot[RX_SLOT].head,
+		    hdev->slot[RX_SLOT].tail, NRC_PS_STATE_STR(hdev));
 		hdev->slot[RX_SLOT].tail = hdev->slot[RX_SLOT].head;
 		if (NRC_PS_IS_AWAKE(hdev))
 			need_rx_reset = true;
@@ -1948,8 +1948,8 @@ int spi_poll_thread(void *data)
 			ret = gpio_get_value_cansleep(gpio);
 
 			if (ret < 0)
-				ERR_SPI("%s: gpio_get_value_cansleep() failed, ret=%d",
-					__func__, ret);
+				ERR("%s: gpio_get_value_cansleep() failed, ret=%d",
+				    __func__, ret);
 			else if (ret == !!(CSPI_EIRQ_MODE & 1))
 				spi_irq(gpio, hdev);
 		}
@@ -2052,7 +2052,7 @@ void c_spi_config(struct nrc_spi_priv *priv, struct nrc_hif_device *hdev)
 		priv->slot_sync_auto = true;
 		break;
 	default:
-		ERR_SPI("Unknown chipset %04x", sys->chip_id);
+		ERR("Unknown chipset %04x", sys->chip_id);
 		BUG();
 	}
 
@@ -2090,28 +2090,19 @@ void c_spi_config(struct nrc_spi_priv *priv, struct nrc_hif_device *hdev)
 
 int nrc_cspi_gpio_alloc(struct spi_device *spi)
 {
-#if defined(SPI_DBG)
-	/* Claim gpio used for debugging */
-	if (nrc_gpio_request(SPI_DBG, "nrc-spi-dgb") < 0) {
-		ERR_SPI("[Error] gpio_reqeust() is failed");
-		goto err;
-	}
-	nrc_gpio_direction_output(SPI_DBG, 1);
-#endif
-
 #if defined(ENABLE_HW_RESET)
 #if defined(CONFIG_SPI_USE_DT)
 	((struct nrc_spi_priv *)(spi->dev.platform_data))->reset_gpio =
 		devm_gpiod_get_optional(&spi->dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(((struct nrc_spi_priv *)(spi->dev.platform_data))
 			   ->reset_gpio)) {
-		ERR_SPI("[Error] gpio_reqeust(nrc-reset) is failed");
-		goto err_dbg_irq_free;
+		ERR("gpio_request(nrc-reset) failed");
+		goto err;
 	}
 #else
 	if (nrc_gpio_request(HOST_GPIO_FOR_TARGET_RST, "nrc-reset") < 0) {
-		ERR_SPI("[Error] gpio_reqeust(nrc-reset) is failed");
-		goto err_dbg_irq_free;
+		ERR("gpio_request(nrc-reset) failed");
+		goto err;
 	}
 	nrc_gpio_direction_output(HOST_GPIO_FOR_TARGET_RST, 1);
 #endif
@@ -2124,8 +2115,8 @@ int nrc_cspi_gpio_alloc(struct spi_device *spi)
 	if (spi_gpio_irq >= 0) {
 		/* Claim gpio used for irq */
 		if (nrc_gpio_request(spi_gpio_irq, "nrc-spi-irq") < 0) {
-			ERR_SPI("[Error] gpio_reqeust() is failed (%d)",
-				spi_gpio_irq);
+			ERR("gpio_request() failed (%d)",
+			    spi_gpio_irq);
 			goto err_rst_free;
 		}
 		nrc_gpio_direction_input(spi_gpio_irq);
@@ -2141,10 +2132,6 @@ err_rst_free:
 #if !defined(CONFIG_SPI_USE_DT)
 	nrc_gpio_free(HOST_GPIO_FOR_TARGET_RST);
 #endif
-err_dbg_irq_free:
-#endif
-#if defined(SPI_DBG)
-	nrc_gpio_free(SPI_DBG);
 err:
 #endif
 	return -EINVAL;
@@ -2152,10 +2139,6 @@ err:
 
 void nrc_cspi_gpio_free(struct spi_device *spi)
 {
-#if defined(SPI_DBG)
-	nrc_gpio_free(SPI_DBG);
-#endif
-
 #if defined(ENABLE_HW_RESET)
 #if !defined(CONFIG_SPI_USE_DT)
 	nrc_gpio_set_value(HOST_GPIO_FOR_TARGET_RST, 0);
@@ -2207,7 +2190,7 @@ struct nrc_spi_priv *nrc_cspi_alloc(struct spi_device *dev)
 
 	priv->dummy_slot = kzalloc(TX_SLOT_SIZE, GFP_KERNEL);
 	if (!priv->dummy_slot) {
-		ERR_SPI("dummy_slot alloc failed");
+		ERR("dummy_slot alloc failed");
 #if !defined(CONFIG_SUPPORT_THREADED_IRQ)
 		destroy_workqueue(priv->irq_wq);
 #endif
@@ -2274,7 +2257,7 @@ static struct spi_controller *spi_busnum_to_master(u16 bus_num)
 
 	master = spi_alloc_master(&pdev->dev, sizeof(void *));
 	if (!master) {
-		ERR_SPI("Error: failed to allocate SPI master device");
+		ERR("Error: failed to allocate SPI master device");
 		platform_device_unregister(pdev);
 		return NULL;
 	}
@@ -2311,15 +2294,15 @@ struct spi_device *nrc_create_spi_device(void)
 	/* Find the spi master that our device is attached to */
 	master = spi_busnum_to_master(spi_bus_num);
 	if (!master) {
-		ERR_SPI("Could not find spi master with the bus number %d.",
-			spi_bus_num);
+		ERR("Could not find spi master with the bus number %d.",
+		    spi_bus_num);
 		return NULL;
 	}
 
 	/* Instantiate and add a spi device */
 	spi = spi_new_device(master, &bi);
 	if (!spi) {
-		ERR_SPI("Failed to instantiate a new spi device.");
+		ERR("Failed to instantiate a new spi device.");
 		return NULL;
 	}
 	/*
@@ -2360,8 +2343,7 @@ int nrc_hif_set_model_conf(struct nrc_hif_device *hdev, u16 chip_id)
 		hdev->wowlan_pattern_num = 2;
 		break;
 	default:
-		ERR_SPI("Unknown Newracom IEEE80211 chipset %04x",
-			hdev->chip_id);
+		ERR("Unknown Newracom IEEE80211 chipset %04x", hdev->chip_id);
 		BUG();
 	}
 
@@ -2385,31 +2367,26 @@ void nrc_backend_set_hal_core_refs(struct nrc_hif_device *hdev)
 	struct nrc_spi_priv *priv;
 
 	if (!hdev) {
-		ERR_SPI("SPI: Invalid parameters: hdev=%p", hdev);
+		ERR("SPI: Invalid parameters: hdev=%p", hdev);
 		return;
 	}
 
 	if (!hdev->priv) {
-		ERR_SPI("SPI: HIF device private data is NULL");
+		ERR("SPI: HIF device private data is NULL");
 		return;
 	}
 
 	priv = hdev->priv;
 
 	if (priv->hdev && priv->hdev != hdev) {
-		ERR_SPI("Warning - overwriting existing hdev reference (%p -> %p)",
-			priv->hdev, hdev);
+		ERR("Warning - overwriting existing hdev reference (%p -> %p)",
+		    priv->hdev, hdev);
 	}
 
 	priv->hdev = hdev;
 
-	/* Synchronize SPI module parameter to nw structure */
 	memcpy(hdev->params->power_save_gpio, power_save_gpio,
 	       sizeof(power_save_gpio));
-	// DBG_STATE("HIF device module: Power save GPIO synchronized - [%d, %d, %d]",
-	// 		hdev->params->power_save_gpio[0], hdev->params->power_save_gpio[1], hdev->params->power_save_gpio[2]);
-
-	// INFO("SPI module: Core references set - nw=%p hdev=%p", nw, hdev);
 }
 EXPORT_SYMBOL(nrc_backend_set_hal_core_refs);
 

@@ -79,11 +79,11 @@ static const char *mcp_event_to_str(int event_type)
 int nrc_mcp_handle_spi_irq(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_MCP("Invalid event data for SPI IRQ");
+		ERR("Invalid event data for SPI IRQ");
 		return -EINVAL;
 	}
 
-	VBS_MCP("SPI interrupt received");
+	VBS(CAT(BASIC), "SPI interrupt received");
 
 	return 0;
 }
@@ -109,23 +109,23 @@ int nrc_mcp_handle_rx_ready(struct nrc_hal_event_data *event)
 
 	mcp = nrc_mcp_get_device();
 	if (!mcp) {
-		ERR_MCP("Device not available");
+		ERR("Device not available");
 		return -EINVAL;
 	}
 	hdev = mcp->hdev;
 	if (!hdev) {
-		ERR_MCP("MCP: HIF device not available");
+		ERR("MCP: HIF device not available");
 		return -EINVAL;
 	}
 
 	if (!event || !event->data) {
-		ERR_MCP("Invalid event data for RX ready");
+		ERR("Invalid event data for RX ready");
 		return -EINVAL;
 	}
 
 	skb = (struct sk_buff *)event->data;
 	if (!skb || skb->len < sizeof(struct hif)) {
-		ERR_MCP("Invalid SKB in RX ready event: skb=%p, data=%p, len=%d",
+		ERR("Invalid SKB in RX ready event: skb=%p, data=%p, len=%d",
 			skb, skb ? skb->data : NULL, skb ? skb->len : 0);
 		return -EINVAL;
 	}
@@ -156,7 +156,7 @@ int nrc_mcp_handle_rx_ready(struct nrc_hal_event_data *event)
 		/* send_to_netlink will free the SKB */
 		send_to_netlink(id, skb, hdev, hif->type, true);
 	} else {
-		ERR_MCP("MCP RX: Cannot determine netlink channel ID for type=%s(%u), subtype=%s(%u)",
+		ERR("MCP RX: Cannot determine netlink channel ID for type=%s(%u), subtype=%s(%u)",
 			nrc_hif_type_str(hif->type), hif->type,
 			nrc_hif_subtype_str(hif->type, hif->subtype),
 			hif->subtype);
@@ -175,7 +175,7 @@ int nrc_mcp_handle_rx_ready(struct nrc_hal_event_data *event)
 int nrc_mcp_handle_tx_complete(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_MCP("Invalid event data for TX complete");
+		ERR("Invalid event data for TX complete");
 		return -EINVAL;
 	}
 
@@ -191,7 +191,7 @@ int nrc_mcp_handle_tx_complete(struct nrc_hal_event_data *event)
 int nrc_mcp_handle_error(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_MCP("Invalid event data for error");
+		ERR("Invalid event data for error");
 		return -EINVAL;
 	}
 
@@ -206,7 +206,7 @@ static int __maybe_unused
 nrc_mcp_handle_kick_txq(struct nrc_hal_event_data *event)
 {
 	if (!event) {
-		ERR_MCP("Invalid event data for error");
+		ERR("Invalid event data for error");
 		return -EINVAL;
 	}
 
@@ -224,7 +224,7 @@ static int nrc_mcp_hal_callback_handler(struct nrc_hal_event_data *hal_event)
 	int ret = 0;
 
 	if (!hal_event) {
-		ERR_MCP("Invalid HAL event data");
+		ERR("Invalid HAL event data");
 		return -EINVAL;
 	}
 
@@ -278,7 +278,7 @@ static int nrc_mcp_handle_wim_event(struct nrc_hal_event_data *hal_event)
 	int id = -1;
 
 	if (!skb || skb->len < sizeof(struct hif) + sizeof(struct wim)) {
-		ERR_MCP("Invalid WIM event SKB");
+		ERR("Invalid WIM event SKB");
 		if (skb) {
 			struct mcp_priv *mcp = nrc_mcp_get_device();
 			/* Track WIM event SKB free */
@@ -293,7 +293,7 @@ static int nrc_mcp_handle_wim_event(struct nrc_hal_event_data *hal_event)
 
 	mcp = nrc_mcp_get_device();
 	if (!mcp) {
-		ERR_MCP("Device not available");
+		ERR("Device not available");
 		/* Error drop: MCP device not available, use parsed hif type */
 		NRC_SKB_TRACK_FREE(NULL, skb, hif_type, true, false);
 		return -ENODEV;
@@ -336,7 +336,7 @@ static int nrc_mcp_handle_wim_event(struct nrc_hal_event_data *hal_event)
 		/* send_to_netlink will free the SKB */
 		send_to_netlink(id, skb, hdev, HIF_TYPE_WIM, true);
 	} else {
-		ERR_MCP("Unknown WIM event %s(%d), cannot determine netlink channel ID",
+		ERR("Unknown WIM event %s(%d), cannot determine netlink channel ID",
 			mcp_event_to_str(event_type), event_type);
 		skb_push(skb, sizeof(*hif));
 		NRC_SKB_TRACK_FREE(hdev, skb, HIF_TYPE_WIM, true, false);
@@ -357,7 +357,7 @@ int nrc_mcp_callback_init(void)
 	ret = nrc_hal_register_callback(NRC_FRONTEND_MCP,
 					nrc_mcp_hal_callback_handler);
 	if (ret) {
-		ERR_MCP("Failed to register HAL callback: %d", ret);
+		ERR("Failed to register HAL callback: %d", ret);
 		return ret;
 	}
 

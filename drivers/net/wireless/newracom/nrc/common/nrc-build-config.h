@@ -93,6 +93,9 @@
 #if KERNEL_VERSION(4, 7, 0) <= NRC_TARGET_KERNEL_VERSION
 #define CONFIG_USE_NEW_BAND_ENUM
 #endif
+#if KERNEL_VERSION(6, 2, 0) <= NRC_TARGET_KERNEL_VERSION
+#define CONFIG_SUPPORT_AMPDU_TX_DELAY_ADDBA
+#endif
 #if KERNEL_VERSION(4, 6, 0) <= NRC_TARGET_KERNEL_VERSION ||       \
 	(KERNEL_VERSION(4, 4, 69) <= NRC_TARGET_KERNEL_VERSION && \
 	 KERNEL_VERSION(4, 5, 0) > NRC_TARGET_KERNEL_VERSION)
@@ -226,6 +229,9 @@ this feature is disabled
 // To use this feature, some S1G capabilities patch is needed,
 #endif
 */
+
+/* Software-level recovery: error counting, time window, auto-restart */
+#define CONFIG_SUPPORT_RECOVERY
 
 #define CONFIG_QOS_NULL_OFFLOAD
 

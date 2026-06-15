@@ -57,7 +57,7 @@ static void write_file(char *filename, char *data, int len)
 #endif /* if KERNEL_VERSION(5,18,0) < NRC_TARGET_KERNEL_VERSION */
 	filp = filp_open(filename, O_CREAT|O_RDWR, 0606);
 	if (IS_ERR(filp)) {
-		ERR_HAL("error:%d", IS_ERR(filp));
+		ERR("error:%d", IS_ERR(filp));
 		return;
 	}
 #if KERNEL_VERSION(4, 14, 0) <= NRC_TARGET_KERNEL_VERSION

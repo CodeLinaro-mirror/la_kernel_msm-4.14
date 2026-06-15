@@ -46,14 +46,14 @@ static int nrc_wlan_module_init(void)
 	/* Early HAL initialization from WLAN layer */
 	ret = nrc_wlan_hal_early_init();
 	if (ret) {
-		ERR_WLAN("Failed to perform early HAL initialization: %d", ret);
+		ERR("Failed to perform early HAL initialization: %d", ret);
 		return ret;
 	}
 
 	/* Initialize WLAN callback system */
 	ret = nrc_wlan_callback_init();
 	if (ret) {
-		ERR_WLAN("Failed to initialize WLAN callback system: %d", ret);
+		ERR("Failed to initialize WLAN callback system: %d", ret);
 		nrc_wlan_hal_early_cleanup();
 		return ret;
 	}
@@ -61,7 +61,7 @@ static int nrc_wlan_module_init(void)
 	/* Get network device from WLAN layer and initialize frontend components */
 	ret = nrc_wlan_post_hal_init(false);
 	if (ret) {
-		ERR_WLAN("Failed to initialize frontend components: %d", ret);
+		ERR("Failed to initialize frontend components: %d", ret);
 		nrc_wlan_callback_cleanup();
 		nrc_wlan_hal_early_cleanup();
 		return ret;
@@ -75,10 +75,21 @@ static void nrc_wlan_module_exit(void)
 {
 	struct nrc_hif_device *hdev;
 
-	// INFO("NRC WLAN Frontend subsystem exiting...");
-
 	/* Ensure device is awake before cleanup */
 	hdev = nrc_hal_core_get_hdev();
+
+#ifdef CONFIG_SUPPORT_RECOVERY
+	/* Wait for any in-progress recovery restart to complete
+	 * before proceeding with module removal (mutual exclusion). */
+	if (hdev && hdev->restarting) {
+		INFO("Waiting for recovery restart to complete...");
+		if (wait_for_completion_timeout(&hdev->restart_done,
+						msecs_to_jiffies(10000)) == 0) {
+			WRN("Recovery restart timeout, proceeding with cleanup");
+		}
+	}
+#endif
+
 	if (hdev && !NRC_PS_IS_AWAKE(hdev)) {
 		DBG_PS("WLAN exit: Device not awake, requesting wake");
 		nrc_hal_ops_ps_request_wake(2000, NRC_PS_REASON_HAL_SHUTDOWN);

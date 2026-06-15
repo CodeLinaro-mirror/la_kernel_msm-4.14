@@ -15,6 +15,10 @@
 #include "nrc-ps-common.h"
 #include "nrc-wim-types.h"
 
+/* Forward declarations for recovery (implementation in hal/nrc_core/) */
+struct nrc_recovery;
+struct nrc_recovery_wdt;
+
 /**
  * struct nrc_hif_ops - Host Interface operations
  *
@@ -261,6 +265,16 @@ struct nrc_hif_device {
 	/* SKB Debug control and statistics */
 	bool skb_debug_enabled; /* Runtime control via debugfs */
 	struct nrc_skb_stats skb_stats;
+
+#ifdef CONFIG_SUPPORT_RECOVERY
+	/* Software recovery engine (opaque, managed by HAL) */
+	struct nrc_recovery *recovery;
+
+	/* Restart mutual exclusion (rmmod vs recovery restart) */
+	struct mutex restart_mtx;
+	bool restarting;
+	struct completion restart_done;
+#endif
 };
 
 #define NRC_HIF_DRV_STATE(dev) atomic_read(&(dev)->drv_state)

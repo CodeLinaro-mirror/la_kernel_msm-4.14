@@ -35,8 +35,8 @@
  * These macros maintain backward compatibility while using the unified
  * nrc-debug-common infrastructure underneath.
  */
-#define LOG_ERR(...) ERR_MCP(__VA_ARGS__)
-#define LOG_WARN(...) WARN_MCP(__VA_ARGS__)
+#define LOG_ERR(...) ERR(__VA_ARGS__)
+#define LOG_WARN(...) WRN(__VA_ARGS__)
 #define LOG_INFO(...) INFO(__VA_ARGS__)
 #define LOG_WIM(...) DBG_WIM(__VA_ARGS__)
 

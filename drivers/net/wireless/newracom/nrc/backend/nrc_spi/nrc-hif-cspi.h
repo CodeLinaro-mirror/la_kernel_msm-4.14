@@ -117,8 +117,6 @@ struct spi_status_reg {
 	(CSPI_EIRQ_Q_ENABLE | CSPI_EIRQ_R_ENABLE | CSPI_EIRQ_S_ENABLE)
 /*#define CSPI_EIRQ_ENABLE 0x16*/ /* disable tx/rx que */
 
-/*#define SPI_DBG (13)*/
-
 /* Object prepended to strut nrc_hif_device */
 struct nrc_spi_priv {
 	struct spi_device *spi;

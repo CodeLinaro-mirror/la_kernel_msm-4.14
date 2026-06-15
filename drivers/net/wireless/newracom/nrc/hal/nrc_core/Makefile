@@ -40,7 +40,8 @@ nrc_core-objs = \
 		nrc-fw.o \
 		nrc-hal-init.o \
 		nrc-tx.o \
-		nrc-ps.o
+		nrc-ps.o \
+		nrc-recovery.o
 
 # Base compilation flags
 ccflags-y := -I$(src)

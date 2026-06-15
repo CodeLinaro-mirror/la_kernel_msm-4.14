@@ -48,7 +48,7 @@ int nrc_spi_register_device(struct spi_device *spi, void *priv,
 
 	if (g_spi_device_info.initialized) {
 		mutex_unlock(&spi_device_mutex);
-		ERR_SPI("SPI device already registered");
+		ERR("SPI device already registered");
 		return -EEXIST;
 	}
 

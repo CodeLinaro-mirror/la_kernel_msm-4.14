@@ -391,6 +391,16 @@ MODULE_PARM_DESC(band_selection_gpio_polarity,
 		 "target gpio polarity for band selection");
 
 /* ===========================================================================
+ * Recovery Parameters
+ * =========================================================================== */
+
+/* Recovery mode: 0=monitor only (default), 1=auto-recovery */
+int recovery = 0;
+module_param(recovery, int, 0600);
+MODULE_PARM_DESC(recovery,
+		 "Recovery mode (0: monitor/count only, 1: auto-restart on error threshold)");
+
+/* ===========================================================================
  * Parameter Synchronization Functions
  * =========================================================================== */
 
@@ -406,7 +416,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 	struct nrc_params *params = nw->params;
 
 	if (!nw || !nw->params) {
-		ERR_WLAN("Invalid nrc structure for parameter synchronization");
+		ERR("Invalid nrc structure for parameter synchronization");
 		return;
 	}
 
@@ -439,18 +449,19 @@ void nrc_wlan_sync_params(struct nrc *nw)
 	params->enable_legacy_ack = enable_legacy_ack;
 	params->enable_beacon_bypass = enable_beacon_bypass;
 	params->support_ch_width = support_ch_width;
+	params->recovery = recovery;
 
 	/* Set bd_name only if not already set by first frontend */
 	if (!params->bd_name) {
 		if (bd_name) {
 			params->bd_name = kstrdup(bd_name, GFP_KERNEL);
 			if (!params->bd_name) {
-				ERR_WLAN("Failed to allocate memory for bd_name");
+				ERR("Failed to allocate memory for bd_name");
 				return;
 			}
 		}
 	} else if (bd_name && strcmp(bd_name, params->bd_name) != 0) {
-		WARN_WLAN("WLAN bd_name ('%s') differs from first frontend ('%s') - using first frontend's BD",
+		WRN("WLAN bd_name ('%s') differs from first frontend ('%s') - using first frontend's BD",
 			  bd_name, params->bd_name);
 	}
 
@@ -459,7 +470,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 		if (macaddr) {
 			params->macaddr = kstrdup(macaddr, GFP_KERNEL);
 			if (!params->macaddr) {
-				ERR_WLAN("Failed to allocate memory for macaddr");
+				ERR("Failed to allocate memory for macaddr");
 				/* Clean up bd_name if macaddr allocation fails */
 				if (params->bd_name) {
 					kfree(params->bd_name);
@@ -475,7 +486,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 		if (fw_name) {
 			params->fw_name = kstrdup(fw_name, GFP_KERNEL);
 			if (!params->fw_name) {
-				ERR_WLAN("Failed to allocate memory for fw_name");
+				ERR("Failed to allocate memory for fw_name");
 				/* Clean up previously allocated strings */
 				if (params->macaddr) {
 					kfree(params->macaddr);
@@ -489,7 +500,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 			}
 		}
 	} else if (fw_name && strcmp(fw_name, params->fw_name) != 0) {
-		WARN_WLAN("WLAN fw_name ('%s') differs from first frontend ('%s') - using first frontend's FW",
+		WRN("WLAN fw_name ('%s') differs from first frontend ('%s') - using first frontend's FW",
 			  fw_name, params->fw_name);
 	}
 
@@ -497,7 +508,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 	if (fw_update_name) {
 		params->fw_update_name = kstrdup(fw_update_name, GFP_KERNEL);
 		if (!params->fw_update_name) {
-			ERR_WLAN("Failed to allocate memory for fw_update_name");
+			ERR("Failed to allocate memory for fw_update_name");
 			goto cleanup_strings;
 		}
 	}
@@ -509,7 +520,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 	if (dl_name) {
 		params->dl_name = kstrdup(dl_name, GFP_KERNEL);
 		if (!params->dl_name) {
-			ERR_WLAN("Failed to allocate memory for dl_name");
+			ERR("Failed to allocate memory for dl_name");
 			goto cleanup_strings;
 		}
 	}
@@ -518,7 +529,7 @@ void nrc_wlan_sync_params(struct nrc *nw)
 	if (bl_name) {
 		params->bl_name = kstrdup(bl_name, GFP_KERNEL);
 		if (!params->bl_name) {
-			ERR_WLAN("Failed to allocate memory for bl_name");
+			ERR("Failed to allocate memory for bl_name");
 			goto cleanup_strings;
 		}
 	}

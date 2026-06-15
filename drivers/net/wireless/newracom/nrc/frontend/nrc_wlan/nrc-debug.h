@@ -30,10 +30,10 @@ struct nrc;
 /* Global device pointer */
 extern struct device *g_dev;
 
-/* WLAN-specific debug macros */
-#define INFO_WLAN(fmt, ...) INFo("Wlan", fmt, ##__VA_ARGS__)
-#define WARN_WLAN(fmt, ...) WARn("Wlan", fmt, ##__VA_ARGS__)
-#define ERR_WLAN(fmt, ...) ERR("Wlan", fmt, ##__VA_ARGS__)
+/* WLAN debug macros:
+ * Module identity is provided by the kernel device prefix (e.g., "ieee80211 nrc80211:")
+ * Use generic INFO/WARN/ERR from nrc-debug-common.h directly.
+ */
 
 /* WLAN Debug Functions */
 void nrc_init_debugfs(struct nrc *nw);

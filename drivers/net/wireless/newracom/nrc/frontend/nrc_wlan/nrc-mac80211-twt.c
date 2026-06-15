@@ -111,7 +111,7 @@ twt_setup_assoc_info_restore(struct nrc *nw, struct ieee80211_sta *sta,
 
 	flowid = i_sta->twt.assoc_flowid - 1;
 	if (flowid < 0) {
-		ERR_WLAN("No associated TWT");
+		ERR("No associated TWT");
 		goto done;
 	}
 
@@ -352,7 +352,7 @@ void nrc_mac_rx_twt_setup_assoc_req(struct nrc *nw, struct ieee80211_sta *sta,
 
 	in_prog = twt_setup_in_progress(nw, sta, twt);
 	if (in_prog) {
-		ERR_WLAN("TWT setup is in progress");
+		ERR("TWT setup is in progress");
 		goto done;
 	}
 
@@ -456,7 +456,7 @@ static int nrc_mac_twt_flow_get(struct nrc *nw, struct nrc_sta *i_sta,
 	int ret = -1;
 
 	if (flowid > NRC_MAX_STA_TWT_AGRT - 1) {
-		ERR_WLAN("Exceed TWT flow id (%u), max num: %u", flowid,
+		ERR("Exceed TWT flow id (%u), max num: %u", flowid,
 			 NRC_MAX_STA_TWT_AGRT);
 		goto done; /* reject */
 	}
