@@ -1456,6 +1456,11 @@ DEVICE_READY:
 }
 
 /**
+ * spi_update_credits - Update credit rear pointers and report to HAL
+ * @spi: SPI device
+ * @hdev: NRC HIF device
+ * @status: Current status register data
+ *
  * This function updates the credit rear pointers from the status register
  * messages and then allocates/sends a WIM_EVENT_CREDIT_REPORT back to the HAL
  * to notify it of available TX credits.
@@ -1684,11 +1689,10 @@ int spi_update_status(struct nrc_hif_device *hdev)
 	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
 	struct spi_status_reg *status = &priv->hw.status;
 	struct nrc_debug *debug;
+	struct nrc_spi_event_data pending_event;
 	bool need_tx_reset = false;
 	bool need_rx_reset = false;
-	struct nrc_spi_event_data pending_event;
 	int ret;
-
 	if (!spi_check_core_refs(priv, __func__) || !hdev) {
 		return -EINVAL;
 	}
@@ -1779,12 +1783,6 @@ int spi_update_status(struct nrc_hif_device *hdev)
 		}
 	}
 
-
-	/* NOTE: spi_hif_reset_tx/rx must NOT be called while SLOT_SYNC_LOCK
-	 * is held — they call disable_irq → synchronize_irq, which waits for
-	 * the IRQ handler thread. That thread also acquires SLOT_SYNC_LOCK,
-	 * causing a deadlock. Instead, set flags here and call after unlock.
-	 */
 	/* Initial TX state is head=32, tail=-1, which is a gap of 33.
 	 * Any value > 33 means pointers have desynchronized (e.g. wrapped around).
 	 *
@@ -1802,7 +1800,6 @@ int spi_update_status(struct nrc_hif_device *hdev)
 			need_tx_reset = true;
 	}
 
-	/* RX gap > 33 means tail has wrapped around head */
 	if (c_spi_num_slots(hdev, RX_SLOT) > 33) {
 		WRN("RX_gap:%u head:%u vs tail:%u (ps=%s)",
 		    c_spi_num_slots(hdev, RX_SLOT), hdev->slot[RX_SLOT].head,
@@ -1831,6 +1828,12 @@ int spi_update_status(struct nrc_hif_device *hdev)
 		spi_reset_slot_tx(hdev);
 	if (need_rx_reset)
 		spi_reset_slot_rx(hdev);
+
+	/* Trigger any event deferred by spi_process_device_status (return 0 path).
+	 * This covers DEVICE_READY events like FW_READY_FROM_PS / FW_READY_FROM_WDT
+	 * that set pending_event but returned 0 to continue normal slot/credit update. */
+	if (pending_event.type != 0)
+		nrc_spi_trigger_event(&pending_event);
 
 	/* no need to update credit while loopback test */
 	if (hdev->params->loopback) {

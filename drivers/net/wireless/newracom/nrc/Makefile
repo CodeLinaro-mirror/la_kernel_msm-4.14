@@ -30,7 +30,7 @@ MCP_DIR = frontend/nrc_mcp
 COMMON_DIR = common
 
 # Common paths
-COMMON_INCLUDE = $(PWD)/$(COMMON_DIR)
+COMMON_INCLUDE = $(CURDIR)/$(COMMON_DIR)
 
 # Module install path (for modprobe support)
 INSTALL_MOD_DIR ?= /lib/modules/$(shell uname -r)/extra/nrc
@@ -81,7 +81,7 @@ hal: backend
 		COMMON_INCLUDE=$(COMMON_INCLUDE) \
 		COMMON_CFLAGS="$(COMMON_CFLAGS)" \
 		KBUILD_MODPOST_WARN=$(KBUILD_MODPOST_WARN) \
-		KBUILD_EXTRA_SYMBOLS=$(PWD)/$(BACKEND_DIR)/Module.symvers modules
+		KBUILD_EXTRA_SYMBOLS=$(CURDIR)/$(BACKEND_DIR)/Module.symvers modules
 
 wlan: hal
 	@echo "Building nrc_wlan.ko..."
@@ -90,7 +90,7 @@ wlan: hal
 		COMMON_INCLUDE=$(COMMON_INCLUDE) \
 		COMMON_CFLAGS="$(COMMON_CFLAGS)" \
 		KBUILD_MODPOST_WARN=$(KBUILD_MODPOST_WARN) \
-		KBUILD_EXTRA_SYMBOLS="$(PWD)/$(BACKEND_DIR)/Module.symvers $(PWD)/$(HAL_DIR)/Module.symvers" modules
+		KBUILD_EXTRA_SYMBOLS="$(CURDIR)/$(BACKEND_DIR)/Module.symvers $(CURDIR)/$(HAL_DIR)/Module.symvers" modules
 
 mcp: hal
 	@echo "Building nrc-mcp.ko..."
@@ -99,7 +99,7 @@ mcp: hal
 		COMMON_INCLUDE=$(COMMON_INCLUDE) \
 		COMMON_CFLAGS="$(COMMON_CFLAGS)" \
 		KBUILD_MODPOST_WARN=$(KBUILD_MODPOST_WARN) \
-		KBUILD_EXTRA_SYMBOLS="$(PWD)/$(BACKEND_DIR)/Module.symvers $(PWD)/$(HAL_DIR)/Module.symvers" modules
+		KBUILD_EXTRA_SYMBOLS="$(CURDIR)/$(BACKEND_DIR)/Module.symvers $(CURDIR)/$(HAL_DIR)/Module.symvers" modules
 
 clean:
 	@$(MAKE) -C $(BACKEND_DIR) clean

@@ -369,7 +369,6 @@ static int capi_sta_get_info(struct sk_buff *skb, struct genl_info *info)
 	hdr = genlmsg_put(msg, info->snd_pid, info->snd_seq, &nrc_nl_fam, 0,
 			  NL_WFA_CAPI_STA_GET_INFO);
 #endif
-
 	if (!hdr) {
 		nlmsg_free(msg);
 		return -EMSGSIZE;
@@ -1408,7 +1407,7 @@ static int nrc_shell_run_simple(struct sk_buff *skb, struct genl_info *info)
 		return -EIO;
 	}
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR("%s Can't send command", __func__);
+		ERR("Can't send command");
 		return -EIO;
 	}
 
@@ -1470,7 +1469,7 @@ static int nrc_shell_run(struct sk_buff *skb, struct genl_info *info)
 		return -EIO;
 	}
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR("%s Can't send command", __func__);
+		ERR("Can't send command");
 		return -EIO;
 	}
 
@@ -1579,7 +1578,7 @@ static int nrc_shell_run_raw(struct sk_buff *skb, struct genl_info *info)
 		return -EIO;
 	}
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR("%s Can't send command", __func__);
+		ERR("Can't send command");
 		return -EIO;
 	}
 
@@ -1683,7 +1682,7 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 	memset(cmd_resp, 0x0, sizeof(cmd_resp));
 
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR("%s Can't send command", __func__);
+		ERR("Can't send command");
 		return -EIO;
 	}
 
@@ -1817,7 +1816,7 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 	memset(cmd_resp, 0x0, sizeof(cmd_resp));
 
 	if (!nrc_access_vif(nrc_nw)) {
-		ERR("%s Can't send command", __func__);
+		ERR("Can't send command");
 		return -EIO;
 	}
 
@@ -2424,7 +2423,7 @@ static int nrc_auto_ba_toggle(struct sk_buff *skb, struct genl_info *info)
 		nw->params->ampdu_mode = NRC_AMPDU_MANUAL;
 
 	INFO("Auto BA session feature %s",
-		  (nw->params->ampdu_mode == NRC_AMPDU_AUTO) ? "ON" : "OFF");
+	     (nw->params->ampdu_mode == NRC_AMPDU_AUTO) ? "ON" : "OFF");
 
 	return 0;
 }

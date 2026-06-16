@@ -1084,6 +1084,7 @@ int nrc_fw_start(struct nrc_hif_device *hdev)
 		(NRC_TARGET_KERNEL_VERSION >> 8) &
 		0x0fff; // 12 bits for kernel version (4 for major, 8 for minor)
 	p->ps_pretend_flag = hdev->params->ps_pretend;
+	p->sub_xtal_bypass = hdev->params->sub_xtal_bypass;
 	p->vendor_oui = VENDOR_OUI;
 	if (hdev->chip_id == 0x7292) {
 		p->deepsleep_gpio_dir = TARGET_DEEP_SLEEP_GPIO_DIR_7292;
@@ -1108,7 +1109,6 @@ int nrc_fw_start(struct nrc_hif_device *hdev)
 		p->twt_wake_interval = 0;
 	}
 	p->raw = hdev->params->raw;
-	p->sub_xtal_bypass = hdev->params->sub_xtal_bypass;
 
 	p->auth_control_enable = hdev->params->set_auth_control[0] ? true :
 								     false;
