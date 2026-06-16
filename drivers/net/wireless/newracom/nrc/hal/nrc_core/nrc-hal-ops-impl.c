@@ -62,15 +62,6 @@ static struct wim_bd_param *nrc_hal_bd_get_tx_pwr_impl(u8 *cc)
 #endif
 }
 
-static struct bd_supp_param *nrc_hal_bd_get_supp_ch_list_impl(void)
-{
-#if defined(CONFIG_SUPPORT_BD)
-	return &g_supp_ch_list;
-#else
-	return NULL;
-#endif
-}
-
 /* ===========================================================================
  * HAL Operations Structure
  *
@@ -92,7 +83,6 @@ static struct nrc_hal_ops default_hal_ops = {
 	.wim_skb_add_tlv = nrc_wim_skb_add_tlv,
 	/* BD (Board Data) operations */
 	.bd_get_tx_pwr = nrc_hal_bd_get_tx_pwr_impl,
-	.bd_get_supp_ch_list = nrc_hal_bd_get_supp_ch_list_impl,
 	/* TX operations */
 	.tx_cleanup_queues = nrc_tx_cleanup_queues,
 	/* Power Save Operations - HAL Master */

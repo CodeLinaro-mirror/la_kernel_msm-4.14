@@ -210,6 +210,11 @@ int kr_band = -1;
 module_param(kr_band, int, 0600);
 MODULE_PARM_DESC(kr_band, "Specify KR band (KR USN1(1) or KR USN5(2))");
 
+/* TW band specification */
+int tw_band = -1;
+module_param(tw_band, int, 0600);
+MODULE_PARM_DESC(tw_band, "Specify TW band: 2=T2(NCC 920MHz), 9=T9(920MHz), default=T8(840MHz)");
+
 /* Supported channel width */
 int support_ch_width = 1;
 module_param(support_ch_width, int, 0600);

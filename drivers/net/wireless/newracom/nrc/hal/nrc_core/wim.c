@@ -37,9 +37,6 @@
 #if defined(CONFIG_SUPPORT_BD)
 #include "nrc-bd.h"
 #endif
-#ifdef CONFIG_S1G_CHANNEL
-#include "nrc-s1g.h"
-#endif
 #include "hif.h"
 #include "nrc-tx.h"
 #ifdef CONFIG_SUPPORT_RECOVERY
@@ -442,7 +439,7 @@ int nrc_wim_response_init(struct nrc_hif_device *hdev)
 	}
 
 	hdev->wim_resp =
-		kzalloc(sizeof(struct wim_response) * WIM_CMD_MAX, GFP_KERNEL);
+		kcalloc(WIM_CMD_MAX, sizeof(struct wim_response), GFP_KERNEL);
 	if (!hdev->wim_resp) {
 		ERR_WIM("Failed to allocate memory for WIM response");
 		return -ENOMEM;
@@ -605,6 +602,10 @@ int nrc_wim_set_ps(struct nrc_hif_device *hdev, enum NRC_PS_MODE mode,
 
 	skb = nrc_wim_alloc_skb(WIM_CMD_SET,
 				tlv_len(sizeof(struct wim_pm_param)));
+	if (!skb) {
+		ERR_WIM("Failed to allocate SKB for WIM_CMD_SET PS");
+		return -ENOMEM;
+	}
 
 	p = nrc_wim_skb_add_tlv(skb, WIM_TLV_PS_ENABLE,
 				sizeof(struct wim_pm_param), NULL);
@@ -779,7 +780,8 @@ int nrc_wim_request(struct sk_buff *skb, u16 cmd, int timeout,
 	if (!skb_tx) {
 		ERR_WIM("Failed to clone SKB for cmd %d(%s)", cmd,
 			nrc_wim_cmd_str(cmd));
-		NRC_WIM_RESP_UNLOCK(hdev, cmd);
+		if (!no_resp)
+			NRC_WIM_RESP_UNLOCK(hdev, cmd);
 		ret = -ENOMEM;
 		goto free_skb;
 	}

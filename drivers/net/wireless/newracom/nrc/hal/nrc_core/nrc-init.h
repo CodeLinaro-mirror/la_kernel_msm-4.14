@@ -27,7 +27,6 @@ void nrc_hal_fw_cleanup(struct nrc_hif_device *hdev);
 int nrc_nw_start(void);
 int nrc_nw_start_fusing(void);
 int nrc_nw_stop(void);
-int country_match(const char *const cc[], const char *const country);
 
 /* Parameters Management Functions */
 struct nrc_params *nrc_params_alloc(void);

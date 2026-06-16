@@ -142,20 +142,6 @@ void nrc_init_credit_queue(struct nrc_hif_device *hdev)
 	}
 }
 
-int country_match(const char *const cc[], const char *const country)
-{
-	int i;
-
-	if (country == NULL)
-		return 0;
-	for (i = 0; cc[i]; i++) {
-		if (cc[i][0] == country[0] && cc[i][1] == country[1])
-			return 1;
-	}
-
-	return 0;
-}
-
 #define MAX_RETRY_CNT 3
 #define MAX_FW_RETRY_CNT 30
 

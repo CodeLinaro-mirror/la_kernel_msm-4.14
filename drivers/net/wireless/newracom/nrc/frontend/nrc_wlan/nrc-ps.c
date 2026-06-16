@@ -257,6 +257,19 @@ static void nrc_ps_dynamic_work(struct work_struct *work)
 		return;
 	}
 
+	/*
+	 * TWT configured but session not yet established: suppress sleep.
+	 * twt_sched is created at module load when twt_sp is set, but the
+	 * TWT session is only active when twt_sched->started is true.
+	 * Calling DEEPSLEEP_TIM before the session starts conflicts with FW
+	 * TWT init.  Sleep is driven by TWT QUIET events once started.
+	 */
+	if (nw->params->twt_sp > 0 && nw->params->twt_force_sleep &&
+	    nw->twt_sched && !READ_ONCE(nw->twt_sched->started)) {
+		DBG_PS("TWT configured but not yet active — skip DEEPSLEEP_TIM");
+		return;
+	}
+
 	/* Use unified PS set mode path */
 	nrc_ps_set_mode(nw, NRC_PARAM_POWER_SAVE(hdev),
 			hdev->params->sleep_duration[0] *
@@ -344,6 +357,16 @@ void nrc_ps_dyn_start(struct nrc *nw, int busy_delay_ms,
 		timeout = (int)(div_u64(nw->twt_sched->sp, USEC_PER_MSEC));
 		nw->hdev->ps.timeout = timeout;
 		goto arm_timer;
+	}
+
+	/*
+	 * TWT configured but session not yet established: suppress timer.
+	 * twt_sched->started becomes true only after TWT negotiation completes.
+	 */
+	if (nw->params->twt_sp > 0 && nw->params->twt_force_sleep &&
+	    nw->twt_sched && !READ_ONCE(nw->twt_sched->started)) {
+		DBG_PS("dyn_start: suppressed — TWT configured but not yet active");
+		return;
 	}
 
 	/* Normal dynamic PS guards */

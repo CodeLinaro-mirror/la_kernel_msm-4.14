@@ -464,13 +464,20 @@ static int nrc_wlan_handle_free_skb(struct nrc_hal_event_data *event)
 	struct hif *hif;
 	struct frame_hdr *fh;
 	bool ack = true;
-	struct nrc *nw = nrc_wlan_get_nw();
-	struct nrc_hif_device *hdev = nw->hdev;
+	struct nrc *nw;
+	struct nrc_hif_device *hdev;
 
 	if (!nrc_wlan_is_initialized()) {
 		ERR("WLAN not initialized");
 		return -EINVAL;
 	}
+
+	nw = nrc_wlan_get_nw();
+	if (!nw || !nw->hdev) {
+		ERR("No nw or hdev available");
+		return -EINVAL;
+	}
+	hdev = nw->hdev;
 
 	if (!event || !event->data) {
 		ERR("Invalid event data");
@@ -818,9 +825,20 @@ static int nrc_wlan_handle_twt_service(struct nrc_hal_event_data *event)
 	}
 
 	DBG_STATE("TARGET_NOTI_TWT_SERVICE");
-	nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_TARGET_TWT_SERVICE);
 	nw->params->twt_service = true;
 	sysfs_notify(&THIS_MODULE->mkobj.kobj, NULL, "twt_service");
+
+	/*
+	 * TWT service period = device is AWAKE and exchanging frames.
+	 * Wake the PS state machine so any pending TX can proceed.
+	 * Do NOT arm the sleep timer here — sleeping during the service
+	 * period would conflict with the firmware's TWT schedule and cause
+	 * repeated DEEPSLEEP_TIM timeouts.
+	 *
+	 * Sleep (if twt_force_sleep is set) is triggered from the QUIET
+	 * handler below, once the service period ends.
+	 */
+	nrc_ps_dyn_stop(nw, NRC_PS_REASON_TARGET_TWT_SERVICE);
 
 	return 0;
 }
@@ -842,6 +860,14 @@ static int nrc_wlan_handle_twt_quiet(struct nrc_hal_event_data *event)
 	DBG_STATE("TARGET_NOTI_TWT_QUIET");
 	nw->params->twt_service = false;
 	sysfs_notify(&THIS_MODULE->mkobj.kobj, NULL, "twt_service");
+
+	/*
+	 * TWT quiet period = device should sleep until next service period.
+	 * Arm the PS timer so the driver enters sleep aligned with the
+	 * FW TWT schedule (only when twt_force_sleep is enabled).
+	 */
+	if (nw->twt_sched && nw->params->twt_force_sleep)
+		nrc_ps_dyn_start(nw, 0, NRC_PS_REASON_TARGET_TWT_QUIET);
 
 	return 0;
 }

@@ -13,7 +13,6 @@
 #include <linux/errno.h>
 #include <linux/stddef.h>
 #include "nrc-debug-common.h"
-#include "nrc-bd-common.h"
 #include "nrc-ps-common.h"
 
 /* Forward declarations */
@@ -32,7 +31,8 @@ extern struct nrc_hif_device *nrc_hal_core_get_hdev(void);
 
 /* HAL initialization */
 extern int nrc_hal_core_nw_init(struct nrc *nw, struct nrc_hif_device *hdev);
-extern void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev, struct nrc *nw);
+extern void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev,
+				    struct nrc *nw);
 
 /**
  * struct nrc_hal_ops - HAL operations for frontend modules
@@ -48,7 +48,6 @@ extern void nrc_hal_core_nw_cleanup(struct nrc_hif_device *hdev, struct nrc *nw)
  * @wim_skb_add_tlv:    Add TLV to WIM SKB
  * @wim_request:        Send WIM request (caller frees response SKB)
  * @bd_get_tx_pwr:      Get TX power from board data
- * @bd_get_supp_ch_list: Get supported channel list
  * @tx_cleanup_queues:  Cleanup TX queues
  * @ps_request_sleep:   Request power save sleep
  * @ps_request_wake:    Request power save wake
@@ -77,7 +76,6 @@ struct nrc_hal_ops {
 
 	/* Board data */
 	struct wim_bd_param *(*bd_get_tx_pwr)(u8 *cc);
-	struct bd_supp_param *(*bd_get_supp_ch_list)(void);
 
 	/* TX control */
 	void (*tx_cleanup_queues)(void);
@@ -185,13 +183,6 @@ static inline struct wim_bd_param *nrc_hal_ops_bd_get_tx_pwr(u8 *cc)
 {
 	struct nrc_hal_ops *ops = nrc_hal_core_get_ops();
 	return ops && ops->bd_get_tx_pwr ? ops->bd_get_tx_pwr(cc) : NULL;
-}
-
-static inline struct bd_supp_param *nrc_hal_ops_bd_get_supp_ch_list(void)
-{
-	struct nrc_hal_ops *ops = nrc_hal_core_get_ops();
-	return ops && ops->bd_get_supp_ch_list ? ops->bd_get_supp_ch_list() :
-						 NULL;
 }
 
 /* TX control */

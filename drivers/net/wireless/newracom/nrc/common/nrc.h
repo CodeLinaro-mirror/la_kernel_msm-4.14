@@ -351,6 +351,4 @@ struct nrc_sta {
 
 #define to_i_sta(s) ((struct nrc_sta *)(s)->drv_priv)
 
-/* EU countries (27) + GB, SA for S1G channel compatibility - defined in nrc-wlan-module.c */
-extern const char *const eu_countries_cc[];
 #endif

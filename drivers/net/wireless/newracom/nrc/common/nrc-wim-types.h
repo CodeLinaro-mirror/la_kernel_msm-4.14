@@ -498,6 +498,13 @@ struct s1g_channel_table {
 	int8_t primary_loc; // for 1MHz bandwidth alignment
 };
 
+struct s1g_proxy_map {
+	uint16_t s1g_freq;
+	uint16_t proxy_freq;
+	uint8_t s1g_ch_idx;
+	uint16_t proxy_ch_idx;
+};
+
 struct nrc_tlv {
 	struct nrc_tlv_hdr tlv_hdr;
 	union {
@@ -570,7 +577,7 @@ struct wim_channel_param {
 	uint8_t width;
 } __packed;
 
-#define WIM_MAX_BD_DATA_LEN (544)
+#define WIM_MAX_BD_DATA_LEN (768)
 struct wim_bd_param {
 	uint16_t type;
 	uint16_t length;
@@ -581,7 +588,7 @@ struct wim_bd_param {
 
 #define WIM_MAX_SCAN_SSID (5)
 #define WIM_MAX_SCAN_BSSID (2)
-#define WIM_MAX_SCAN_CHANNEL (55)
+#define WIM_MAX_SCAN_CHANNEL (70)
 #ifndef IEEE80211_MAX_SSID_LEN
 #define IEEE80211_MAX_SSID_LEN (32)
 #endif

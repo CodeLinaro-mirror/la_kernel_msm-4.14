@@ -39,6 +39,7 @@
 
 /* Common directory headers - Core */
 #include "nrc.h"
+#include "nrc-country.h"
 #include "nrc-hif.h"
 
 /* Common directory headers - Debug & Trace */
@@ -62,9 +63,7 @@
 #include "nrc-wlan-hal-init.h"
 #include "nrc-hal-core-interface.h"
 #include "nrc-wim-wlan.h"
-#if defined(CONFIG_S1G_CHANNEL)
 #include "nrc-s1g.h"
-#endif
 #include "nrc-mac80211-twt.h"
 #include "nrc-twt-sched.h"
 
@@ -178,10 +177,26 @@ static struct ieee80211_channel nrc_channels_5ghz[] = {
 	CHAN5G(5230), /* Channel 46 */
 	CHAN5G(5235), /* Channel 47 */
 	CHAN5G(5240), /* Channel 48 */
-	CHAN5G(5260), /* Channel 52 */
-	CHAN5G(5280), /* Channel 56 */
-	CHAN5G(5300), /* Channel 60 */
-	CHAN5G(5320), /* Channel 64 */
+	/* Op35 (2 MHz, S1G ch 128-172): proxy 5250-5360 MHz, 10 MHz step */
+	CHAN5G(5250), /* Channel 50  (Op35 S1G ch128 2M proxy) */
+	CHAN5G(5260), /* Channel 52  (Op35 S1G ch132 2M proxy) */
+	CHAN5G(5270), /* Channel 54  (Op35 S1G ch136 2M proxy) */
+	CHAN5G(5280), /* Channel 56  (Op35 S1G ch140 2M proxy) */
+	CHAN5G(5290), /* Channel 58  (Op35 S1G ch144 2M proxy) */
+	CHAN5G(5300), /* Channel 60  (Op35 S1G ch148 2M proxy) */
+	CHAN5G(5310), /* Channel 62  (Op35 S1G ch152 2M proxy) */
+	CHAN5G(5320), /* Channel 64  (Op35 S1G ch156 2M proxy) */
+	CHAN5G(5330), /* Channel 66  (Op35 S1G ch160 2M proxy) */
+	CHAN5G(5340), /* Channel 68  (Op35 S1G ch164 2M proxy) */
+	CHAN5G(5350), /* Channel 70  (Op35 S1G ch168 2M proxy) */
+	CHAN5G(5360), /* Channel 72  (Op35 S1G ch172 2M proxy) */
+	/* Op36 (4 MHz, S1G ch 130-170): proxy 5380-5480 MHz, 20 MHz step */
+	CHAN5G(5380), /* Channel 76  (Op36 S1G ch130 4M proxy) */
+	CHAN5G(5400), /* Channel 80  (Op36 S1G ch138 4M proxy) */
+	CHAN5G(5420), /* Channel 84  (Op36 S1G ch146 4M proxy) */
+	CHAN5G(5440), /* Channel 88  (Op36 S1G ch154 4M proxy) */
+	CHAN5G(5460), /* Channel 92  (Op36 S1G ch162 4M proxy) */
+	CHAN5G(5480), /* Channel 96  (Op36 S1G ch170 4M proxy) */
 	CHAN5G(5500), /* Channel 100 */
 	CHAN5G(5520), /* Channel 104 */
 	CHAN5G(5540), /* Channel 108 */
@@ -248,12 +263,21 @@ static const struct ieee80211_regdomain mac80211_regdom = {
 };
 #else
 static const struct ieee80211_regdomain mac80211_regdom = {
+	/*
+	 * All 5 GHz entries are proxy frequencies for S1G operation only;
+	 * no real 5 GHz RF is used by NRC7394.
+	 *
+	 * Rule 2 extends the original 5180-5320 range to cover the 18 new
+	 * Op35/Op36 proxy channels (5250-5480 MHz).
+	 * Rules 3 and 4 are unchanged from the original configuration.
+	 */
 	.n_reg_rules = 4,
 	.alpha2 = "99",
 	.reg_rules =
 		{
 			REG_RULE(2412 - 10, 2484 + 10, 40, 0, 30, 0),
-			REG_RULE(5180 - 10, 5320 + 10, 40, 0, 30, 0),
+			/* 5180-5480: original 5180-5320 + Op35/Op36 proxy block */
+			REG_RULE(5180 - 10, 5480 + 10, 40, 0, 30, 0),
 			REG_RULE(5500 - 10, 5580 + 10, 40, 0, 30, 0),
 			REG_RULE(5745 - 10, 5825 + 10, 40, 0, 30, 0),
 		},
@@ -789,6 +813,10 @@ static void nrc_assoc_h_basic(struct ieee80211_hw *hw,
 #else
 	conf = rcu_dereference(vif->chanctx_conf);
 #endif /* ifdef CONFIG_USE_BSS_CHAN_CONF */
+	if (!conf) {
+		WARN_MAC("%s: chanctx_conf is NULL, skipping band TLV", __func__);
+		return;
+	}
 	band = conf->def.chan->band;
 #else
 	band = conf_chan->band;
@@ -941,10 +969,15 @@ static int nrc_vendor_update_beacon(struct ieee80211_hw *hw,
 	if (b->len > WIM_MAX_SIZE) {
 		DBG_MAC("Fail to alloc skb for wim(b->len:%d, max: %d)", b->len,
 			WIM_MAX_SIZE);
+		NRC_SKB_TRACK_FREE(nw->hdev, b, HIF_TYPE_FRAME, false, false);
 		return -EMSGSIZE;
 	}
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, WIM_MAX_SIZE);
+	if (!skb) {
+		NRC_SKB_TRACK_FREE(nw->hdev, b, HIF_TYPE_FRAME, false, false);
+		return -ENOMEM;
+	}
 	pos = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_BEACON, b->len, b->data);
 
 	/* Track beacon buffer free (from mac80211) */
@@ -1066,8 +1099,10 @@ static int nrc_mac_start(struct ieee80211_hw *hw)
 			alloc_size += tlv_len(sizeof(u8));
 		}
 		skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, alloc_size);
-
-		/* Add AID TLV */
+		if (!skb) {
+			mutex_unlock(&nw->state_mtx);
+			return -ENOMEM;
+		}
 		nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_AID, sizeof(u16),
 					    &init_aid);
 		/* Add MAC address TLV */
@@ -1854,6 +1889,7 @@ void init_s1g_channels(struct nrc *nw)
 	struct ieee80211_channel *channels;
 	struct sk_buff *skb;
 	int i, freq, w;
+	extern char *nrc_country_code;
 
 	nrc_set_s1g_country(nrc_country_code);
 
@@ -2001,7 +2037,8 @@ static void nrc_mac_apply_ps(struct nrc *nw, bool ps_on, int timeout_ms)
 	if (timeout_ms == 0) {
 		if (!ps_on) {
 			nw->hdev->ps.timeout = 0;
-			nrc_ps_dyn_stop(nw, NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
+			nrc_ps_dyn_stop(nw,
+					NRC_PS_REASON_MAC_CONFIG_PS_DISABLED);
 			return;
 		}
 		DBG(CAT(MAC) | CAT(PS),
@@ -2083,7 +2120,7 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 #if defined(CONFIG_SUPPORT_BD)
 	int i;
 	bool supp_ch_flag = false;
-	struct bd_supp_param *supp_ch_list = NULL;
+	const struct bd_supp_param *supp_ch_list = NULL;
 #endif /* defined(CONFIG_SUPPORT_BD) */
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO
 	struct cfg80211_chan_def chandef = {
@@ -2122,7 +2159,7 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 
 	DBG_MAC("%s: changed: 0x%x", __FUNCTION__, changed);
 #if defined(CONFIG_SUPPORT_BD)
-	supp_ch_list = nrc_hal_ops_bd_get_supp_ch_list();
+	supp_ch_list = nrc_s1g_get_supp_ch_list();
 	if (supp_ch_list && supp_ch_list->num_ch) {
 		if (changed & IEEE80211_CONF_CHANGE_CHANNEL) {
 			for (i = 0; i < supp_ch_list->num_ch; i++) {
@@ -2174,8 +2211,8 @@ static int nrc_mac_config(struct ieee80211_hw *hw, u32 changed)
 			__FUNCTION__);
 		skb = nrc_hal_ops_wim_alloc_skb(
 			WIM_CMD_SET, tlv_len(sizeof(struct wim_channel_param)));
-
-		/* TODO: Remove the following line */
+		if (!skb)
+			return -ENOMEM;
 #ifdef CONFIG_SUPPORT_CHANNEL_INFO
 		nw->band = hw->conf.chandef.chan->band;
 		nw->center_freq = hw->conf.chandef.chan->center_freq;
@@ -2475,8 +2512,8 @@ static void nrc_bss_handle_ps(struct ieee80211_hw *hw,
 	ps_on = info->ps;
 #endif
 
-	DBG_MAC("%s(changed:%s) ps=%d timeout=%d", __func__,
-		"BSS_CHANGED_PS", ps_on, hw->conf.dynamic_ps_timeout);
+	DBG_MAC("%s(changed:%s) ps=%d timeout=%d", __func__, "BSS_CHANGED_PS",
+		ps_on, hw->conf.dynamic_ps_timeout);
 	nrc_mac_apply_ps(nw, ps_on, hw->conf.dynamic_ps_timeout);
 }
 
@@ -2502,6 +2539,8 @@ void nrc_mac_bss_info_changed(struct ieee80211_hw *hw,
 		return;
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, WIM_MAX_SIZE);
+	if (!skb)
+		return;
 
 	if (changed & BSS_CHANGED_ASSOC)
 		nrc_bss_handle_assoc(hw, vif, info, skb);
@@ -2777,8 +2816,7 @@ static void nrc_tx_ba_session_work(struct work_struct *work)
 	int ret = 0;
 
 	if (!peer_sta) {
-		DBG_MAC("Fail to set up BA. Fail to find peer (%pM)",
-			peer_sta->addr);
+		DBG_MAC("Fail to set up BA. peer_sta is NULL");
 		return;
 	}
 
@@ -3808,6 +3846,8 @@ static void nrc_mac_scan_timeout(struct work_struct *work)
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(i_vif->nw, to_ieee80211_vif(i_vif),
 					    WIM_CMD_SCAN_STOP, 0);
+	if (!skb)
+		return;
 
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 
@@ -4505,7 +4545,7 @@ static int nrc_mac_switch_vif_chanctx(struct ieee80211_hw *hw,
 	param.s1g_freq_index = nrc_get_channel_idx_by_freq(param.s1g_freq);
 	param.cca_level_type = nrc_get_cca_by_freq(param.s1g_freq);
 	nrc_s1g_set_channel_bw(param.s1g_freq, new_ctx->def.chan);
-	param.chan_spacing = get_wim_channel_width(new_ctx->def.chan->width);
+	param.chan_spacing = get_wim_channel_width(new_ctx->def.width);
 	param.global_oper_class = nrc_get_oper_class_by_freq(param.s1g_freq);
 	param.offset = nrc_get_offset_by_freq(param.s1g_freq);
 	param.primary_loc = nrc_get_pri_loc_by_freq(param.s1g_freq);
@@ -4987,6 +5027,86 @@ static const struct ieee80211_ops nrc_mac80211_ops = {
 	.sched_scan_stop = nrc_mac_sched_scan_stop,
 };
 
+/*
+ * HaLow proxy channel flag suppression table.
+ *
+ * NRC7394 reuses 5 GHz channel numbers as proxy identifiers for mac80211;
+ * actual RF operates in the 900 MHz S1G band.  After a country regulatory
+ * update (CRDA/kernel), certain 5 GHz proxy ranges receive flags that
+ * block AP operation.  Each entry defines a frequency range (inclusive,
+ * MHz) and the set of IEEE80211_CHAN_* flags to unconditionally clear.
+ *
+ * To add a new proxy range, append a row here — no other code changes
+ * are needed.
+ */
+struct nrc_proxy_rule {
+	u32 freq_lo;
+	u32 freq_hi;
+	u32 clr_flags;
+};
+
+static const struct nrc_proxy_rule nrc_halow_proxy_rules[] = {
+	/*
+	 * Op35 proxy block (5250-5360 MHz, S1G ch128-172, 2 MHz BW).
+	 * Falls in UNII-2 / UNII-2e; US/EU regulatory domains require DFS
+	 * (IEEE80211_CHAN_RADAR) on this range.
+	 */
+	{5250, 5360, IEEE80211_CHAN_RADAR | IEEE80211_CHAN_NO_IR},
+
+	/*
+	 * Op36 proxy block (5380-5480 MHz, S1G ch130-170, 4 MHz BW).
+	 * Outside the standard 802.11a channel plan; CRDA marks them
+	 * IEEE80211_CHAN_DISABLED and IEEE80211_CHAN_NO_IR.
+	 */
+	{5380, 5480, IEEE80211_CHAN_DISABLED | IEEE80211_CHAN_NO_IR},
+
+	/*
+	 * S1G ch40-48 proxy block (5500-5580 MHz).
+	 * UNII-2e; US/EU regulatory domains require DFS (IEEE80211_CHAN_RADAR),
+	 * causing mac80211 to enter a 60-second CAC before AP operation.
+	 */
+	{5500, 5580, IEEE80211_CHAN_RADAR | IEEE80211_CHAN_NO_IR},
+};
+
+/**
+ * nrc_halow_suppress_proxy_chan_flags() - Clear restrictive regulatory flags
+ *                                         on HaLow 5 GHz proxy channels.
+ * @wiphy: target wiphy
+ *
+ * Walks the 5 GHz band and clears any flags listed in
+ * @nrc_halow_proxy_rules for the corresponding frequency ranges.
+ *
+ * Must be called from nrc_reg_notifier() after each country regulatory
+ * update, because CRDA re-applies the country domain and restores the
+ * original (restrictive) flags every time.
+ *
+ * NOTE: wiphy_apply_custom_regulatory() cannot be used here;
+ * nrc_reg_notifier() is called while cfg80211 holds rtnl_mutex
+ * (via wiphy_update_regulatory), so calling it would deadlock.
+ * Direct flag manipulation under the existing lock context is safe.
+ */
+static void nrc_halow_suppress_proxy_chan_flags(struct wiphy *wiphy)
+{
+	struct ieee80211_supported_band *band = wiphy->bands[NL80211_BAND_5GHZ];
+	int i, r;
+
+	if (!band)
+		return;
+
+	for (i = 0; i < band->n_channels; i++) {
+		struct ieee80211_channel *chan = &band->channels[i];
+
+		for (r = 0; r < ARRAY_SIZE(nrc_halow_proxy_rules); r++) {
+			const struct nrc_proxy_rule *rule =
+				&nrc_halow_proxy_rules[r];
+
+			if (chan->center_freq >= rule->freq_lo &&
+			    chan->center_freq <= rule->freq_hi)
+				chan->flags &= ~rule->clr_flags;
+		}
+	}
+}
+
 static void nrc_reg_notifier(struct wiphy *wiphy,
 			     struct regulatory_request *request)
 {
@@ -5054,10 +5174,11 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 	INFO_MAC("reg_notifier: CC=%c%c applied to FW (initiator=%d)",
 		 nw->alpha2[0], nw->alpha2[1], request->initiator);
 
-	skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
-#ifdef CONFIG_S1G_CHANNEL
+	/* Always update internal S1G proxy map and supported channel list. */
 	nrc_set_s1g_country(nrc_cc);
-#else
+
+	skb = nrc_hal_ops_wim_alloc_skb(WIM_CMD_SET, WIM_MAX_SIZE);
+#ifndef CONFIG_S1G_CHANNEL
 	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_COUNTRY_CODE, sizeof(u16),
 				    nrc_cc);
 #endif
@@ -5096,6 +5217,8 @@ static void nrc_reg_notifier(struct wiphy *wiphy,
 		(struct s1g_channel_table *)nrc_get_current_s1g_cc_table());
 	nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 #endif /* CONFIG_S1G_CHANNEL */
+
+	nrc_halow_suppress_proxy_chan_flags(wiphy);
 }
 
 /**

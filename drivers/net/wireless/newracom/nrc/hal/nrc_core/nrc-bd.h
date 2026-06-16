@@ -17,13 +17,9 @@
 #ifndef _NRC_BD_H_
 #define _NRC_BD_H_
 
-#include "nrc-bd-common.h"
-
-#define BD_DEBUG				0
-
 struct BDF {
-	uint8_t	ver_major;
-	uint8_t	ver_minor;
+	uint8_t ver_major;
+	uint8_t ver_minor;
 	uint16_t total_len;
 
 	uint16_t num_data_groups;
@@ -33,20 +29,9 @@ struct BDF {
 	uint8_t data[];
 };
 
-struct bd_ch_table {
-	uint16_t    s1g_freq;
-	uint16_t    nons1g_freq;
-	uint8_t     s1g_freq_index;
-	uint16_t    nons1g_freq_index;
-};
-
 #if defined(CONFIG_SUPPORT_BD)
-/* Forward declarations */
-struct bd_supp_param;
-
-extern struct bd_supp_param g_supp_ch_list;
-
-struct wim_bd_param * nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev, uint8_t *cc);
+struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
+					uint8_t *cc);
 int nrc_check_bd(struct nrc_hif_device *hdev);
 #endif /* defined(CONFIG_SUPPORT_BD) */
 

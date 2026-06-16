@@ -38,9 +38,8 @@
 #include "nrc-wim-wlan.h"
 #include "nrc-mac80211.h"
 #include "nrc-wlan-params.h"
-
+#include "nrc-s1g.h"
 #if defined(CONFIG_SUPPORT_BD)
-#include "nrc-bd-common.h"
 #endif
 
 /**
@@ -118,7 +117,8 @@ int nrc_wim_wlan_change_sta(struct ieee80211_vif *vif,
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_STA_CMD,
 					    tlv_len(sizeof(*p)));
-
+	if (!skb)
+		return -ENOMEM;
 	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_PARAM, sizeof(*p),
 					NULL);
 	*p = (struct wim_sta_param){0};
@@ -202,7 +202,8 @@ int nrc_wim_wlan_set_sta_type(struct ieee80211_vif *vif)
 	}
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET, skb_len);
-
+	if (!skb)
+		return -ENOMEM;
 	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_TYPE, sizeof(u32),
 				    &sta_type);
 	if (nrc_mac_is_s1g(hdev)) {
@@ -277,7 +278,8 @@ int nrc_wim_wlan_unset_sta_type(struct ieee80211_vif *vif)
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET,
 					    tlv_len(sizeof(u32)));
-
+	if (!skb)
+		return -ENOMEM;
 	nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_STA_TYPE, sizeof(u32),
 				    &sta_type);
 
@@ -299,7 +301,8 @@ static int nrc_wim_set_sta_mac_addr(struct nrc_hif_device *hdev,
 
 	skb = nrc_hal_ops_wim_alloc_skb_vif(vif, WIM_CMD_SET,
 					    tlv_len(ETH_ALEN));
-
+	if (!skb)
+		return -ENOMEM;
 	p = nrc_hal_ops_wim_skb_add_tlv(skb, WIM_TLV_MACADDR_PARAM, sizeof(*p),
 					NULL);
 	p->enable = enable;
@@ -378,7 +381,7 @@ static void nrc_wim_build_scan_param(struct nrc_hif_device *hdev,
 #if defined(CONFIG_SUPPORT_BD)
 	int j;
 	bool avail_ch_flag = false;
-	struct bd_supp_param *supp_ch_list;
+	const struct bd_supp_param *supp_ch_list;
 #endif /* defined(CONFIG_SUPPORT_BD) */
 
 	/* WIM_TL_SCAN_PARAM */
@@ -400,7 +403,7 @@ static void nrc_wim_build_scan_param(struct nrc_hif_device *hdev,
 	}
 
 #if defined(CONFIG_SUPPORT_BD)
-	supp_ch_list = nrc_hal_ops_bd_get_supp_ch_list();
+	supp_ch_list = nrc_s1g_get_supp_ch_list();
 	if (supp_ch_list && supp_ch_list->num_ch) {
 		for (i = 0; i < req->n_channels; i++) {
 			for (j = 0; j < supp_ch_list->num_ch; j++) {

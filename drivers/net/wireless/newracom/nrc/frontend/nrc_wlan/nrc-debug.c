@@ -38,15 +38,15 @@
 /* Local module headers */
 #include "nrc-mac80211.h"
 #include "nrc-mac80211-twt.h"
-#if defined(CONFIG_S1G_CHANNEL)
 #include "nrc-s1g.h"
-#endif
 
 #include "nrc-hal-core-interface.h"
 #include "nrc-stats.h"
 #include "nrc-debug.h"
 #include "nrc-apf.h"
 #include "nrc-ps.h"
+#if defined(CONFIG_SUPPORT_BD)
+#endif
 
 /* Global debug variables - defined as module parameters in nrc-wlan-params.c */
 extern unsigned long debug_mask;
@@ -420,13 +420,13 @@ static int nrc_debugfs_channel_map_show(struct seq_file *s, void *unused)
 	if (!nw || !nw->hw)
 		return -EINVAL;
 
-	supp = nrc_hal_ops_bd_get_supp_ch_list();
+	supp = nrc_s1g_get_supp_ch_list();
 	if (!supp) {
-		seq_puts(s, "BD channel list not available\n");
+		seq_puts(s, "S1G proxy channel list not available\n");
 		return 0;
 	}
 
-	/* Find active S1G channel: match NonS1G proxy freq to BD ch list */
+	/* Find active S1G channel: match proxy frequency to current map */
 	if (nw->hw->conf.chandef.chan) {
 		u32 center_freq = nw->hw->conf.chandef.chan->center_freq;
 
@@ -455,7 +455,9 @@ static int nrc_debugfs_channel_map_show(struct seq_file *s, void *unused)
 	seq_puts(s, "-----------------------------------\n");
 	if (active_ch) {
 		int idx = -1;
+		const char *bw_str = "?";
 
+		/* Find the proxy-map entry for the active S1G channel */
 		for (i = 0; i < supp->num_ch; i++) {
 			if (supp->s1g_ch_index[i] == active_ch) {
 				idx = i;
@@ -464,11 +466,58 @@ static int nrc_debugfs_channel_map_show(struct seq_file *s, void *unused)
 		}
 		if (idx >= 0) {
 			uint16_t freq = supp->s1g_ch_freq[idx];
-
-			seq_printf(s, "Active: S1G ch %u  (%u.%u MHz)\n",
-				   active_ch, freq / 10, freq % 10);
+#if defined(CONFIG_S1G_CHANNEL)
+			/*
+			 * Derive BW from the S1G channel table using the S1G
+			 * frequency (×10 units).  hw->conf.chandef.width holds
+			 * the 5 GHz proxy width and is NOT the S1G BW.
+			 */
+			switch (nrc_get_s1g_width_by_freq(freq)) {
+			case 1:
+				bw_str = "1 MHz";
+				break;
+			case 2:
+				bw_str = "2 MHz";
+				break;
+			case 4:
+				bw_str = "4 MHz";
+				break;
+			case 8:
+				bw_str = "8 MHz";
+				break;
+			case 16:
+				bw_str = "16 MHz";
+				break;
+			default:
+				break;
+			}
+#else
+			switch (nw->hw->conf.chandef.width) {
+			case NL80211_CHAN_WIDTH_1:
+				bw_str = "1 MHz";
+				break;
+			case NL80211_CHAN_WIDTH_2:
+				bw_str = "2 MHz";
+				break;
+			case NL80211_CHAN_WIDTH_4:
+				bw_str = "4 MHz";
+				break;
+			case NL80211_CHAN_WIDTH_8:
+				bw_str = "8 MHz";
+				break;
+			case NL80211_CHAN_WIDTH_16:
+				bw_str = "16 MHz";
+				break;
+			default:
+				break;
+			}
+#endif /* CONFIG_S1G_CHANNEL */
+			seq_printf(s,
+				   "Active: S1G ch %u  (%u.%u MHz)  BW: %s\n",
+				   active_ch, freq / 10, freq % 10, bw_str);
 		} else {
-			seq_printf(s, "Active: S1G ch %u\n", active_ch);
+			seq_printf(s, "Active: S1G ch %u  BW: %s\n", active_ch,
+				   bw_str);
 		}
 	} else {
 		seq_puts(s, "Active: no channel configured\n");

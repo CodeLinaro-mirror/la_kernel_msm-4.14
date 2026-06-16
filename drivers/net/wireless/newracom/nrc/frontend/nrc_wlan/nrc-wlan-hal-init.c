@@ -97,6 +97,14 @@ int nrc_wlan_hal_early_init(void)
 	atomic_set(&g_nw->scan_mode, NRC_SCAN_MODE_IDLE);
 	g_nw->twt_sched = NULL;
 
+	/*
+	 * Pre-set band to S1GHz so that RX frames arriving before the first
+	 * config(CHANGE_CHANNEL) callback carry a valid band.  Without this,
+	 * status->band = 0 (2GHz) while wiphy->bands[2GHz] is NULL, which
+	 * triggers WARN_ON in ieee80211_rx_list (mac80211 rx.c).
+	 */
+	g_nw->band = NL80211_BAND_S1GHZ;
+
 	/* Initialize WLAN-specific components first - better for parameter dependency */
 	ret = nrc_wlan_nw_init(g_nw);
 	if (ret) {
