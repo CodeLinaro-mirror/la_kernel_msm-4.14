@@ -108,16 +108,20 @@ bool no_convert_usf = false;
 
 char nrc_cc[2];
 
-#define CHAN2G(freq)                                              \
-	{                                                         \
-		.band = NL80211_BAND_2GHZ, .center_freq = (freq), \
-		.hw_value = ((freq - 2407) / 5), .max_power = 20, \
+#define CHAN2G(freq)                             \
+	{                                        \
+		.band = NL80211_BAND_2GHZ,       \
+		.center_freq = (freq),           \
+		.hw_value = ((freq - 2407) / 5), \
+		.max_power = 20,                 \
 	}
 
-#define CHAN5G(freq)                                              \
-	{                                                         \
-		.band = NL80211_BAND_5GHZ, .center_freq = (freq), \
-		.hw_value = ((freq - 5000) / 5), .max_power = 20, \
+#define CHAN5G(freq)                             \
+	{                                        \
+		.band = NL80211_BAND_5GHZ,       \
+		.center_freq = (freq),           \
+		.hw_value = ((freq - 5000) / 5), \
+		.max_power = 20,                 \
 	}
 
 #define NRC_CONFIGURE_FILTERS \
@@ -815,7 +819,8 @@ static void nrc_assoc_h_basic(struct ieee80211_hw *hw,
 	conf = rcu_dereference(vif->chanctx_conf);
 #endif /* ifdef CONFIG_USE_BSS_CHAN_CONF */
 	if (!conf) {
-		WARN_MAC("%s: chanctx_conf is NULL, skipping band TLV", __func__);
+		WARN_MAC("%s: chanctx_conf is NULL, skipping band TLV",
+			 __func__);
 		return;
 	}
 	band = conf->def.chan->band;
@@ -5087,16 +5092,23 @@ static const struct nrc_proxy_rule nrc_halow_proxy_rules[] = {
 	/*
 	 * Op35 proxy block (5250-5360 MHz, S1G ch128-172, 2 MHz BW).
 	 * Falls in UNII-2 / UNII-2e; US/EU regulatory domains require DFS
-	 * (IEEE80211_CHAN_RADAR) on this range.
+	 * (IEEE80211_CHAN_RADAR) on this range.  The 5350-5360 MHz tail is
+	 * outside any US regdb rule (5250-5350 / 5470-5730), so cfg80211
+	 * also marks it IEEE80211_CHAN_DISABLED.
 	 */
-	{5250, 5360, IEEE80211_CHAN_RADAR | IEEE80211_CHAN_NO_IR},
+	{5250, 5360,
+	 IEEE80211_CHAN_DISABLED | IEEE80211_CHAN_RADAR | IEEE80211_CHAN_NO_IR},
 
 	/*
 	 * Op36 proxy block (5380-5480 MHz, S1G ch130-170, 4 MHz BW).
 	 * Outside the standard 802.11a channel plan; CRDA marks them
-	 * IEEE80211_CHAN_DISABLED and IEEE80211_CHAN_NO_IR.
+	 * IEEE80211_CHAN_DISABLED and IEEE80211_CHAN_NO_IR.  The 5480 MHz
+	 * edge falls inside the US 5470-5730 DFS rule, which adds
+	 * IEEE80211_CHAN_RADAR (NRC7394 cannot run radar CAC on proxy
+	 * channels).
 	 */
-	{5380, 5480, IEEE80211_CHAN_DISABLED | IEEE80211_CHAN_NO_IR},
+	{5380, 5480,
+	 IEEE80211_CHAN_DISABLED | IEEE80211_CHAN_RADAR | IEEE80211_CHAN_NO_IR},
 
 	/*
 	 * S1G ch40-48 proxy block (5500-5580 MHz).
