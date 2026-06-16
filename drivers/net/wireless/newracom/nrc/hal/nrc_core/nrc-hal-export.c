@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC HAL Export Functions
@@ -130,7 +131,6 @@ int nrc_hal_core_nw_init(struct nrc *nw, struct nrc_hif_device *hdev)
 		return -EINVAL;
 	}
 
-	// pr_info("HAL: Initializing HAL with network device from WLAN layer\n");
 
 	if (nw) {
 		/* Set network device reference for HAL access */

@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1722,15 +1723,15 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 		DBG_CAPI("%s Start Signal Monitor (%d)", __func__,
 			 signal_monitor);
 		total_count = nrc_stats_report_count();
-		sprintf(cmd_resp, "%d,%d", total_count,
-			max_number_per_response);
+		scnprintf(cmd_resp, sizeof(cmd_resp), "%d,%d", total_count,
+			 max_number_per_response);
 	} else if (strcmp(cmd, "show signal stop") == 0) {
 		//stop monitoring
 		signal_monitor = false;
 		nrc_nw->params->signal_monitor = false;
 		DBG_CAPI("%s Stop Signal Monitor (%d)", __func__,
 			 signal_monitor);
-		sprintf(cmd_resp, "okay");
+		scnprintf(cmd_resp, sizeof(cmd_resp), "okay");
 	} else {
 		str = strrchr(cmd, ' ');
 		if (!str) {
@@ -1740,8 +1741,8 @@ static int cli_app_get_info(struct sk_buff *skb, struct genl_info *info)
 		for (i = 1; str[i] != '\0'; ++i)
 			start_point = start_point * 10 + str[i] - '0';
 
-		nrc_stats_report(nrc_nw, cmd_resp, start_point,
-				 max_number_per_response);
+		nrc_stats_report(nrc_nw, cmd_resp, sizeof(cmd_resp),
+				 start_point, max_number_per_response);
 	}
 	nla_put_string(msg, NL_SHELL_RUN_CMD_RESP, cmd_resp);
 	genlmsg_end(msg, hdr);
@@ -1862,7 +1863,7 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 			} else if (strcmp(argv[2], "off") == 0) {
 				nrc_nw->params->ignore_listen_interval = false;
 			}
-			sprintf(cmd_resp, "success");
+			snprintf(cmd_resp, sizeof(cmd_resp), "success");
 		} else if (argc == 3 && strcmp(argv[1], "ampdu_mode") == 0) {
 			if (strcmp(argv[2], "disable") == 0) {
 				nrc_nw->params->ampdu_mode = NRC_AMPDU_DISABLE;
@@ -1871,7 +1872,7 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 			} else if (strcmp(argv[2], "auto") == 0) {
 				nrc_nw->params->ampdu_mode = NRC_AMPDU_AUTO;
 			}
-			sprintf(cmd_resp, "success");
+			snprintf(cmd_resp, sizeof(cmd_resp), "success");
 		} else if (nrc_nw->params->idle_mode && argc == 3 &&
 			   strcmp(argv[1], "idle_mode") == 0) {
 			if (strcmp(argv[2], "disable") == 0) {
@@ -1881,26 +1882,26 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 				INFO("Enable idle mode for test");
 				nrc_idle_mode_set_state(nrc_nw, true);
 			}
-			sprintf(cmd_resp, "success");
+			snprintf(cmd_resp, sizeof(cmd_resp), "success");
 #ifdef CONFIG_SUPPORT_MESH_ROUTING
 		} else if (argc == 3 &&
 			   strcmp(argv[1], "mesh_rssi_threshold") == 0) {
 			int rssi;
 			if (kstrtoint(argv[2], 10, &rssi) < 0) {
-				sprintf(cmd_resp, "fail");
+				snprintf(cmd_resp, sizeof(cmd_resp), "fail");
 			}
 			if (nrc_stats_set_mesh_rssi_threshold(rssi) < 0) {
-				sprintf(cmd_resp, "fail");
+				snprintf(cmd_resp, sizeof(cmd_resp), "fail");
 			} else {
-				sprintf(cmd_resp, "success");
+				snprintf(cmd_resp, sizeof(cmd_resp), "success");
 			}
 #endif
 		} else {
-			sprintf(cmd_resp, "fail");
+			snprintf(cmd_resp, sizeof(cmd_resp), "fail");
 		}
 	} else if (strcmp(argv[0], "show") == 0) {
 		if (argc < 2) {
-			sprintf(cmd_resp, "fail");
+			snprintf(cmd_resp, sizeof(cmd_resp), "fail");
 		} else if (strcmp(argv[1], "ps_conf") == 0) {
 			snprintf(cmd_resp, sizeof(cmd_resp), "%s",
 				 nrc_nw->params->power_save > 0 ? "ENABLE" : "DISABLE");
@@ -1914,10 +1915,10 @@ static int cli_app_driver_cmd(struct sk_buff *skb, struct genl_info *info)
 			snprintf(cmd_resp, sizeof(cmd_resp), "%s",
 				 nrc_idle_mode_get_state_str(nrc_nw));
 		} else {
-			sprintf(cmd_resp, "fail");
+			snprintf(cmd_resp, sizeof(cmd_resp), "fail");
 		}
 	} else {
-		sprintf(cmd_resp, "fail");
+		snprintf(cmd_resp, sizeof(cmd_resp), "fail");
 	}
 	kfree(argv[argc + 1]); /* free string buffer stored by cmd_to_argc_argv */
 	kfree(argv);

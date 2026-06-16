@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC WLAN Post-HAL Initialization
@@ -128,8 +129,7 @@ int nrc_wlan_post_hal_init(bool restart)
 		if (hal_pdev) {
 			nw->hw->wiphy->dev.parent = hal_pdev;
 		} else {
-			dev_warn(nw->dev,
-				 "WLAN: HAL platform device not available\n");
+			WARN_WLAN("HAL platform device not available");
 		}
 
 		/* Register hardware with IEEE80211 subsystem */

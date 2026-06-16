@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * WLAN-specific WIM (Wireless Interface Message) Functions
@@ -31,6 +32,7 @@
 #include "nrc-wim-types.h"
 #include "nrc-hal-core-interface.h"
 #include "nrc-debug-common.h"
+#include "nrc-debug.h"
 #include "nrc-hif.h"
 #include "nrc.h"
 
@@ -106,12 +108,12 @@ int nrc_wim_wlan_change_sta(struct ieee80211_vif *vif,
 	struct wim_sta_param *p;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
 	if (!sta) {
-		pr_err("nrc-wim-wlan: Invalid sta\n");
+		ERR_WLAN("Invalid sta");
 		return -EINVAL;
 	}
 
@@ -183,7 +185,7 @@ int nrc_wim_wlan_set_sta_type(struct ieee80211_vif *vif)
 	int sta_type, skb_len;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -268,7 +270,7 @@ int nrc_wim_wlan_unset_sta_type(struct ieee80211_vif *vif)
 	int sta_type;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -317,7 +319,7 @@ int nrc_wim_wlan_set_p2p_addr(struct ieee80211_vif *vif)
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -329,7 +331,7 @@ int nrc_wim_wlan_set_mac_addr(struct ieee80211_vif *vif)
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -527,7 +529,12 @@ int nrc_wim_wlan_hw_scan(struct ieee80211_vif *vif,
 	struct sk_buff *skb;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
+		return -EINVAL;
+	}
+
+	if (!req) {
+		ERR_WLAN("Invalid scan request");
 		return -EINVAL;
 	}
 
@@ -550,7 +557,12 @@ int nrc_wim_wlan_sched_scan_start(struct ieee80211_vif *vif,
 	int i;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
+		return -EINVAL;
+	}
+
+	if (!req) {
+		ERR_WLAN("Invalid sched scan request");
 		return -EINVAL;
 	}
 
@@ -563,6 +575,10 @@ int nrc_wim_wlan_sched_scan_start(struct ieee80211_vif *vif,
 				   req->n_channels *
 					   sizeof(struct ieee80211_channel *),
 			   GFP_KERNEL);
+	if (!scan_req) {
+		ERR_WLAN("Failed to allocate scan_req");
+		return -ENOMEM;
+	}
 
 	/* mapping cfg80211_sched_scan_request to cfg80211_scan_request */
 	scan_req->n_ssids = req->n_ssids;
@@ -573,9 +589,16 @@ int nrc_wim_wlan_sched_scan_start(struct ieee80211_vif *vif,
 		scan_req->channels[i] = req->channels[i];
 	}
 
-	scan_req->ie = kzalloc(req->ie_len, GFP_KERNEL);
 	scan_req->ie_len = req->ie_len;
-	memcpy((u8 *)scan_req->ie, req->ie, req->ie_len);
+	if (req->ie_len > 0 && req->ie) {
+		scan_req->ie = kzalloc(req->ie_len, GFP_KERNEL);
+		if (!scan_req->ie) {
+			ERR_WLAN("Failed to allocate IE buffer");
+			kfree(scan_req);
+			return -ENOMEM;
+		}
+		memcpy((u8 *)scan_req->ie, req->ie, req->ie_len);
+	}
 
 	nrc_wim_build_scan_param(hdev, skb, scan_req, ies);
 
@@ -593,7 +616,7 @@ int nrc_wim_wlan_sched_scan_stop(struct ieee80211_vif *vif)
 	struct sk_buff *skb;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -684,7 +707,7 @@ int nrc_wim_wlan_install_key(enum set_key_cmd cmd, struct ieee80211_vif *vif,
 	int ret = 0;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -754,6 +777,12 @@ int nrc_wim_wlan_install_key(enum set_key_cmd cmd, struct ieee80211_vif *vif,
 
 	ether_addr_copy(p->mac_addr, addr);
 	p->aid = aid;
+	if (key->keylen > WIM_KEY_MAX_LEN) {
+		ERR_WLAN("Key length %u exceeds max %u", key->keylen,
+			 WIM_KEY_MAX_LEN);
+		dev_kfree_skb(skb);
+		return -EINVAL;
+	}
 	memcpy(p->key, key->key, key->keylen);
 	p->cipher_type = cipher;
 	p->key_index = key->keyidx;
@@ -787,7 +816,7 @@ int nrc_wim_wlan_ampdu_action(struct ieee80211_vif *vif,
 	struct sk_buff *skb;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return -EINVAL;
 	}
 
@@ -819,7 +848,7 @@ u64 nrc_wim_wlan_get_tsf(struct ieee80211_vif *vif)
 	u64 tsf = 0;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		return 0;
 	}
 
@@ -828,7 +857,7 @@ u64 nrc_wim_wlan_get_tsf(struct ieee80211_vif *vif)
 	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
 				      &resp_skb);
 	if (ret) {
-		pr_err("nrc-wim-wlan: Failed to get TSF: %d\n", ret);
+		ERR_WLAN("Failed to get TSF: %d", ret);
 		goto done;
 	}
 
@@ -860,12 +889,17 @@ int nrc_wim_wlan_apf_get_enable(struct nrc_hif_device *hdev, int *enable)
 	struct wim *wim;
 	int ret;
 
+	if (!enable) {
+		ERR_WLAN("Invalid enable pointer");
+		return -EINVAL;
+	}
+
 	req_skb = nrc_hal_ops_wim_alloc_skb_vif(0, WIM_CMD_GET, tlv_len(0));
 	nrc_hal_ops_wim_skb_add_tlv(req_skb, WIM_TLV_APF_ENABLE, 0, NULL);
 	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
 				      &resp_skb);
 	if (ret) {
-		pr_err("nrc-wim-wlan: Failed to get apf enable: %d\n", ret);
+		ERR_WLAN("Failed to get APF enable: %d", ret);
 		return ret;
 	}
 
@@ -908,7 +942,7 @@ u32 nrc_wim_wlan_apf_get_version(struct nrc_hif_device *hdev)
 	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
 				      &resp_skb);
 	if (ret) {
-		pr_err("nrc-wim-wlan: Failed to get apf version: %d\n", ret);
+		ERR_WLAN("Failed to get APF version: %d", ret);
 		goto done;
 	}
 
@@ -940,7 +974,7 @@ u32 nrc_wim_wlan_apf_get_maxlen(struct nrc_hif_device *hdev)
 	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT, false,
 				      &resp_skb);
 	if (ret) {
-		pr_err("nrc-wim-wlan: Failed to get apf maxlen: %d\n", ret);
+		ERR_WLAN("Failed to get APF maxlen: %d", ret);
 		goto done;
 	}
 
@@ -980,9 +1014,14 @@ int nrc_wim_wlan_apf_get_packet_filter(struct nrc_hif_device *hdev,
 	int ret = 0;
 
 	if (len > WIM_MAX_SIZE) {
-		pr_err("nrc-wim-wlan: The filter length(%u) exceeds the wim size(%zu)\n",
-		       len, WIM_MAX_SIZE);
+		ERR_WLAN("Filter length (%u) exceeds WIM size (%zu)",
+		 len, WIM_MAX_SIZE);
 		return -EMSGSIZE;
+	}
+
+	if (!host_dst) {
+		ERR_WLAN("Invalid host_dst pointer");
+		return -EINVAL;
 	}
 
 	param = (u64)src_offset << 32 | len;
@@ -993,7 +1032,7 @@ int nrc_wim_wlan_apf_get_packet_filter(struct nrc_hif_device *hdev,
 	ret = nrc_hal_ops_wim_request(req_skb, 0, WIM_RESP_TIMEOUT * 10, false,
 				      &resp_skb);
 	if (ret) {
-		pr_err("nrc-wim-wlan: Failed to get packet filter: %d\n", ret);
+		ERR_WLAN("Failed to get packet filter: %d", ret);
 		goto done;
 	}
 
@@ -1038,7 +1077,7 @@ static int wim_request_and_extract_return(struct sk_buff *skb, int timeout)
 	int ret = -1;
 
 	if (!hdev) {
-		pr_err("nrc-wim-wlan: Invalid HIF device\n");
+		ERR_WLAN("Invalid HIF device");
 		/* SKB ownership: caller passed SKB, but nrc_hal_ops_wim_request will free it */
 		nrc_hal_ops_wim_request(skb, 0, 0, false, NULL);
 		return -EINVAL;
@@ -1062,8 +1101,8 @@ static int wim_request_and_extract_return(struct sk_buff *skb, int timeout)
 				memcpy(&ret, &tlv->v, tlv->l);
 			}
 		} else {
-			pr_err("nrc-wim-wlan: wim request/response different (%d vs %d)\n",
-			       cmd, resp_wim->cmd);
+			ERR_WLAN("WIM request/response mismatch (%d vs %d)",
+				 cmd, resp_wim->cmd);
 		}
 
 		/* Free response SKB */

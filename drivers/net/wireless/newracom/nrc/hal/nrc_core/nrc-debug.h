@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC Debug Header - HAL Core debug interface
@@ -23,6 +24,24 @@
 
 /* Common debug macros and definitions */
 #include "nrc-debug-common.h"
+
+/* HAL layer aliases */
+#ifndef ERR_HAL
+#define ERR_HAL(fmt, ...) ERR(fmt, ##__VA_ARGS__)
+#endif
+#ifndef WARN_HAL
+#define WARN_HAL(fmt, ...) WRN(fmt, ##__VA_ARGS__)
+#endif
+#ifndef INFO_HAL
+#define INFO_HAL(fmt, ...) INFO(fmt, ##__VA_ARGS__)
+#endif
+#ifndef DBG_HAL
+#define DBG_HAL(fmt, ...) DBG(CAT(BASIC), fmt, ##__VA_ARGS__)
+#endif
+#ifndef VBS_HAL
+#define VBS_HAL(fmt, ...) VBS(CAT(BASIC), fmt, ##__VA_ARGS__)
+#endif
+
 
 /* HAL Core debug macros:
  * Module identity is provided by the kernel device prefix (e.g., "nrc-hal core:")

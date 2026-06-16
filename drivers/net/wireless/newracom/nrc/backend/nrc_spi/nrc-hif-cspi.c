@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2004,7 +2005,6 @@ void c_spi_enable_irq(struct spi_device *spi, bool enable, u8 mask)
 
 	tmp = enable ? (shadow | mask) : (shadow & ~mask);
 	if (tmp == shadow) {
-		//printk("SKIP:(%d)", enable);
 		goto skip;
 	}
 

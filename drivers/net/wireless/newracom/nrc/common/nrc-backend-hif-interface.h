@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * NRC Backend HIF Interface - HAL uses these to access SPI HIF operations

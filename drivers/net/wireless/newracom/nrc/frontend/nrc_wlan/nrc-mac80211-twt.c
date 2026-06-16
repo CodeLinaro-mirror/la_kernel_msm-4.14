@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * TX/RX routines
@@ -658,18 +659,37 @@ unlock:
 static ssize_t nrc_mac_twt_info_read(struct file *file, char __user *user_buf,
 				     size_t count, loff_t *ppos)
 {
-	struct nrc *nw = file->private_data;
-	struct nrc_twt_sched *twt_sched = nw->twt_sched;
+	struct nrc *nw;
+	struct nrc_twt_sched *twt_sched;
 
 	char buf[128];
 	char *text;
 	int m, ret, text_size = 256;
+
+	if (!file || !file->private_data) {
+		ERR_WLAN("Invalid file pointer");
+		return -EINVAL;
+	}
+
+	if (!ppos) {
+		ERR_WLAN("Invalid ppos pointer");
+		return -EINVAL;
+	}
+
+	if (!user_buf) {
+		ERR_WLAN("Invalid user_buf pointer");
+		return -EINVAL;
+	}
+
+	nw = file->private_data;
+	twt_sched = nw->twt_sched;
 
 	if (*ppos != 0) {
 		return 0;
 	}
 	text = kmalloc(text_size, GFP_KERNEL);
 	if (!text) {
+		ERR_WLAN("Failed to allocate text buffer");
 		return -ENOMEM;
 	}
 
@@ -680,10 +700,10 @@ static ssize_t nrc_mac_twt_info_read(struct file *file, char __user *user_buf,
 	}
 
 	m += scnprintf(text + m, text_size - m, "Num:%u\n", twt_sched->num);
-	get_time_str_from_usec(twt_sched->sp, buf);
+	get_time_str_from_usec(twt_sched->sp, buf, sizeof(buf));
 	m += scnprintf(text + m, text_size - m, "Period:%llu usec (%s)\n",
 		       twt_sched->sp, buf);
-	get_time_str_from_usec(twt_sched->interval, buf);
+	get_time_str_from_usec(twt_sched->interval, buf, sizeof(buf));
 	m += scnprintf(text + m, text_size - m, "Interval:%llu usec(%s)\n",
 		       twt_sched->interval, buf);
 	m += scnprintf(text + m, text_size - m, "Mantissa: %u\n",

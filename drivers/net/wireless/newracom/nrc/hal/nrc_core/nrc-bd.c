@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -94,7 +95,8 @@ static void *nrc_dump_load(struct nrc_hif_device *hdev, int len)
 #endif
 #endif /* if KERNEL_VERSION(5,18,0) < NRC_TARGET_KERNEL_VERSION */
 
-	sprintf(filepath, "/lib/firmware/%s", hdev->params->bd_name);
+	scnprintf(filepath, sizeof(filepath), "/lib/firmware/%s",
+		 hdev->params->bd_name);
 	filp = filp_open(filepath, O_RDONLY, 0);
 	if (IS_ERR(filp)) {
 		ERR_BD("Failed to load board data, error:%ld", PTR_ERR(filp));
@@ -291,7 +293,8 @@ int nrc_check_bd(struct nrc_hif_device *hdev)
 #endif
 #endif /* if KERNEL_VERSION(5,18,0) < NRC_TARGET_KERNEL_VERSION */
 
-	sprintf(filepath, "/lib/firmware/%s", hdev->params->bd_name);
+	scnprintf(filepath, sizeof(filepath), "/lib/firmware/%s",
+		 hdev->params->bd_name);
 	filp = filp_open(filepath, O_RDONLY, 0);
 	if (IS_ERR(filp)) {
 		ERR_BD("Failed to load board data (%s): error %ld", filepath,

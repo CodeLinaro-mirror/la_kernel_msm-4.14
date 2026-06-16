@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * NRC HAL Callback Interface - HAL to Frontend event notification

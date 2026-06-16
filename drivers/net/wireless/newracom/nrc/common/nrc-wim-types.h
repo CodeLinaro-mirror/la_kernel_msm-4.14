@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * NRC WIM Types - Wireless Interface Message protocol definitions

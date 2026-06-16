@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * NRC Vendor Definitions - Vendor-specific commands and attributes

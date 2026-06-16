@@ -1,4 +1,5 @@
 /* Common directory headers - Debug & Trace */
+
 #include "nrc-debug-common.h"
 #include "nrc-debug.h"
 

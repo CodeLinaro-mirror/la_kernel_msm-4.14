@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -387,8 +388,7 @@ int nrc_hal_fw_init(struct nrc_hif_device *hdev)
 
 	/* Check if fw_priv is already allocated to prevent double initialization */
 	if (hdev->fw.priv) {
-		dev_warn(hdev->dev,
-			 "FW already initialized, skipping re-initialization");
+		WARN_HAL("FW already initialized, skipping re-initialization");
 		return 0;
 	}
 

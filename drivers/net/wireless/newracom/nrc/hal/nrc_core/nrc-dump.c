@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -81,7 +82,12 @@ void nrc_dump_store(char *src, int len)
 {
 	char str[32];
 
-	sprintf(str, "./host_core_dump_%d.bin", cnt);
+	if (!src) {
+		ERR_HAL("Invalid src pointer");
+		return;
+	}
+
+	scnprintf(str, sizeof(str), "./host_core_dump_%d.bin", cnt);
 	write_file(str, src, len);
 	cnt++;
 }

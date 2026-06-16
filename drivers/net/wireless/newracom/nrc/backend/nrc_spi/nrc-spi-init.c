@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC SPI Module Initialization
@@ -65,8 +66,13 @@ MODULE_DEVICE_TABLE(spi, nrc_spi_id);
 #if defined(ENABLE_HW_RESET) && defined(CONFIG_SPI_USE_DT)
 static int nrc_cspi_device_hw_reset(struct nrc_spi_priv *priv)
 {
+	if (!priv) {
+		ERR_SPI("Invalid priv pointer");
+		return -EINVAL;
+	}
+
 	if (!priv->reset_gpio) {
-		dev_warn(&priv->spi->dev, "No reset GPIO defined");
+		WARN_SPI("No reset GPIO defined");
 		return 0;
 	}
 
@@ -198,7 +204,7 @@ static void nrc_cspi_remove(struct spi_device *spi)
 
 	priv = spi_get_drvdata(spi);
 	if (!priv) {
-		dev_warn(&spi->dev, "SPI device data is NULL");
+		WARN_SPI("SPI device data is NULL");
 #if NRC_TARGET_KERNEL_VERSION < KERNEL_VERSION(5, 18, 0)
 		return 0;
 #else
@@ -208,8 +214,7 @@ static void nrc_cspi_remove(struct spi_device *spi)
 
 	/* Force cleanup only essential resources - avoid kthread operations */
 	if (spi->irq >= 0 && priv->irq_requested && priv->irq_dev_id) {
-		dev_warn(&spi->dev,
-			 "SPI: Force cleanup IRQ %d during module unload",
+		WARN_SPI("Force cleanup IRQ %d during module unload",
 			 spi->irq);
 		synchronize_irq(spi->irq);
 		free_irq(spi->irq, priv->irq_dev_id);
@@ -222,14 +227,10 @@ static void nrc_cspi_remove(struct spi_device *spi)
 
 	/* Only warn about leftover threads - never call kthread_stop() to avoid use-after-free */
 	if (priv->polling_kthread) {
-		dev_warn(
-			&spi->dev,
-			"SPI: polling_kthread still exists during module unload - leaked");
+		WARN_SPI("polling_kthread still exists during module unload - leaked");
 	}
 	if (priv->kthread) {
-		dev_warn(
-			&spi->dev,
-			"SPI: kthread still exists during module unload - leaked");
+		WARN_SPI("kthread still exists during module unload - leaked");
 	}
 	/* Unregister SPI device from HAL layer */
 	nrc_spi_unregister_device(spi);
@@ -345,14 +346,6 @@ out:
  */
 static void __exit nrc_cspi_exit(void)
 {
-	// /* Additional cleanup for power save GPIO if still allocated */
-	// if (g_spi_priv && g_spi_priv->power_save_gpio_allocated && g_spi_priv->power_save_gpio_number > 0) {
-	// 	// pr_info("SPI: Freeing power save GPIO %d during module exit", g_spi_priv->power_save_gpio_number);
-	// 	gpio_free(g_spi_priv->power_save_gpio_number);
-	// 	g_spi_priv->power_save_gpio_allocated = false;
-	// 	g_spi_priv->power_save_gpio_number = -1;
-	// }
-
 #ifndef CONFIG_SPI_USE_DT
 	spi_unregister_device(g_spi_dev);
 #endif

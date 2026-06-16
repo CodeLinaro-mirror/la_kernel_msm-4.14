@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -503,15 +504,19 @@ void nrc_stats_print(void)
 	spin_unlock(&state_lock);
 }
 
-int nrc_stats_report(struct nrc *nw, uint8_t *output, int index, int number)
+int nrc_stats_report(struct nrc *nw, char *output, size_t output_len,
+		     int index, int number)
 {
 	struct stats_sta *cur, *next;
+	size_t len = 0;
 	int i = 0;
 	int start = index;
 	int count = 0;
 
-	if (!output)
+	if (!output || !output_len)
 		return -1;
+
+	len = strnlen(output, output_len);
 
 	if (!nw->params->signal_monitor) {
 		DBG_CAPI("%s Failure. Signal Monitor is disabled.", __func__);
@@ -589,11 +594,12 @@ int nrc_stats_report(struct nrc *nw, uint8_t *output, int index, int number)
 					}
 				}
 			}
-			if (count > 0)
-				sprintf((output + strlen(output)), ",");
-			sprintf((output + strlen(output)), "%pM,%d,%d",
-				cur->macaddr, rssi,
-				moving_average_compute(cur->snr));
+			if (count > 0 && len < output_len)
+				len += scnprintf(output + len, output_len - len, ",");
+			if (len < output_len)
+				len += scnprintf(output + len, output_len - len,
+						  "%pM,%d,%d", cur->macaddr, rssi,
+						  moving_average_compute(cur->snr));
 			count++;
 			if (count == number)
 				break;
@@ -601,8 +607,8 @@ int nrc_stats_report(struct nrc *nw, uint8_t *output, int index, int number)
 		i++;
 	}
 
-	if (count > 0)
-		sprintf((output + strlen(output)), "\n");
+	if (count > 0 && len < output_len)
+		len += scnprintf(output + len, output_len - len, "\n");
 
 	spin_unlock(&state_lock);
 	return 0;

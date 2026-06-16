@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC WLAN Debug Header - WLAN Frontend debug interface
@@ -23,6 +24,24 @@
 
 /* Include common debug interface */
 #include "nrc-debug-common.h"
+
+/* WLAN layer aliases */
+#ifndef ERR_WLAN
+#define ERR_WLAN(fmt, ...) ERR(fmt, ##__VA_ARGS__)
+#endif
+#ifndef WARN_WLAN
+#define WARN_WLAN(fmt, ...) WRN(fmt, ##__VA_ARGS__)
+#endif
+#ifndef INFO_WLAN
+#define INFO_WLAN(fmt, ...) INFO(fmt, ##__VA_ARGS__)
+#endif
+#ifndef DBG_WLAN
+#define DBG_WLAN(fmt, ...) DBG(CAT(BASIC), fmt, ##__VA_ARGS__)
+#endif
+#ifndef VBS_WLAN
+#define VBS_WLAN(fmt, ...) VBS(CAT(BASIC), fmt, ##__VA_ARGS__)
+#endif
+
 
 /* Forward declarations */
 struct nrc;

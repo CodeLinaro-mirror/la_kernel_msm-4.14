@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC WLAN Frontend Module Init
@@ -41,7 +42,6 @@ static int nrc_wlan_module_init(void)
 {
 	int ret;
 
-	// INFO("NRC WLAN Frontend subsystem initializing...");
 
 	/* Early HAL initialization from WLAN layer */
 	ret = nrc_wlan_hal_early_init();
@@ -101,7 +101,7 @@ static void nrc_wlan_module_exit(void)
 
 	nrc_wlan_hal_early_cleanup();
 
-	pr_info("nrc_wlan: NRC WLAN Frontend subsystem cleaned up\n");
+	INFO_WLAN("NRC WLAN Frontend subsystem cleaned up");
 }
 
 /**
@@ -111,7 +111,6 @@ static void nrc_wlan_module_exit(void)
  */
 static int __init nrc_wlan_init(void)
 {
-	// INFO("NRC WLAN Frontend Module loaded");
 	return nrc_wlan_module_init();
 }
 
@@ -120,7 +119,6 @@ static int __init nrc_wlan_init(void)
  */
 static void __exit nrc_wlan_exit(void)
 {
-	// INFO("NRC WLAN Frontend Module unloaded");
 	nrc_wlan_module_exit();
 }
 

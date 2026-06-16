@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC MCP Module Initialization
@@ -97,7 +98,6 @@ static int nrc_mcp_module_init(void)
 	struct nrc_hif_device *hdev;
 	int ret;
 
-	// pr_info("NRC MCP Module initializing...\n");
 
 	/* Initialize debug system early */
 	nrc_dbg_init(NULL); /* Device will be set later when available */
@@ -127,7 +127,7 @@ static int nrc_mcp_module_init(void)
 	if (IS_ERR(g_mcp_virtual_dev)) {
 		ERR("Failed to register virtual device");
 		g_mcp_virtual_dev = NULL;
-		/* Continue without device - will use pr_info */
+		/* Continue without virtual device */
 	}
 
 	/* 1. Allocate MCP device structure */
@@ -198,7 +198,6 @@ static void nrc_mcp_module_exit(void)
 {
 	struct nrc_hif_device *hdev = nrc_hal_core_get_hdev();
 
-	// pr_info("NRC MCP Module exiting...\n");
 
 	/* Cleanup debugfs */
 	if (g_mcp_dev) {

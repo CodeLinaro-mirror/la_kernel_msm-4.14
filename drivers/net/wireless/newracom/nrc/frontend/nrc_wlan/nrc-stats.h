@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,7 +60,8 @@ int nrc_stats_update(uint8_t *macaddr, int8_t snr, int8_t rssi);
 int nrc_stats_add(uint8_t *macaddr, int count);
 int nrc_stats_del(uint8_t *macaddr);
 void nrc_stats_print(void);
-int nrc_stats_report(struct nrc* nw, uint8_t *output, int index, int number);
+int nrc_stats_report(struct nrc *nw, char *output, size_t output_len,
+		     int index, int number);
 int nrc_stats_report_count(void);
 
 int nrc_stats_channel_noise_update(uint32_t freq, int8_t noise);

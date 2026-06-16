@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC HAL Module Initialization
@@ -60,7 +61,6 @@ static int nrc_hal_register_ops(struct nrc_hal_ops *ops)
 		ret = -EEXIST;
 	} else {
 		g_hal_ops = ops;
-		// pr_info("HAL ops registered successfully\n");
 	}
 	mutex_unlock(&hal_ops_mutex);
 

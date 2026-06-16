@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * NRC Backend Callback Interface - SPI to HAL event notification

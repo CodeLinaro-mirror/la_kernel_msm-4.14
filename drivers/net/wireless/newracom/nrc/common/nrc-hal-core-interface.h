@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * NRC HAL Core Interface - Frontend modules use these APIs to access HAL

@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC HAL Operations Implementation Header
@@ -27,7 +28,7 @@
 
 /**
  * nrc_hal_get_default_ops - Get default HAL operations structure
- * 
+ *
  * Returns: Pointer to default HAL operations
  */
 struct nrc_hal_ops *nrc_hal_get_default_ops(void);

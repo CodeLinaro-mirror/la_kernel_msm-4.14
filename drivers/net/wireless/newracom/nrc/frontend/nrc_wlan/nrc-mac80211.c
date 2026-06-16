@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -3732,6 +3733,43 @@ static int __nrc_mac_hw_scan(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 				break;
 			}
 		}
+	}
+
+	/*
+	 * AP+STA same-channel constraint: if a concurrent AP VIF is active,
+	 * restrict the scan to the AP's operating channel only.  The single-
+	 * radio FW cannot TX AP beacons while the STA VIF is scanning
+	 * off-channel, which causes connected clients to beacon-timeout and
+	 * disconnect.  Both APs in a mutual ap+sta setup share the same
+	 * channel, so a single-channel directed probe is sufficient.
+	 */
+	if (vif->type == NL80211_IFTYPE_STATION) {
+		int vi;
+
+		rcu_read_lock();
+		for (vi = 0; vi < NR_NRC_VIF; vi++) {
+			struct ieee80211_vif *ap_vif = nw->vif[vi];
+			struct ieee80211_chanctx_conf *ctx;
+
+			if (!ap_vif || ap_vif == vif ||
+			    ap_vif->type != NL80211_IFTYPE_AP)
+				continue;
+#ifdef CONFIG_USE_BSS_CHAN_CONF
+			ctx = rcu_dereference(ap_vif->bss_conf.chanctx_conf);
+#else
+			ctx = rcu_dereference(ap_vif->chanctx_conf);
+#endif
+			if (ctx && ctx->def.chan) {
+				INFO_MAC(
+					"%s: VIF%d restricting scan to AP ch %d MHz (ap+sta concurrent)",
+					__func__, to_i_vif(vif)->index,
+					ctx->def.chan->center_freq);
+				req->n_channels = 1;
+				req->channels[0] = ctx->def.chan;
+				break;
+			}
+		}
+		rcu_read_unlock();
 	}
 
 	/*

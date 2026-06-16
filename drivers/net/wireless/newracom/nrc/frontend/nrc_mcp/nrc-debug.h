@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2019 Newracom, Inc.
  *
  * NRC MCP Debug Header - MCP Frontend debug interface
@@ -23,6 +24,24 @@
 
 /* Include common debug interface */
 #include "nrc-debug-common.h"
+
+/* MCP layer aliases */
+#ifndef ERR_MCP
+#define ERR_MCP(fmt, ...) ERR(fmt, ##__VA_ARGS__)
+#endif
+#ifndef WARN_MCP
+#define WARN_MCP(fmt, ...) WRN(fmt, ##__VA_ARGS__)
+#endif
+#ifndef INFO_MCP
+#define INFO_MCP(fmt, ...) INFO(fmt, ##__VA_ARGS__)
+#endif
+#ifndef DBG_MCP
+#define DBG_MCP(fmt, ...) DBG(CAT(BASIC), fmt, ##__VA_ARGS__)
+#endif
+#ifndef VBS_MCP
+#define VBS_MCP(fmt, ...) VBS(CAT(BASIC), fmt, ##__VA_ARGS__)
+#endif
+
 
 /* Forward declarations */
 struct mcp_priv;

@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,7 +60,6 @@ static int twt_param_check(u64 *sp, u32 *num, u64 *interval, u32 num_in_group)
 		n = *interval;
 		rem = do_div(n, *num / num_in_group);
 		*sp = n;
-		//printk("rem: %u\n", rem);
 	} else {
 		ret = -1;
 	}
@@ -79,13 +79,11 @@ static int cal_twt_interval(u64 i, u16 *m, u8 *e)
 
 	int ret = -1;
 
-	//printk("i: %llu\n", i);
 	for (currentY = 0; currentY <= maxY; ++currentY) {
 		currentX = (i >> currentY);
 
 		if (currentX >= 0 && currentX <= maxX) {
 			u64 diff = abs((u64)(currentX << currentY) - i);
-			//printk ("1currentY: %d,currentX: %llu, diff: %llu\n", currentY, currentX, diff);
 
 			if (diff < minDiff) {
 				minDiff = diff;
@@ -95,7 +93,6 @@ static int cal_twt_interval(u64 i, u16 *m, u8 *e)
 			}
 			currentX += 1;
 			diff = abs((u64)(currentX << currentY) - i);
-			//printk ("2currentY: %d,currentX: %llu, diff: %llu\n", currentY, currentX, diff);
 			if (diff <= minDiff) {
 				minDiff = diff;
 				bestX = currentX;
@@ -214,12 +211,10 @@ static u64 twt_get_tsf(struct nrc *nw, struct ieee80211_vif *vif)
 #endif
 
 	tsf = nrc_wim_wlan_get_tsf(vif);
-	//printk("TSF: %llu\n", tsf);
 #ifdef TSF_ALIGH_TBTT
 	beacon_int = (u64)nw->beacon_int << 10;
 	tsf = (div64_u64_rem(tsf, beacon_int, &remain) + 1) * beacon_int;
 #endif
-	//printk("ADJ TSF: %llu, remain: %llu\n", tsf, remain);
 
 	return tsf;
 }
@@ -273,14 +268,17 @@ static void get_tsf_worker(struct work_struct *work)
 	mutex_unlock(&twt_sched->mutex);
 }
 
-void get_time_str_from_usec(u64 usec, char *buf)
+void get_time_str_from_usec(u64 usec, char *buf, size_t buf_len)
 {
 	u64 days, hours, minutes, seconds, msecs, remainder;
 	int n = 0;
 
+	if (!buf || !buf_len)
+		return;
+
+	buf[0] = '\0';
 	days = usec;
 
-	//printk("%llu, %lu, %lu, %lu\n", TWT_DAY, TWT_HOUR, TWT_MINUTE, TWT_SECOND);
 	days = div64_u64_rem(days, TWT_DAY, &hours);
 	minutes = do_div(hours, TWT_HOUR);
 	seconds = do_div(minutes, TWT_MINUTE);
@@ -288,24 +286,23 @@ void get_time_str_from_usec(u64 usec, char *buf)
 	remainder = do_div(msecs, TWT_MSEC);
 
 	if (days > 0) {
-		n += sprintf(buf + n, "%llddays ", days);
+		n += scnprintf(buf + n, buf_len - n, "%llddays ", days);
 	}
 	if (hours > 0) {
-		n += sprintf(buf + n, "%lldhours ", hours);
+		n += scnprintf(buf + n, buf_len - n, "%lldhours ", hours);
 	}
 	if (minutes > 0) {
-		n += sprintf(buf + n, "%lldminutes ", minutes);
+		n += scnprintf(buf + n, buf_len - n, "%lldminutes ", minutes);
 	}
 	if (seconds > 0) {
-		n += sprintf(buf + n, "%lldseconds ", seconds);
+		n += scnprintf(buf + n, buf_len - n, "%lldseconds ", seconds);
 	}
 	if (msecs > 0) {
-		n += sprintf(buf + n, "%lldmsecs ", msecs);
+		n += scnprintf(buf + n, buf_len - n, "%lldmsecs ", msecs);
 	}
 	if (remainder > 0) {
-		n += sprintf(buf + n, "%lldusecs", remainder);
+		n += scnprintf(buf + n, buf_len - n, "%lldusecs", remainder);
 	}
-	//sprintf(buf + n, "%lldusecs", remainder);
 }
 
 static ktime_t get_ktime_from_interval(u64 interval)
@@ -613,6 +610,11 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 	u16 mantissa = 0;
 	u8 exponent = 0;
 
+	if (num_in_group == 0) {
+		ERR("Invalid TWT Params: num_in_group must not be zero");
+		goto fail;
+	}
+
 	ret = twt_param_check(&sp, &num, &interval, num_in_group);
 	if (ret) {
 		ERR(
@@ -625,7 +627,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 		"Initializing TWT (Interval: %llu, Service Period: %llu, Service Number: %u Group Number: %u)\n",
 		interval, sp, num, num_in_group);
 
-	get_time_str_from_usec(interval, buf);
+	get_time_str_from_usec(interval, buf, sizeof(buf));
 	DBG_STATE("TWT Interval: %s", buf);
 
 	ret = cal_twt_interval(interval, &mantissa, &exponent);
@@ -638,7 +640,7 @@ struct nrc_twt_sched *nrc_twt_sched_init(struct nrc *nw, u64 sp, u32 num,
 	DBG_STATE("TWT Mantissa: %u, Exponent: %u", mantissa, exponent);
 
 	interval = (u64)(mantissa) << exponent;
-	get_time_str_from_usec(interval, buf);
+	get_time_str_from_usec(interval, buf, sizeof(buf));
 	DBG_STATE("TWT Real Interval: %llu, %s", interval, buf);
 
 	entries = (struct twt_sched_entry *)kzalloc(

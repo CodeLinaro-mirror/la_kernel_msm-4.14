@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,4 +28,4 @@ int nrc_apf_read_packet_filter (struct nrc *nw, u32 src_offset, u8 *host_dst, u3
 
 void nrc_apf_debugfs_init (struct dentry *root, void *nw);
 
-#endif 
+#endif

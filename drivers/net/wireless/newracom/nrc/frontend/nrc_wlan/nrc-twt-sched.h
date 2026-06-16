@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright (c) 2016-2024 Newracom, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +18,7 @@
 #ifndef _NRC_TWT_SCHED_H_
 #define _NRC_TWT_SCHED_H_
 
-//#define TWT_SECOND 1000000UL  
+//#define TWT_SECOND 1000000UL
 #define TWT_MSEC	1000UL			/* usec */
 #define TWT_SECOND (1000UL * TWT_MSEC)
 #define TWT_MINUTE (60UL * TWT_SECOND)
@@ -126,7 +127,7 @@ int nrc_twt_sched_entry_add (struct nrc *nw, struct nrc_sta *sta, struct nrc_twt
 void nrc_twt_sched_entry_del (struct nrc *nw, struct nrc_sta *sta, u8 flowid);
 void nrc_twt_sched_entry_del_all (struct nrc *nw, struct nrc_sta *sta);
 int nrc_twt_sched_entry_dump (struct  nrc *nw, char **buf);
-void get_time_str_from_usec (u64 usec, char *buf);
+void get_time_str_from_usec(u64 usec, char *buf, size_t buf_len);
 
 void nrc_twt_sched_start_update (struct nrc_twt_sched *sched, struct nrc_sta *sta, struct nrc_twt_flow *flow);
 void nrc_twt_sched_end_update (struct nrc_twt_sched *sched, struct nrc_sta *sta, struct nrc_twt_flow *flow);
