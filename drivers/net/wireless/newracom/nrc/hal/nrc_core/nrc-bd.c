@@ -16,17 +16,10 @@
  */
 
 /* Linux kernel headers */
-#include <linux/fcntl.h>
-#include <linux/file.h>
-#include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/stat.h>
-#include <linux/syscalls.h>
-
-/* Assembly headers */
-#include <asm/uaccess.h>
+#include <linux/firmware.h>
 
 /* Common directory headers - Core */
 #include "nrc.h"
@@ -45,7 +38,6 @@
 #if defined(CONFIG_SUPPORT_BD)
 #define NRC_BD_HEADER_LENGTH 16
 int g_bd_size = 0;
-
 
 static uint16_t nrc_checksum_16(uint16_t len, uint8_t *buf)
 {
@@ -70,74 +62,29 @@ static uint16_t nrc_checksum_16(uint16_t len, uint8_t *buf)
 
 static void *nrc_dump_load(struct nrc_hif_device *hdev, int len)
 {
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-	mm_segment_t old_fs;
-#endif
-	struct file *filp;
-	loff_t pos = 0;
-	char filepath[64];
-	char *buf;
+	const struct firmware *fw;
+	char *buf = NULL;
 
 #ifdef CONFIG_BD_LOAD_ONCE
 	if (hdev->bd)
 		return hdev->bd;
 #endif
 
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 0, 0) > NRC_TARGET_KERNEL_VERSION
-	old_fs = get_fs();
-	set_fs(get_ds());
-#elif KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-	old_fs = get_fs();
-	set_fs(KERNEL_DS);
-#else
-	old_fs = force_uaccess_begin();
-#endif
-#endif /* if KERNEL_VERSION(5,18,0) < NRC_TARGET_KERNEL_VERSION */
-
-	scnprintf(filepath, sizeof(filepath), "/lib/firmware/%s",
-		 hdev->params->bd_name);
-	filp = filp_open(filepath, O_RDONLY, 0);
-	if (IS_ERR(filp)) {
-		ERR_BD("Failed to load board data, error:%ld", PTR_ERR(filp));
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-		set_fs(old_fs);
-#else
-		force_uaccess_end(old_fs);
-#endif
-#endif
+	if (request_firmware(&fw, hdev->params->bd_name, hdev->dev)) {
+		ERR_BD("Failed to load board data (%s)", hdev->params->bd_name);
 		return NULL;
 	}
 
-	buf = kmalloc(len, GFP_KERNEL);
+	buf = (char *)kmalloc(len, GFP_KERNEL);
 	if (!buf) {
-		ERR_BD("failed to allocate BD buffer");
-		filp_close(filp, NULL);
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-		set_fs(old_fs);
-#else
-		force_uaccess_end(old_fs);
-#endif
-#endif
+		ERR_BD("malloc input buf error!");
+		release_firmware(fw);
 		return NULL;
 	}
 
-#if KERNEL_VERSION(4, 14, 0) <= NRC_TARGET_KERNEL_VERSION
-	kernel_read(filp, buf, len, &pos);
-#else
-	kernel_read(filp, pos, buf, len);
-#endif
+	memcpy(buf, fw->data, min_t(int, len, (int)fw->size));
+	release_firmware(fw);
 
-	filp_close(filp, NULL);
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-	set_fs(old_fs);
-#else
-	force_uaccess_end(old_fs);
-#endif
-#endif
 	return buf;
 }
 
@@ -183,8 +130,9 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 	cc_index = nrc_cc_bd_idx[nrc_cc];
 	if (!cc_index) {
 		/* No dedicated BD entry; fall back to US TX power */
-		DBG_STATE("[BD] Country (%c%c) has no BD entry; using US BD as fallback",
-			  country_code[0], country_code[1]);
+		DBG_STATE(
+			"[BD] Country (%c%c) has no BD entry; using US BD as fallback",
+			country_code[0], country_code[1]);
 		cc_index = nrc_cc_bd_idx[NRC_CC_US];
 	}
 
@@ -220,13 +168,16 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 			if (target_version == bd_sel->hw_version) {
 				bd_sel->length =
 					(uint16_t)(bd->data[2 + len + 4 * i] +
-						   (bd->data[3 + len + 4 * i] << 8));
+						   (bd->data[3 + len + 4 * i]
+						    << 8));
 				bd_sel->checksum =
 					(uint16_t)(bd->data[4 + len + 4 * i] +
-						   (bd->data[5 + len + 4 * i] << 8));
+						   (bd->data[5 + len + 4 * i]
+						    << 8));
 
 				for (j = 0; j < bd_sel->length - 2 &&
-					    j < WIM_MAX_BD_DATA_LEN; j++)
+					    j < WIM_MAX_BD_DATA_LEN;
+				     j++)
 					bd_sel->value[j] =
 						bd->data[8 + len + 4 * i + j];
 
@@ -262,114 +213,37 @@ struct wim_bd_param *nrc_read_bd_tx_pwr(struct nrc_hif_device *hdev,
 int nrc_check_bd(struct nrc_hif_device *hdev)
 {
 	struct BDF *bd;
-	struct file *filp;
-	loff_t pos = 0;
-	struct kstat *stat;
-	char *buf;
-	size_t length;
+	const struct firmware *fw;
 	int ret;
-	char filepath[64];
-#if KERNEL_VERSION(5, 10, 0) <= NRC_TARGET_KERNEL_VERSION
-	int rc;
-#endif
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-	mm_segment_t old_fs;
-#endif
 
-	if (!hdev || !hdev->params) {
-		ERR_BD("invalid argument: hdev=%p", hdev);
-		return -EINVAL;
-	}
-
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 0, 0) > NRC_TARGET_KERNEL_VERSION
-	old_fs = get_fs();
-	set_fs(get_ds());
-#elif KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-	old_fs = get_fs();
-	set_fs(KERNEL_DS);
-#else
-	old_fs = force_uaccess_begin();
-#endif
-#endif /* if KERNEL_VERSION(5,18,0) < NRC_TARGET_KERNEL_VERSION */
-
-	scnprintf(filepath, sizeof(filepath), "/lib/firmware/%s",
-		 hdev->params->bd_name);
-	filp = filp_open(filepath, O_RDONLY, 0);
-	if (IS_ERR(filp)) {
-		ERR_BD("Failed to load board data (%s): error %ld", filepath,
-		       PTR_ERR(filp));
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-		set_fs(old_fs);
-#else
-		force_uaccess_end(old_fs);
-#endif
-#endif
+	if (request_firmware(&fw, hdev->params->bd_name, hdev->dev)) {
+		ERR_BD("Failed to load board data (%s)", hdev->params->bd_name);
 		return -EIO;
 	}
 
-	stat = kmalloc(sizeof(*stat), GFP_KERNEL);
-	if (!stat) {
-		filp_close(filp, NULL);
-		return -ENOMEM;
-	}
-
-#if KERNEL_VERSION(5, 10, 0) <= NRC_TARGET_KERNEL_VERSION
-	rc = vfs_getattr(&filp->f_path, stat, STATX_SIZE, AT_STATX_SYNC_AS_STAT);
-	if (rc != 0)
-		ERR_BD("vfs_getattr error (%d)", rc);
-#else
-	vfs_stat(filepath, stat);
-#endif
-	length = (size_t)stat->size;
-	kfree(stat);
-
-	buf = kmalloc((int)length, GFP_KERNEL);
-	if (!buf) {
-		filp_close(filp, NULL);
-		ERR_BD("failed to allocate BD buffer");
-		return -ENOMEM;
-	}
-
-#if KERNEL_VERSION(4, 14, 0) <= NRC_TARGET_KERNEL_VERSION
-	g_bd_size = kernel_read(filp, buf, (int)length, &pos);
-#else
-	g_bd_size = kernel_read(filp, pos, buf, (int)length);
-#endif
-
-	filp_close(filp, NULL);
-#if KERNEL_VERSION(5, 18, 0) > NRC_TARGET_KERNEL_VERSION
-#if KERNEL_VERSION(5, 10, 0) > NRC_TARGET_KERNEL_VERSION
-	set_fs(old_fs);
-#else
-	force_uaccess_end(old_fs);
-#endif
-#endif
-
+	g_bd_size = (int)fw->size;
 	if (g_bd_size < NRC_BD_HEADER_LENGTH) {
-		ERR_BD("Invalid data size (%d)", g_bd_size);
-		kfree(buf);
+		ERR_BD("Invalid data size(%d)", g_bd_size);
+		release_firmware(fw);
 		return -EINVAL;
 	}
 
-	bd = (struct BDF *)buf;
+	bd = (struct BDF *)fw->data;
 	if ((bd->total_len > g_bd_size - NRC_BD_HEADER_LENGTH) ||
 	    (bd->total_len < NRC_BD_HEADER_LENGTH)) {
-		ERR_BD("Invalid total length (%d)", bd->total_len);
-		kfree(buf);
+		ERR_BD("Invalid total length(%d)", bd->total_len);
+		release_firmware(fw);
 		return -EINVAL;
 	}
 
 	ret = nrc_checksum_16(bd->total_len, (uint8_t *)&bd->data[0]);
 	if (bd->checksum_data != ret) {
-		ERR_BD("Checksum mismatch (expected %u, got %u)",
-		       bd->checksum_data, ret);
-		kfree(buf);
+		ERR_BD("Invalid checksum(%u : %u)", bd->checksum_data, ret);
+		release_firmware(fw);
 		return -EINVAL;
 	}
 
-	kfree(buf);
+	release_firmware(fw);
 	return 0;
 }
 #endif /* #if defined(CONFIG_SUPPORT_BD) */
