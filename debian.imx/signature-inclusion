@@ -10,6 +10,7 @@ adt7316-spi.ko
 anybuss_core.ko
 arcx-anybus.ko
 axis-fifo.ko
+dwc-mipi-csi2-host.ko
 fb_agm1264k-fl.ko
 fb_bd663474.ko
 fb_hx8340bn.ko
