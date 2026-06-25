@@ -53,6 +53,8 @@ ccflags-y := -I$(src)
 # Add common include path (fallback to relative path if not provided)
 ifdef COMMON_INCLUDE
     ccflags-y += -I$(COMMON_INCLUDE)
+else ifeq ($(KBUILD_EXTMOD),)
+    ccflags-y += -I$(src)/../../common -I$(srctree)/$(src)/../../common
 else
     ccflags-y += -I$(src)/../../common
 endif
