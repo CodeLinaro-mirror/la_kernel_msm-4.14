@@ -121,6 +121,7 @@
 		regulator-max-microvolt = <3800000>;
 		gpio = <&gpio2 25 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
+		status = "disabled";
 	};
 
 	reg_can_en: regulator-can-en {
@@ -505,7 +506,6 @@
 	over-current-active-low;
 	samsung,picophy-pre-emp-curr-control = <3>;
 	samsung,picophy-dc-vol-level-adjust = <7>;
-	vbus-supply = <&reg_lte_en>;
 	status = "okay";
 
 	port-4 {
