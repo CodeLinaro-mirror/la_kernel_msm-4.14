@@ -680,6 +680,7 @@ CONFIG_DRM_XEN                                  policy<{'arm64': '-'}>
 CONFIG_DRM_XEN_FRONTEND                         policy<{'arm64': '-'}>
 CONFIG_DRM_XE_PAGEMAP                           policy<{'arm64': 'y'}>
 CONFIG_DVB_CORE                                 policy<{'arm64': 'y'}>
+CONFIG_DWMAC_IMX8                               policy<{'arm64': 'y'}>
 CONFIG_DWMAC_ROCKCHIP                           policy<{'arm64': '-'}>
 CONFIG_EC_LENOVO_YOGA_C630                      policy<{'arm64': 'm'}>
 CONFIG_EMAC_ROCKCHIP                            policy<{'arm64': '-'}>
@@ -722,6 +723,7 @@ CONFIG_FSL_PPFE_UTIL_DISABLED                   policy<{'arm64': 'y'}>
 CONFIG_GARP                                     policy<{'arm64': 'y'}>
 CONFIG_GIC_GENTLE_CONFIG                        policy<{'arm64': 'n'}>
 CONFIG_GMSL_MAX9286                             policy<{'arm64': 'm'}>
+CONFIG_GPIO_ADP5585                             policy<{'arm64': 'y'}>
 CONFIG_GPIO_IMX_RPMSG                           policy<{'arm64': 'm'}>
 CONFIG_GPIO_PCA953X                             policy<{'arm64': 'y'}>
 CONFIG_GPIO_PI4IOE5V6408                        policy<{'arm64': 'n'}>
@@ -799,6 +801,7 @@ CONFIG_MEDIA_TUNER_TEA5767                      policy<{'arm64': 'y'}>
 CONFIG_MEDIA_TUNER_XC2028                       policy<{'arm64': 'y'}>
 CONFIG_MEDIA_TUNER_XC4000                       policy<{'arm64': 'y'}>
 CONFIG_MEDIA_TUNER_XC5000                       policy<{'arm64': 'y'}>
+CONFIG_MFD_ADP5585                              policy<{'arm64': 'y'}>
 CONFIG_MFD_FP9931                               policy<{'arm64': '-'}>
 CONFIG_MFD_IMX_FLEXIO                           policy<{'arm64': 'm'}>
 CONFIG_MFD_MAX17135                             policy<{'arm64': 'n'}>
@@ -845,7 +848,7 @@ CONFIG_NET_SCH_TAPRIO                           policy<{'arm64': 'y'}>
 CONFIG_NEUTRON                                  policy<{'arm64': 'm'}>
 CONFIG_NOVA_CORE                                policy<{'arm64': '-'}>
 CONFIG_NVMEM_IMX_OCOTP                          policy<{'arm64': 'y'}>
-CONFIG_NVMEM_IMX_OCOTP_ELE                      policy<{'arm64': 'n'}>
+CONFIG_NVMEM_IMX_OCOTP_ELE                      policy<{'arm64': 'y'}>
 CONFIG_NVMEM_IMX_OCOTP_FSB_S400                 policy<{'arm64': '-'}>
 CONFIG_NVMEM_IMX_OCOTP_SCU                      policy<{'arm64': 'y'}>
 CONFIG_NVMEM_ROCKCHIP_EFUSE                     policy<{'arm64': '-'}>
