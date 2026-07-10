@@ -270,8 +270,8 @@ static int _c_spi_read_regs(struct spi_device *spi, u8 addr, u8 *buf,
 #ifndef CONFIG_SPI_HALF_DUPLEX
 	if (rx[7] != C_SPI_ACK) {
 		if (priv && priv->hdev && !NRC_PS_IS_ASLEEP(priv->hdev) &&
-		    !NRC_PS_IS_SLEEPING(priv->hdev)) {
-			WARN_ON_ONCE(1);
+		    !NRC_PS_IS_SLEEPING(priv->hdev) && !priv->boot_poll) {
+			/* No WARN_ON(): expected during not-ready polling. */
 			ERR("SPI ACK is invalid (PS state: %s)",
 			    NRC_PS_STATE_STR(priv->hdev));
 		}
@@ -884,13 +884,16 @@ fail:
 /* Use this function in other function */
 int spi_read_sys_reg(struct spi_device *spi, struct spi_sys_reg *sys)
 {
+	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
 	int ret;
 
 	ret = c_spi_read_regs(spi, C_SPI_SYS_REG, (void *)sys,
 			      sizeof(struct spi_sys_reg));
 
 	if (ret) {
-		ERR("Fail to c_spi_read_regs");
+		/* Expected while polling for readiness after a reset. */
+		if (!priv || !priv->boot_poll)
+			ERR("Fail to c_spi_read_regs");
 		return -1;
 	}
 
@@ -900,6 +903,52 @@ int spi_read_sys_reg(struct spi_device *spi, struct spi_sys_reg *sys)
 	sys->board_id = be32_to_cpu(sys->board_id);
 
 	return 0;
+}
+
+/*
+ * spi_hif_wait_rom_boot - Bounded poll for target readiness after a reset,
+ * instead of a fixed delay. @need_boot also requires the ROM bootloader
+ * (sw_id == SW_MAGIC_FOR_BOOT), e.g. before FW download. Return 0/-ETIMEDOUT.
+ */
+int spi_hif_wait_rom_boot(struct spi_device *spi, struct spi_sys_reg *sys,
+			  unsigned int timeout_ms, bool need_boot)
+{
+	struct nrc_spi_priv *priv = spi_get_drvdata(spi);
+	unsigned long deadline = jiffies + msecs_to_jiffies(timeout_ms);
+	int ret = -ETIMEDOUT;
+
+	/* Silence expected read failures while the target comes up. */
+	if (priv)
+		priv->boot_poll = true;
+
+	do {
+		if (spi_read_sys_reg(spi, sys) == 0 &&
+		    (!need_boot || sys->sw_id == SW_MAGIC_FOR_BOOT)) {
+			ret = 0;
+			break;
+		}
+		usleep_range(10000, 12000);
+	} while (time_before(jiffies, deadline));
+
+	if (priv)
+		priv->boot_poll = false;
+
+	return ret;
+}
+
+/*
+ * Free the host IRQ (shared by the stop and remove paths). free_irq() masks
+ * the line before it syncs, so it won't hang on a re-firing level IRQ the way
+ * a bare synchronize_irq() did when the target keeps EIRQ asserted.
+ */
+void nrc_spi_free_irq(struct nrc_spi_priv *priv)
+{
+	if (!priv || !priv->spi || priv->spi->irq < 0 || !priv->irq_requested)
+		return;
+
+	free_irq(priv->spi->irq, priv->irq_dev_id);
+	priv->irq_requested = false;
+	priv->irq_dev_id = NULL;
 }
 
 /* Credit queue management moved to HAL module */

@@ -80,13 +80,22 @@ static int nrc_cspi_device_hw_reset(struct nrc_spi_priv *priv)
 
 	/* Assert (Active Low) */
 	gpiod_set_value_cansleep(priv->reset_gpio, 1);
-	msleep(10); /* 10ms wait */
+	msleep(10); /* 10ms assert */
 
 	/* Deassert */
 	gpiod_set_value_cansleep(priv->reset_gpio, 0);
-	msleep(50); /* 50ms recovery wait */
 
-	INFO("Device reset completed");
+	/* Settle, then poll for the chip to respond (ROM-boot is confirmed
+	 * later in spi_hif_probe()). */
+	msleep(NRC_HW_RESET_SETTLE_MS);
+
+	if (spi_hif_wait_rom_boot(priv->spi, &priv->hw.sys,
+				  NRC_HW_RESET_READY_TIMEOUT_MS, false))
+		WARN_SPI("Device not responding %dms after reset",
+			 NRC_HW_RESET_SETTLE_MS +
+				 NRC_HW_RESET_READY_TIMEOUT_MS);
+	else
+		INFO("Device reset completed");
 	return 0;
 }
 #endif
@@ -212,15 +221,9 @@ static void nrc_cspi_remove(struct spi_device *spi)
 #endif
 	}
 
-	/* Force cleanup only essential resources - avoid kthread operations */
-	if (spi->irq >= 0 && priv->irq_requested && priv->irq_dev_id) {
-		WARN_SPI("Force cleanup IRQ %d during module unload",
-			 spi->irq);
-		synchronize_irq(spi->irq);
-		free_irq(spi->irq, priv->irq_dev_id);
-		priv->irq_requested = false;
-		priv->irq_dev_id = NULL;
-	}
+	/* Force IRQ cleanup if the frontend was not stopped first (e.g. SPI
+	 * device removed on reboot while the driver is still up). */
+	nrc_spi_free_irq(priv);
 
 	/* Cancel any pending work - this is safe */
 	cancel_delayed_work_sync(&priv->work);

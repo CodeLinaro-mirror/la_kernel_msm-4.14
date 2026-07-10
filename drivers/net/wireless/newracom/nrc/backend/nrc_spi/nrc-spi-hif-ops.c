@@ -64,15 +64,13 @@ static void spi_hif_reset_device(struct nrc_hif_device *hdev);
  * Device Management Operations
  * =========================================================================== */
 
-#define MAX_PROBE_CNT 3
+#define MAX_RESET_RETRY 2
 static int spi_hif_probe(struct nrc_hif_device *hdev)
 {
 	struct nrc_spi_priv *priv = nrc_spi_get_priv();
 	struct spi_device *spi = nrc_spi_get_device();
 	struct spi_sys_reg *sys;
-
-	int i;
-	int ret;
+	bool need_boot;
 	int reset_retry = 0;
 
 	if (!priv) {
@@ -81,36 +79,15 @@ static int spi_hif_probe(struct nrc_hif_device *hdev)
 	}
 	sys = &priv->hw.sys;
 
+	/* ROM bootloader is required only when the host downloads firmware. */
+	need_boot = (hdev->params->fw_name != NULL);
+
 retry_after_reset:
-	for (i = 0; i < MAX_PROBE_CNT; i++) {
-		mdelay(50);
-		ret = spi_read_sys_reg(spi, sys);
-
-		if (ret) {
-			DBG_HIF("probe: target not ready, retry %d/%d", i + 1,
-				MAX_PROBE_CNT);
-			continue;
-		}
-
-		DBG_HIF("probe: chip_id=%04x modem_id=%08x status=%d",
-			sys->chip_id, sys->modem_id, sys->status);
-
-		if (hdev->params->fw_name && !(sys->status & 0x1)) {
-			DBG_HIF("probe: invalid target status 0x%x",
-				sys->status);
-
-			/* Retry with reset if not attempted yet */
-			if (reset_retry == 0) {
-				WRN("Target status invalid (0x%x), attempting SPI reset (retry %d/2)...",
-				    sys->status, reset_retry + 1);
-				spi_hif_reset_device(hdev);
-				msleep(100); /* Allow device to stabilize after reset */
-				reset_retry++;
-				goto retry_after_reset;
-			}
-
-			return -1;
-		}
+	/* Poll for readiness after reset (ROM boot if downloading FW). */
+	if (spi_hif_wait_rom_boot(spi, sys, NRC_PROBE_BOOT_TIMEOUT_MS,
+				  need_boot) == 0) {
+		DBG_HIF("probe: chip_id=%04x modem_id=%08x sw_id=%08x status=%d",
+			sys->chip_id, sys->modem_id, sys->sw_id, sys->status);
 
 		switch (sys->chip_id) {
 		case 0x4791:
@@ -121,28 +98,26 @@ retry_after_reset:
 			if (hdev->chip_id != sys->chip_id)
 				nrc_hif_set_model_conf(hdev, sys->chip_id);
 
-			if (reset_retry > 0) {
+			if (reset_retry > 0)
 				INFO("SPI probe succeeded after %d reset(s)",
 				     reset_retry);
-			}
 			return 0;
 		default:
-			ERR("Invalid target chip");
+			ERR("Invalid target chip %04x", sys->chip_id);
 			BUG();
 		}
 	}
 
-	/* All probe attempts failed - try reset if not attempted yet */
-	if (reset_retry == 0) {
-		WRN("Probe failed after %d attempts, trying SPI reset (retry %d/2)...",
-		    MAX_PROBE_CNT, reset_retry + 1);
+	/* Not ready within timeout - SPI reset and retry a bounded number of times. */
+	if (reset_retry < MAX_RESET_RETRY) {
+		WRN("Target not ready (sw_id=0x%x status=0x%x), SPI reset (retry %d/%d)...",
+		    sys->sw_id, sys->status, reset_retry + 1, MAX_RESET_RETRY);
 		spi_hif_reset_device(hdev);
-		msleep(100);
 		reset_retry++;
 		goto retry_after_reset;
 	}
 
-	ERR_HIF("Probe failed after %d attempts and %d reset(s)", MAX_PROBE_CNT,
+	ERR_HIF("Probe failed: target not ready after %d reset(s)",
 		reset_retry);
 	return -1;
 }
@@ -258,7 +233,6 @@ kill_kthread:
 static int spi_hif_stop(struct nrc_hif_device *hdev)
 {
 	struct nrc_spi_priv *priv = nrc_spi_get_priv();
-	struct spi_device *spi = nrc_spi_get_device();
 
 	/* Note: Wake state check is now handled by HAL in nrc_hif_stop() */
 
@@ -285,14 +259,7 @@ static int spi_hif_stop(struct nrc_hif_device *hdev)
 
 	cancel_delayed_work(&priv->work);
 
-	if (spi->irq >= 0 && priv->irq_requested) {
-		synchronize_irq(spi->irq);
-		free_irq(spi->irq, hdev);
-		priv->irq_requested = false;
-		priv->irq_dev_id = NULL;
-	}
-
-	c_spi_enable_irq(priv->spi, false, CSPI_EIRQ_A_ENABLE);
+	nrc_spi_free_irq(priv);
 
 	return 0;
 }

@@ -110,6 +110,14 @@ struct spi_status_reg {
 #define SW_MAGIC_FOR_BOOT (0x01020716)
 #define SW_MAGIC_FOR_FW (0x01210630)
 
+/* Bounded poll timeouts used instead of fixed post-reset delays. */
+/* Initial settle before polling after HW reset. */
+#define NRC_HW_RESET_SETTLE_MS 100
+/* Poll window for the chip to return on the bus after HW reset. */
+#define NRC_HW_RESET_READY_TIMEOUT_MS 300
+/* Wait for ROM boot per probe attempt. */
+#define NRC_PROBE_BOOT_TIMEOUT_MS 500
+
 #define CSPI_EIRQ_MODE 0x05
 #define CSPI_EIRQ_Q_ENABLE 0x3
 #define CSPI_EIRQ_R_ENABLE 0x4
@@ -124,6 +132,10 @@ struct nrc_spi_priv {
 #if defined(CONFIG_SPI_USE_DT)
 	struct gpio_desc *reset_gpio;
 #endif
+	/* Set while polling the target for readiness after a reset. Read
+	 * failures (invalid ACK / SYS read fail) are expected during that
+	 * window, so they are not logged to avoid flooding the console. */
+	bool boot_poll;
 
 	/* work, kthread, ... */
 	struct delayed_work work;
@@ -209,6 +221,9 @@ ssize_t c_spi_write(struct spi_device *spi, u8 *buf, ssize_t size);
 ssize_t c_spi_xmit(struct spi_device *spi, u8 *buf, ssize_t size);
 int c_spi_read_regs(struct spi_device *spi, u8 addr, u8 *buf, ssize_t size);
 int spi_read_sys_reg(struct spi_device *spi, struct spi_sys_reg *sys);
+int spi_hif_wait_rom_boot(struct spi_device *spi, struct spi_sys_reg *sys,
+			  unsigned int timeout_ms, bool need_boot);
+void nrc_spi_free_irq(struct nrc_spi_priv *priv);
 int nrc_cspi_gpio_alloc(struct spi_device *spi);
 void nrc_cspi_gpio_free(struct spi_device *spi);
 struct nrc_spi_priv *nrc_cspi_alloc(struct spi_device *spi);
