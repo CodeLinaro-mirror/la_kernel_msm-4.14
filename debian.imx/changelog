@@ -1,3 +1,10 @@
+linux-imx (7.0.0-1004.20) resolute; urgency=medium
+
+  * No-change rebuild to produce arm64 build (PPA processor was amd64-
+    only for 1004.19)
+
+ -- Stewart Hore <stewart.hore@canonical.com>  Wed, 15 Jul 2026 08:50:23 +0000
+
 linux-imx (7.0.0-1004.19) resolute; urgency=medium
 
   * Miscellaneous Ubuntu changes
