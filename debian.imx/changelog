@@ -1,3 +1,10 @@
+linux-imx (7.0.0-1004.19) resolute; urgency=medium
+
+  * Miscellaneous Ubuntu changes
+    - [Config] imx: Enable ethernet and OCOTP for i.MX93 EVK
+
+ -- Stewart Hore <stewart.hore@canonical.com>  Wed, 15 Jul 2026 13:07:47 +1000
+
 linux-imx (7.0.0-1003.18) resolute; urgency=medium
 
   * Packaging resync (LP: #1786013)
