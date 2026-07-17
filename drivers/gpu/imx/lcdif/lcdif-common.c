@@ -635,6 +635,8 @@ static int lcdif_add_client_devices(struct lcdif_soc *lcdif)
 
 		pdev->dev.parent = dev;
 		client_reg[i].pdata.of_node = of_node;
+		pdev->dev.of_node = of_node;
+		pdev->dev.of_node_reused = true;
 
 		ret = platform_device_add_data(pdev, &client_reg[i].pdata,
 					       sizeof(client_reg[i].pdata));
@@ -644,8 +646,6 @@ static int lcdif_add_client_devices(struct lcdif_soc *lcdif)
 			platform_device_put(pdev);
 			goto err_register;
 		}
-
-		pdev->dev.of_node = of_node;
 	}
 
 	if (!pdev)

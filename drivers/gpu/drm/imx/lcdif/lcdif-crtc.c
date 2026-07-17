@@ -459,3 +459,4 @@ module_platform_driver(lcdif_crtc_driver);
 MODULE_DESCRIPTION("NXP i.MX LCDIF DRM CRTC driver");
 MODULE_AUTHOR("Fancy Fang <chen.fang@nxp.com>");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:imx-lcdif-crtc");
