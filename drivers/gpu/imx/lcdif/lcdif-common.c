@@ -624,11 +624,11 @@ static int lcdif_add_client_devices(struct lcdif_soc *lcdif)
 				 i, dev->of_node->full_name);
 			continue;
 		}
-		of_node_put(of_node);
 
 		pdev = platform_device_alloc(client_reg[i].name, i);
 		if (!pdev) {
 			dev_err(dev, "Can't allocate port pdev\n");
+			of_node_put(of_node);
 			ret = -ENOMEM;
 			goto err_register;
 		}
