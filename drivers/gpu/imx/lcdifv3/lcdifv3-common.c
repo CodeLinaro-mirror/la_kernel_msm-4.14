@@ -549,6 +549,8 @@ static int lcdifv3_add_client_devices(struct lcdifv3_soc *lcdifv3)
 
 		pdev->dev.parent = dev;
 		client_reg[i].pdata.of_node = of_node;
+		pdev->dev.of_node = of_node;
+		pdev->dev.of_node_reused = true;
 
 		/* make child device 'dma_mask' to point to its
 		 * coherent dma mask, otherwise later probe will
@@ -564,8 +566,6 @@ static int lcdifv3_add_client_devices(struct lcdifv3_soc *lcdifv3)
 			platform_device_put(pdev);
 			goto err_register;
 		}
-
-		pdev->dev.of_node = of_node;
 	}
 
 	if (!pdev)
