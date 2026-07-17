@@ -534,7 +534,6 @@ static int lcdifv3_add_client_devices(struct lcdifv3_soc *lcdifv3)
 				 i, dev->of_node->full_name);
 			continue;
 		}
-		of_node_put(of_node);
 
 		mutex_lock(&lcdifv3_client_id_mutex);
 		id = lcdifv3_client_id++;
@@ -543,6 +542,7 @@ static int lcdifv3_add_client_devices(struct lcdifv3_soc *lcdifv3)
 		pdev = platform_device_alloc(client_reg[i].name, id);
 		if (!pdev) {
 			dev_err(dev, "Can't allocate port pdev\n");
+			of_node_put(of_node);
 			ret = -ENOMEM;
 			goto err_register;
 		}
