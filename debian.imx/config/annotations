@@ -665,7 +665,7 @@ CONFIG_DRM_IMX_SEC_DSIM                         policy<{'arm64': 'm'}>
 CONFIG_DRM_IMX_TVE                              policy<{'arm64': 'y'}>
 CONFIG_DRM_INNO_HDMI                            policy<{'arm64': '-'}>
 CONFIG_DRM_ITE_IT6161                           policy<{'arm64': 'n'}>
-CONFIG_DRM_ITE_IT6263_NXP                       policy<{'arm64': 'n'}>
+CONFIG_DRM_ITE_IT6263_NXP                       policy<{'arm64': 'm'}>
 CONFIG_DRM_MSM_VALIDATE_XML                     policy<{'arm64': '-'}>
 CONFIG_DRM_NXP_SEIKO_43WVFIG                    policy<{'arm64': 'n'}>
 CONFIG_DRM_PANEL_RAYDIUM_RM692C9                policy<{'arm64': 'n'}>
