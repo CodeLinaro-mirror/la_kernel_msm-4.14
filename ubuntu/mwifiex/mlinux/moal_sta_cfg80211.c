@@ -178,7 +178,7 @@ static int woal_cfg80211_disconnect(struct wiphy *wiphy, struct net_device *dev,
 
 static int woal_cfg80211_get_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				     struct wireless_dev *wdev,
 #else
 				     struct net_device *dev,
@@ -192,7 +192,7 @@ static int woal_cfg80211_get_station(struct wiphy *wiphy,
 
 static int woal_cfg80211_dump_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				      struct wireless_dev *wdev,
 #else
 				      struct net_device *dev,
@@ -348,7 +348,7 @@ void woal_cfg80211_tdls_cancel_channel_switch(struct wiphy *wiphy,
 #if CFG80211_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
 static int woal_cfg80211_change_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 					struct wireless_dev *wdev,
 #else
 					struct net_device *dev,
@@ -390,7 +390,7 @@ int woal_cfg80211_uap_add_station(struct wiphy *wiphy, struct net_device *dev,
 #ifdef UAP_SUPPORT
 static int woal_cfg80211_add_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				     struct wireless_dev *wdev,
 #else
 				     struct net_device *dev,
@@ -7062,7 +7062,7 @@ static int woal_cfg80211_disassociate(struct wiphy *wiphy,
  */
 static int woal_cfg80211_get_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				     struct wireless_dev *wdev,
 #else
 				     struct net_device *dev,
@@ -7076,7 +7076,7 @@ static int woal_cfg80211_get_station(struct wiphy *wiphy,
 {
 	mlan_status ret = MLAN_STATUS_SUCCESS;
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 	struct net_device *dev = wdev->netdev;
 #endif
 	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);
@@ -7118,7 +7118,7 @@ static int woal_cfg80211_get_station(struct wiphy *wiphy,
  */
 static int woal_cfg80211_dump_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				      struct wireless_dev *wdev,
 #else
 				      struct net_device *dev,
@@ -7128,7 +7128,7 @@ static int woal_cfg80211_dump_station(struct wiphy *wiphy,
 {
 	mlan_status ret = MLAN_STATUS_SUCCESS;
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 	struct net_device *dev = wdev->netdev;
 #endif
 	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);
@@ -9478,7 +9478,7 @@ static int woal_construct_tdls_action_frame(moal_private *priv,
 			LEAVE();
 			return -EFAULT;
 		}
-#if CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0)
+#if CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION
 		skb_put(skb, IEEE80211_MIN_ACTION_SIZE(tdls_discover_resp) - 24);
 		mgmt->u.action.category = WLAN_CATEGORY_PUBLIC;
 		mgmt->u.action.action_code = WLAN_PUB_ACTION_TDLS_DISCOVER_RES;
@@ -10249,7 +10249,7 @@ done:
  */
 static int woal_cfg80211_change_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 					struct wireless_dev *wdev,
 #else
 					struct net_device *dev,
@@ -10263,7 +10263,7 @@ static int woal_cfg80211_change_station(struct wiphy *wiphy,
 {
 	int ret = 0;
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 	struct net_device *dev = wdev->netdev;
 #endif
 #ifdef UAP_SUPPORT
@@ -10323,7 +10323,7 @@ static int woal_cfg80211_change_station(struct wiphy *wiphy,
  */
 static int woal_cfg80211_add_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				     struct wireless_dev *wdev,
 #else
 				     struct net_device *dev,
@@ -10336,7 +10336,7 @@ static int woal_cfg80211_add_station(struct wiphy *wiphy,
 				     struct station_parameters *params)
 {
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 	struct net_device *dev = wdev->netdev;
 #endif
 	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);
@@ -11353,7 +11353,7 @@ int woal_cfg80211_uap_add_station(struct wiphy *wiphy, struct net_device *dev,
 		sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
 		if (sinfo) {
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 			cfg80211_new_sta(dev->ieee80211_ptr, mac, sinfo,
 					 GFP_KERNEL);
 #else

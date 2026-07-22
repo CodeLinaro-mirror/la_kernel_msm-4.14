@@ -5177,7 +5177,7 @@ mlan_status moal_recv_event(t_void *pmoal, pmlan_event pmevent)
 #endif /* KERNEL_VERSION */
 				if (priv->netdev && priv->wdev)
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 					cfg80211_new_sta(priv->wdev,
 							 (t_u8 *)addr, sinfo,
 							 GFP_KERNEL);
@@ -5247,7 +5247,7 @@ mlan_status moal_recv_event(t_void *pmoal, pmlan_event pmevent)
 #endif
 				if (priv->netdev && priv->wdev)
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 				cfg80211_del_sta(priv->wdev,
 						 pmevent->event_buf + 2,
 						 GFP_KERNEL);

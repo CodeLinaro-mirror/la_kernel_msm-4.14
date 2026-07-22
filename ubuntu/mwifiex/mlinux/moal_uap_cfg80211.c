@@ -589,7 +589,7 @@ static int woal_deauth_assoc_station(moal_private *priv, const u8 *mac_addr,
 #if KERNEL_VERSION(3, 8, 0) <= CFG80211_VERSION_CODE
 	if (moal_extflg_isset(priv->phandle, EXT_HOST_MLME))
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 		cfg80211_del_sta(priv->wdev, mac_addr, GFP_KERNEL);
 #else
 		cfg80211_del_sta(priv->netdev, mac_addr, GFP_KERNEL);
@@ -4296,7 +4296,7 @@ done:
 #endif
 int woal_cfg80211_del_station(struct wiphy *wiphy,
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||            \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 			      struct wireless_dev *wdev,
 #else
 			      struct net_device *dev,
@@ -4316,7 +4316,7 @@ int woal_cfg80211_del_station(struct wiphy *wiphy,
 #endif
 	u16 reason_code = REASON_CODE_DEAUTH_LEAVING;
 #if defined(ANDROID_SDK_VERSION) && (ANDROID_SDK_VERSION >= 36) ||             \
-	(CFG80211_VERSION_CODE >= KERNEL_VERSION(7, 0, 0))
+	(CFG80211_VERSION_CODE >= CFG80211_WDEV_API_VERSION)
 	struct net_device *dev = wdev->netdev;
 #endif
 	moal_private *priv = (moal_private *)woal_get_netdev_priv(dev);

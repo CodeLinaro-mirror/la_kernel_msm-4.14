@@ -195,6 +195,13 @@
 #define COMPAT_VERSION_CODE KERNEL_VERSION(0, 0, 0)
 #define CFG80211_VERSION_CODE MAX(LINUX_VERSION_CODE, COMPAT_VERSION_CODE)
 
+/*
+ * Kernel version at which this driver expects 
+ * cfg80211 API changes to arrive, e.g. the mgmt action-frame layout switching from 
+ * struct net_device * to struct wireless_dev *. 
+ */
+#define CFG80211_WDEV_API_VERSION KERNEL_VERSION(7, 1, 0)
+
 #define IMX_ANDROID_13 0
 #define IMX_ANDROID_14 0
 #define IMX_ANDROID_12_BACKPORT 0
