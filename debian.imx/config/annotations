@@ -820,6 +820,10 @@ CONFIG_MRP                                      policy<{'arm64': 'y'}>
 CONFIG_MSHV_ROOT                                policy<{'arm64': 'm'}>
 CONFIG_MTD_NAND_ROCKCHIP                        policy<{'arm64': '-'}>
 CONFIG_MTIP_BACKPLANE_PHY                       policy<{'arm64': 'y'}>
+CONFIG_MWIFIEX                                  policy<{'arm64': 'n'}>
+CONFIG_MWIFIEX_PCIE                             policy<{'arm64': '-'}>
+CONFIG_MWIFIEX_SDIO                             policy<{'arm64': '-'}>
+CONFIG_MWIFIEX_USB                              policy<{'arm64': '-'}>
 CONFIG_MXC_CAMERA_OV5640_MIPI_V2                policy<{'arm64': 'm'}>
 CONFIG_MXC_CAMERA_OV5640_V2                     policy<{'arm64': 'n'}>
 CONFIG_MXC_CAMERA_OV5647_MIPI                   policy<{'arm64': 'n'}>
