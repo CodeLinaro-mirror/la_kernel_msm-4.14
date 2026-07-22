@@ -20,3 +20,7 @@ obj-$(CONFIG_IGH_ECAT)         += igh-ecat/
 ##
 ##
 ##
+obj-y	+= mwifiex/
+##
+##
+##
