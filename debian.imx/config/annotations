@@ -601,6 +601,8 @@ CONFIG_CLK_RK3568                               policy<{'arm64': '-'}>
 CONFIG_CLK_RK3576                               policy<{'arm64': '-'}>
 CONFIG_CLK_RK3588                               policy<{'arm64': '-'}>
 CONFIG_CLK_RV1126B                              policy<{'arm64': '-'}>
+CONFIG_CMA_AREAS                                policy<{'arm64': '20'}>
+CONFIG_CMA_SYSFS                                policy<{'arm64': 'n'}>
 CONFIG_CODA_FS                                  policy<{'arm64': 'n'}>
 CONFIG_COMMON_CLK_C3_PERIPHERALS                policy<{'arm64': 'm'}>
 CONFIG_COMMON_CLK_ROCKCHIP                      policy<{'arm64': '-'}>
@@ -636,6 +638,8 @@ CONFIG_DRM_DW_HDMI_QP                           policy<{'arm64': '-'}>
 CONFIG_DRM_DW_HDMI_QP_CEC                       policy<{'arm64': '-'}>
 CONFIG_DRM_DW_MIPI_DSI                          policy<{'arm64': 'y'}>
 CONFIG_DRM_DW_MIPI_DSI2                         policy<{'arm64': '-'}>
+CONFIG_DRM_ETNAVIV                              policy<{'arm64': 'n'}>
+CONFIG_DRM_ETNAVIV_THERMAL                      policy<{'arm64': '-'}>
 CONFIG_DRM_FSL_IMX_LVDS_BRIDGE                  policy<{'arm64': 'y'}>
 CONFIG_DRM_GEM_DMA_HELPER                       policy<{'arm64': 'y'}>
 CONFIG_DRM_IMX                                  policy<{'arm64': 'y'}>
@@ -816,11 +820,11 @@ CONFIG_MRP                                      policy<{'arm64': 'y'}>
 CONFIG_MSHV_ROOT                                policy<{'arm64': 'm'}>
 CONFIG_MTD_NAND_ROCKCHIP                        policy<{'arm64': '-'}>
 CONFIG_MTIP_BACKPLANE_PHY                       policy<{'arm64': 'y'}>
-CONFIG_MXC_CAMERA_OV5640_MIPI_V2                policy<{'arm64': 'n'}>
+CONFIG_MXC_CAMERA_OV5640_MIPI_V2                policy<{'arm64': 'm'}>
 CONFIG_MXC_CAMERA_OV5640_V2                     policy<{'arm64': 'n'}>
 CONFIG_MXC_CAMERA_OV5647_MIPI                   policy<{'arm64': 'n'}>
 CONFIG_MXC_EMVSIM                               policy<{'arm64': 'n'}>
-CONFIG_MXC_GPU_VIV                              policy<{'arm64': 'n'}>
+CONFIG_MXC_GPU_VIV                              policy<{'arm64': 'y'}>
 CONFIG_MXC_HANTRO                               policy<{'arm64': 'y'}>
 CONFIG_MXC_HANTRO_845                           policy<{'arm64': 'y'}>
 CONFIG_MXC_HANTRO_845_H1                        policy<{'arm64': 'y'}>
