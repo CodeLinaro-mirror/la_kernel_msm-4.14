@@ -462,7 +462,7 @@ CONFIG_ARM_QCOM_SPM_CPUIDLE                     policy<{'armhf': '-'}>
 CONFIG_ARM_RASPBERRYPI_CPUFREQ                  policy<{'arm64': '-'}>
 CONFIG_ARM_RK3399_DMC_DEVFREQ                   policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_ARM_SCMI_TRANSPORT_OPTEE                 policy<{'arm64': 'y', 'armhf': 'y'}>
-CONFIG_ARM_SDE_INTERFACE                        policy<{'arm64': '-'}>
+CONFIG_ARM_SDE_INTERFACE                        policy<{'arm64': 'n'}>
 CONFIG_ARM_SMMU_QCOM                            policy<{'arm64': '-'}>
 CONFIG_ARM_SMMU_QCOM_DEBUG                      policy<{'arm64': '-'}>
 CONFIG_ARM_SMMU_V3                              policy<{'arm64': 'n', 'armhf': '-'}>
@@ -1684,7 +1684,7 @@ CONFIG_FSL_DPA_PIRQ_FAST                        policy<{'arm64': '-', 'armhf': '
 CONFIG_FSL_DPA_PIRQ_SLOW                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_FSL_DPA_PORTAL_SHARE                     policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_FSL_EDMA                                 policy<{'arm64': 'y', 'armhf': 'y'}>
-CONFIG_FSL_EDMA_V3                              policy<{'arm64': 'm', 'armhf': 'm'}>
+CONFIG_FSL_EDMA_V3                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_FSL_ENETC                                policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_FSL_ENETC4                               policy<{'arm64': 'm'}>
 CONFIG_FSL_FMAN                                 policy<{'arm64': 'n', 'armhf': '-'}>
@@ -1841,7 +1841,7 @@ CONFIG_HOTPLUG_PCI_ACPI_AMPERE_ALTRA            policy<{'arm64': '-'}>
 CONFIG_HOTPLUG_PCI_ACPI_IBM                     policy<{'arm64': '-'}>
 CONFIG_HSA_AMD                                  policy<{'arm64': '-'}>
 CONFIG_HSA_AMD_SVM                              policy<{'arm64': '-'}>
-CONFIG_HTE_TEGRA194                             policy<{'arm64': '-'}>
+CONFIG_HTE_TEGRA194                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_HTE_TEGRA194_TEST                        policy<{'arm64': '-'}>
 CONFIG_HUGETLBFS                                policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_HUGETLB_PAGE                             policy<{'arm64': 'y', 'armhf': '-'}>
@@ -2094,7 +2094,7 @@ CONFIG_IPMI_KCS_BMC_SERIO                       policy<{'arm64': '-', 'armhf': '
 CONFIG_IPQ_APSS_6018                            policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_IPQ_APSS_PLL                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_IPQ_GCC_4019                             policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_IPQ_GCC_5018                             policy<{'arm64': '-'}>
+CONFIG_IPQ_GCC_5018                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_IPQ_GCC_5332                             policy<{'arm64': '-'}>
 CONFIG_IPQ_GCC_6018                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_IPQ_GCC_806X                             policy<{'arm64': '-', 'armhf': '-'}>
@@ -2363,6 +2363,7 @@ CONFIG_MFD_SUN4I_GPADC                          policy<{'arm64': '-', 'armhf': '
 CONFIG_MFD_SUN6I_PRCM                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_MFD_TC3589X                              policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_MFD_TI_AM335X_TSCADC                     policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_MFD_TN48M_CPLD                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_MFD_VEXPRESS_SYSREG                      policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_MFD_WM5102                               policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_MFD_WM5110                               policy<{'arm64': 'n', 'armhf': 'n'}>
@@ -2539,6 +2540,7 @@ CONFIG_MTK_SVS                                  policy<{'arm64': '-', 'armhf': '
 CONFIG_MTK_THERMAL                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_MTK_TIMER                                policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_MTK_UART_APDMA                           policy<{'arm64': '-', 'armhf': '-'}>
+CONFIG_MULTIPLEXER                              policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_MV643XX_ETH                              policy<{'armhf': '-'}>
 CONFIG_MVEBU_CLK_COMMON                         policy<{'armhf': '-'}>
 CONFIG_MVEBU_CLK_COREDIV                        policy<{'armhf': '-'}>
@@ -3713,6 +3715,7 @@ CONFIG_SERIAL_SAMSUNG_UARTS_4                   policy<{'arm64': '-', 'armhf': '
 CONFIG_SERIAL_SH_SCI_DMA                        policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SERIAL_SH_SCI_NR_UARTS                   policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SERIAL_STM32                             policy<{'arm64': '-'}>
+CONFIG_SERIAL_STM32_CONSOLE                     policy<{'arm64': '-'}>
 CONFIG_SERIAL_TEGRA                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SERIAL_TEGRA_TCU                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SERIAL_TEGRA_TCU_CONSOLE                 policy<{'arm64': '-', 'armhf': '-'}>
