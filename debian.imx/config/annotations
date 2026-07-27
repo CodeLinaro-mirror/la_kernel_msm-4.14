@@ -2823,7 +2823,7 @@ CONFIG_PCI_KEYSTONE                             policy<{'arm64': '-'}>
 CONFIG_PCI_KEYSTONE_EP                          policy<{'arm64': '-'}>
 CONFIG_PCI_KEYSTONE_HOST                        policy<{'arm64': '-'}>
 CONFIG_PCI_MVEBU                                policy<{'armhf': '-'}>
-CONFIG_PCI_NXP_RPMSG                            policy<{'arm64': 'n', 'armhf': 'n'}>
+CONFIG_PCI_NXP_RPMSG                            policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_PCI_RCAR_GEN2                            policy<{'armhf': '-'}>
 CONFIG_PCI_TEGRA                                policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_PCI_XGENE                                policy<{'arm64': 'n', 'armhf': '-'}>
