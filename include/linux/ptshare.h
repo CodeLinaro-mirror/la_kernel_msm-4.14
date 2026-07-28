@@ -137,6 +137,40 @@ static inline void ptshare_vma_init_from(struct vm_area_struct *dest,
 				  READ_ONCE(src->__vm_ptshare_desc) : NULL;
 }
 
+/**
+ * ptdesc_ptshare_inc - Count a client PMD that points at a shared PTE table
+ * @pt: The PTE table, owned by the shadow MM.
+ *
+ * The count never pins or frees the table; the shadow MM frees it when the
+ * last client of the shared mapping unmaps or unshares it, or exits.
+ */
+static inline void ptdesc_ptshare_inc(struct ptdesc *pt)
+{
+	atomic_inc(&pt->pt_ptshare_count);
+}
+
+/**
+ * ptdesc_ptshare_dec - Drop the count of a client PMD, if the table has one
+ * @pt: The PTE table.
+ *
+ * Return: true if the table was shared and the count was dropped.
+ */
+static inline bool ptdesc_ptshare_dec(struct ptdesc *pt)
+{
+	return atomic_dec_if_positive(&pt->pt_ptshare_count) >= 0;
+}
+
+/**
+ * ptdesc_ptshare_count - Number of client PMDs that point at a PTE table
+ * @pt: The PTE table.
+ *
+ * Return: the number of client PMDs that point at @pt.
+ */
+static inline int ptdesc_ptshare_count(struct ptdesc *pt)
+{
+	return atomic_read(&pt->pt_ptshare_count);
+}
+
 /* dup_mm() copies the parent's mm_struct: start outside any domain. */
 static inline void ptshare_mm_init(struct mm_struct *mm)
 {
@@ -183,6 +217,20 @@ static inline refcount_t *vma_ptshare_refcount(struct vm_area_struct *vma)
 static inline void ptshare_vma_init_from(struct vm_area_struct *dest,
 					 const struct vm_area_struct *src)
 {
+}
+
+static inline void ptdesc_ptshare_inc(struct ptdesc *pt)
+{
+}
+
+static inline bool ptdesc_ptshare_dec(struct ptdesc *pt)
+{
+	return false;
+}
+
+static inline int ptdesc_ptshare_count(struct ptdesc *pt)
+{
+	return 0;
 }
 
 static inline void ptshare_mm_init(struct mm_struct *mm)
