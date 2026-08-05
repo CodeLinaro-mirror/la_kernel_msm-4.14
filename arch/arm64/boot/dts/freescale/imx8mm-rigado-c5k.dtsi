@@ -56,6 +56,18 @@
 		gpio = <&gpio1 15 GPIO_ACTIVE_HIGH>;
 		startup-delay-us = <70000>;
 		enable-active-high;
+		/*
+		 * Keep the shared m.2 / mPCIe 3.3V rail powered for the whole
+		 * system lifecycle. The m.2 HaLow radio is permanently
+		 * installed and its driver does not (yet) manage this rail, so
+		 * without these flags the rail is only enabled as a side-effect
+		 * of the PCIe controller probe (a boot-ordering race) and can be
+		 * turned off again by regulator_init_complete when it has no
+		 * active consumer. boot-on + always-on guarantees the rail is
+		 * up (past its 70ms startup delay) before any consumer probes.
+		 */
+		regulator-boot-on;
+		regulator-always-on;
 		vin-supply = <&poe12v_supply>;
 	};
 

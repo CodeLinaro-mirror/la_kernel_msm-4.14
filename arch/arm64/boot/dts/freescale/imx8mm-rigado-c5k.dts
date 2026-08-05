@@ -180,7 +180,6 @@
 	pinctrl-0 = <&pinctrl_ecspi2 &pinctrl_ecspi2_cs>;
 	cs-gpios = <&gpio5 13 GPIO_ACTIVE_LOW>;
 	status = "okay";
-	slot-supply = <&exp3v3_supply>;
 
 	spidev0: spi@0 {
 		status="okay";
@@ -191,6 +190,15 @@
 		spi-max-frequency = <20000000>;
 		reset-gpios = <&gpio1 1 GPIO_ACTIVE_LOW>;
 		keep-power-in-suspend;
+		/*
+		 * Real regulator binding for the radio's 3.3V rail. Replaces the
+		 * former non-functional "slot-supply" property on &ecspi2, which
+		 * is not a recognized SPI binding and was silently ignored. Once
+		 * the NRC driver adds regulator support it should
+		 * devm_regulator_get(&spi->dev, "vdd"), enable it, and honor the
+		 * regulator's 70ms startup-delay-us before starting SPI I/O.
+		 */
+		vdd-supply = <&exp3v3_supply>;
 	};
 };
 
