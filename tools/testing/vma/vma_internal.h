@@ -1412,4 +1412,9 @@ static inline vm_flags_t ksm_vma_flags(const struct mm_struct *mm,
 	return vm_flags;
 }
 
+static inline void ptshare_vma_init_from(struct vm_area_struct *dest,
+					 const struct vm_area_struct *src)
+{
+}
+
 #endif	/* __MM_VMA_INTERNAL_H */
