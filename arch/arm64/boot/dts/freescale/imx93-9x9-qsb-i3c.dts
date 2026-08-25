@@ -9,6 +9,7 @@
 /{
 	aliases {
 		/delete-property/ i2c0;
+		/delete-property/ rtc1;
 	};
 };
 
