@@ -1022,7 +1022,7 @@ CONFIG_VIDEOBUF2_MEMOPS                         policy<{'arm64': 'y'}>
 CONFIG_VIDEOBUF2_V4L2                           policy<{'arm64': 'y'}>
 CONFIG_VIDEOBUF_DMA_CONTIG                      policy<{'arm64': 'm'}>
 CONFIG_VIDEOBUF_GEN                             policy<{'arm64': 'm'}>
-CONFIG_VIDEO_AP1302                             policy<{'arm64': 'n'}>
+CONFIG_VIDEO_AP1302                             policy<{'arm64': 'm'}>
 CONFIG_VIDEO_DEV                                policy<{'arm64': 'y'}>
 CONFIG_VIDEO_DWC_MIPI_CSIS                      policy<{'arm64': 'y'}>
 CONFIG_VIDEO_HANTRO_ROCKCHIP                    policy<{'arm64': '-'}>
