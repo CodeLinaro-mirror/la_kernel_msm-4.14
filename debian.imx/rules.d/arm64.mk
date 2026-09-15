@@ -2,9 +2,9 @@ human_arch	= ARMv9
 build_arch	= arm64
 defconfig	= defconfig
 flavours	= imx
-build_image	= Image
-kernel_file	= arch/$(build_arch)/boot/Image
-install_file	= vmlinux
+build_image	= Image.gz
+kernel_file	= arch/$(build_arch)/boot/Image.gz
+install_file	= vmlinuz
 no_dumpfile = true
 uefi_signed     = true
 
