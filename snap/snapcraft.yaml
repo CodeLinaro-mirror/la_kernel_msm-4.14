@@ -59,21 +59,50 @@ parts:
       - -vmlinuz*
       - -dtbs
 
-  # Provide the initrd for Ubuntu Core.
-  # The initrd includes important things such as snap-bootstrap which
-  # orchestrates the entire Ubuntu Core installation process. The documentation
-  # for this tool can be found here:
-  # https://github.com/snapcore/snapd/blob/master/cmd/snap-bootstrap/README.md
+  # Provide the initrd for Ubuntu Core mini.
+  #
+  # A single static Rust binary which maps the dm-verity base snap of the active
+  # A/B slot and pivots into it, in place of the 'dm-mod.create=' table the
+  # bootloader writes on the kernel command line. It runs no shell, spawns no
+  # second process and waits on no udev, so what it costs before userspace is
+  # small enough to pay for a root hash that comes from a signed assertion.
+  #
+  # It carries no modules and no firmware. The i.MX kernels build their storage,
+  # device mapper and squashfs drivers in, and this initrd probes nothing that a
+  # driver would ask firmware for - so the three initrd-firmware files the Ubuntu
+  # Core initrd needed are gone with it.
+  #
+  # Three things here are load bearing rather than stylistic:
+  #  - it stays named 'initrd', because 'firmware-imx' and 'fit-image' order
+  #    themselves after that name
+  #  - it still leaves '${CRAFT_STAGE}/initrd.img' behind, because
+  #    kernel_arm64.its does 'data = /incbin/("./initrd.img")', and that is also
+  #    what puts the ramdisk under the FIT signature
+  #  - 'after: firmware' is not this part's own dependency. It is what keeps
+  #    'firmware-imx' ordered after 'firmware', which it gets through this part
   initrd:
     after:
       - firmware
-      - kernel
-      - test-signing-keys
-    plugin: initrd
-    initrd-firmware:
-      - firmware/imx/sdma/sdma-imx7d.bin
-      - firmware/regulatory.db
-      - firmware/regulatory.db.p7s
+    plugin: nil
+    source: https://git.launchpad.net/~ondrak/+git/uc-mini-initramfs
+    source-type: git
+    source-branch: master
+    source-depth: 1
+    override-pull: |
+      craftctl default
+      # rustup installs the toolchain rust-toolchain.toml pins, and the musl target
+      # with it, the first time cargo runs. Doing that here keeps the download in
+      # the phase which is meant to reach the network, and fails at the pull step
+      # rather than part way through a build if it cannot
+      cargo --version
+    override-build: |
+      # mkinitrd.sh builds the binary and assembles the cpio, and picks the linker
+      # itself: the native cc when building on arm64, gcc-aarch64-linux-gnu when
+      # cross building on amd64. It would default to the build-for architecture on
+      # its own, naming it keeps the initrd and the kernel visibly the same one.
+      # The build runs as root in an unprivileged container, which cannot mknod
+      # /dev/console - the script falls back to fakeroot for that
+      ./mkinitrd.sh --arch "${CRAFT_ARCH_BUILD_FOR}" --output "${CRAFT_PART_INSTALL}/initrd.img" --compress "none"
     prime:
       - -initrd.img*
 
@@ -167,6 +196,9 @@ parts:
         -k ${CRAFT_STAGE}/signing-key
       rm ${CRAFT_STAGE}/kernel_${CRAFT_ARCH_BUILD_FOR}.its
 
+build-snaps:
+  - rustup
+
 build-packages:
   - bison
   - ccache
@@ -187,6 +219,7 @@ build-packages:
   - u-boot-tools
   - uuid-dev
   - wget
+  - zstd
   - on amd64:
     - gcc-aarch64-linux-gnu
   - on arm64:
