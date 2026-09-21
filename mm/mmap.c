@@ -1177,6 +1177,7 @@ static int expand_upwards(struct vm_area_struct *vma, unsigned long address)
 int expand_downwards(struct vm_area_struct *vma, unsigned long address)
 {
 	struct mm_struct *mm = vma->vm_mm;
+	P3S_CONTEXT_REMOTE_MM(mm);
 	struct vm_area_struct *prev;
 	int error = 0;
 	VMA_ITERATOR(vmi, mm, vma->vm_start);
@@ -1399,7 +1400,7 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
 {
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma = NULL;
-	pgoff_t pglen = PHYS_PFN(len);
+	pgoff_t pglen = len >> PAGE_SHIFT;
 	unsigned long charged = 0;
 	struct vma_munmap_struct vms;
 	struct ma_state mas_detach;
@@ -1407,7 +1408,8 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
 	unsigned long end = addr + len;
 	int error;
 	VMA_ITERATOR(vmi, mm, addr);
-	VMG_STATE(vmg, mm, &vmi, addr, end, vm_flags, pgoff);
+	VMG_STATE(vmg, mm, &vmi, addr, end, vm_flags,
+		  mm_mmap_pgoff(mm, file, pgoff));
 
 	vmg.file = file;
 	/* Find the first overlapping VMA */
@@ -1474,7 +1476,8 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
 	}
 
 	vma_iter_config(&vmi, addr, end);
-	vma_set_range(vma, addr, end, pgoff);
+	vma_set_range(vma, addr, end, mm_mmap_pgoff(mm, file, pgoff));
+	vma_set_slice_off(vma, mm_mmap_slice_off(mm, file, pgoff));
 	vm_flags_init(vma, vm_flags);
 	vma->vm_page_prot = vm_get_page_prot(vm_flags);
 
@@ -1860,7 +1863,7 @@ static int do_brk_flags(struct vma_iterator *vmi, struct vm_area_struct *vma,
 	 * occur after forking, so the expand will only happen on new VMAs.
 	 */
 	if (vma && vma->vm_end == addr) {
-		VMG_STATE(vmg, mm, vmi, addr, addr + len, flags, PHYS_PFN(addr));
+		VMG_STATE(vmg, mm, vmi, addr, addr + len, flags, addr >> PAGE_SHIFT);
 
 		vmg.prev = vma;
 		/* vmi is positioned at prev, which this mode expects. */

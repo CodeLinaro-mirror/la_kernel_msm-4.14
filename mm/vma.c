@@ -9,6 +9,7 @@
 
 #include "vma_internal.h"
 #include "vma.h"
+#include <linux/p3s_user_pages.h>
 
 static inline bool is_mergeable_vma(struct vma_merge_struct *vmg, bool merge_next)
 {
@@ -397,7 +398,7 @@ static int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
 		new->vm_end = addr;
 	} else {
 		new->vm_start = addr;
-		new->vm_pgoff += ((addr - vma->vm_start) >> PAGE_SHIFT);
+		vma_set_split_offset(new, vma, addr);
 	}
 
 	err = -ENOMEM;
@@ -444,7 +445,7 @@ static int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
 
 	if (new_below) {
 		vma->vm_start = addr;
-		vma->vm_pgoff += (addr - new->vm_start) >> PAGE_SHIFT;
+		vma_set_split_offset(vma, new, addr);
 	} else {
 		vma->vm_end = addr;
 	}
