@@ -76,6 +76,8 @@ struct vma_merge_struct {
 	struct mm_struct *mm;
 	struct vma_iterator *vmi;
 	pgoff_t pgoff;
+	/* Slice of page pgoff that start maps, see vm_slice_off. */
+	unsigned short slice_off;
 	struct vm_area_struct *prev;
 	struct vm_area_struct *next; /* Modified by vma_merge(). */
 	struct vm_area_struct *vma; /* Either a new VMA or the one being modified. */
@@ -111,8 +113,20 @@ static inline bool vmg_nomem(struct vma_merge_struct *vmg)
 static inline pgoff_t vma_pgoff_offset(struct vm_area_struct *vma,
 				       unsigned long addr)
 {
-	return vma->vm_pgoff + PHYS_PFN(addr - vma->vm_start);
+	return vma_linear_page_index(vma, addr);
 }
+
+#ifdef CONFIG_ARM64_PER_PROCESS_PAGE_SIZE
+bool vmg_can_merge_offsets(struct vma_merge_struct *vmg, bool merge_next);
+#else
+static inline bool vmg_can_merge_offsets(struct vma_merge_struct *vmg, bool merge_next)
+{
+	if (merge_next)
+		return vmg->next->vm_pgoff == vmg->pgoff + PHYS_PFN(vmg->end - vmg->start);
+
+	return vmg->prev->vm_pgoff + vma_pages(vmg->prev) == vmg->pgoff;
+}
+#endif
 
 #define VMG_STATE(name, mm_, vmi_, start_, end_, flags_, pgoff_)	\
 	struct vma_merge_struct name = {				\
@@ -137,6 +151,7 @@ static inline pgoff_t vma_pgoff_offset(struct vm_area_struct *vma,
 		.end = end_,					\
 		.flags = vma_->vm_flags,			\
 		.pgoff = vma_pgoff_offset(vma_, start_),	\
+		.slice_off = vma_slice_offset(vma_, start_),	\
 		.file = vma_->vm_file,				\
 		.anon_vma = vma_->anon_vma,			\
 		.policy = vma_policy(vma_),			\

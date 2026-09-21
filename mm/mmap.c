@@ -1411,6 +1411,7 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
 	VMG_STATE(vmg, mm, &vmi, addr, end, vm_flags,
 		  mm_mmap_pgoff(mm, file, pgoff));
 
+	vmg.slice_off = mm_mmap_slice_off(mm, file, pgoff);
 	vmg.file = file;
 	/* Find the first overlapping VMA */
 	vma = vma_find(&vmi, end);
