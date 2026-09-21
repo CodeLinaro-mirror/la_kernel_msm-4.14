@@ -2873,6 +2873,9 @@ int ksm_enable_merge_any(struct mm_struct *mm)
 {
 	int err;
 
+	if (p3s_4k_unsupported(mm))
+		return -EINVAL;
+
 	if (test_bit(MMF_VM_MERGE_ANY, &mm->flags))
 		return 0;
 
@@ -2936,6 +2939,8 @@ int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
 
 	switch (advice) {
 	case MADV_MERGEABLE:
+		if (p3s_4k_unsupported(mm))
+			return -EINVAL;
 		if (vma->vm_flags & VM_MERGEABLE)
 			return 0;
 		if (!vma_ksm_compatible(vma))
