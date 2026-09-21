@@ -370,6 +370,8 @@ unsigned long randomize_stack_top(unsigned long stack_top)
 #endif
 }
 
+#include <linux/p3s_user_pages.h>
+
 /**
  * randomize_page - Generate a random, page aligned address
  * @start:	The smallest acceptable address the caller will take.
@@ -459,7 +461,7 @@ static unsigned long mmap_base(unsigned long rnd, struct rlimit *rlim_stack)
 	return PAGE_ALIGN_DOWN(mmap_upper_limit(rlim_stack) - rnd);
 #else
 	unsigned long gap = rlim_stack->rlim_cur;
-	unsigned long pad = stack_guard_gap;
+	unsigned long pad = mm_stack_guard_gap(current->mm);
 
 	/* Account for stack randomization if necessary */
 	if (current->flags & PF_RANDOMIZE)
@@ -524,6 +526,8 @@ int __account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc,
 {
 	unsigned long locked_vm, limit;
 	int ret = 0;
+
+	P3S_CONTEXT_REMOTE_MM(mm);
 
 	mmap_assert_write_locked(mm);
 
@@ -624,7 +628,7 @@ static gfp_t kmalloc_gfp_adjust(gfp_t flags, size_t size)
 	 * However make sure that larger requests are not too disruptive - no
 	 * OOM killer and no allocation failure warnings as we have a fallback.
 	 */
-	if (size > PAGE_SIZE) {
+	if (size > PAGE_SIZE_KERNEL) {
 		flags |= __GFP_NOWARN;
 
 		if (!(flags & __GFP_RETRY_MAYFAIL))
@@ -672,7 +676,7 @@ void *__kvmalloc_node_noprof(DECL_BUCKET_PARAMS(size, b), gfp_t flags, int node)
 	ret = __kmalloc_node_noprof(PASS_BUCKET_PARAMS(size, b),
 				    kmalloc_gfp_adjust(flags, size),
 				    node);
-	if (ret || size <= PAGE_SIZE)
+	if (ret || size <= PAGE_SIZE_KERNEL)
 		return ret;
 
 	/* non-sleeping allocations are not supported by vmalloc */
@@ -1157,7 +1161,7 @@ int __weak memcmp_pages(struct page *page1, struct page *page2)
 
 	addr1 = kmap_local_page(page1);
 	addr2 = kmap_local_page(page2);
-	ret = memcmp(addr1, addr2, PAGE_SIZE);
+	ret = memcmp(addr1, addr2, PAGE_SIZE_KERNEL);
 	kunmap_local(addr2);
 	kunmap_local(addr1);
 	return ret;
