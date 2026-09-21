@@ -40,6 +40,7 @@
 
 #include "internal.h"
 #include "swap.h"
+#include <linux/p3s_user_pages.h>
 
 /*
  * Maximum number of attempts we make to install guard pages before we give up
@@ -530,7 +531,8 @@ restart:
 		 * number of pages, it must be exclusive.
 		 */
 		if (!folio_test_lru(folio) ||
-		    folio_mapcount(folio) != folio_nr_pages(folio))
+		    (folio_mapcount(folio) != folio_nr_pages(folio) &&
+		     !vma_folio_slices_exclusive(vma, folio)))
 			continue;
 
 		if (pageout_anon_only_filter && !folio_test_anon(folio))
@@ -1192,7 +1194,7 @@ static long madvise_guard_install(struct vm_area_struct *vma,
 			return err;
 
 		if (err == 0) {
-			unsigned long nr_expected_pages = PHYS_PFN(end - start);
+			unsigned long nr_expected_pages = (end - start) >> PAGE_SHIFT;
 
 			VM_WARN_ON(nr_pages != nr_expected_pages);
 			return 0;
@@ -1967,6 +1969,8 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
 	trace_android_vh_process_madvise_begin(task, behavior);
 
 	while (iov_iter_count(&iter)) {
+		P3S_CONTEXT_REMOTE_MM(mm);
+
 		trace_android_vh_process_madvise_iter(task, behavior, &ret);
 		if (ret < 0)
 			break;
