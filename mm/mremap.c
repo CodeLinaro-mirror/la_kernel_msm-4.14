@@ -32,6 +32,7 @@
 #include <asm/pgalloc.h>
 
 #include "internal.h"
+#include <linux/p3s_user_pages.h>
 
 static pud_t *get_old_pud(struct mm_struct *mm, unsigned long addr)
 {
@@ -750,7 +751,7 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 	}
 
 	vma_start_write(vma);
-	new_pgoff = vma->vm_pgoff + ((old_addr - vma->vm_start) >> PAGE_SHIFT);
+	new_pgoff = vma_pgoff_offset(vma, old_addr);
 	new_vma = copy_vma(&vma, new_addr, new_len, new_pgoff,
 			   &need_rmap_locks);
 	if (!new_vma) {
@@ -986,9 +987,9 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
 	if (vma->vm_flags & VM_MAYSHARE)
 		map_flags |= MAP_SHARED;
 
-	ret = get_unmapped_area(vma->vm_file, new_addr, new_len, vma->vm_pgoff +
-				((addr - vma->vm_start) >> PAGE_SHIFT),
-				map_flags);
+	ret = mm_mremap_get_unmapped_area(vma->vm_file, new_addr, new_len,
+					  vma_pgoff_offset(vma, addr),
+					  map_flags, addr, flags);
 	if (IS_ERR_VALUE(ret))
 		goto out;
 
@@ -1076,6 +1077,10 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 	 * a zero new-len is nonsensical.
 	 */
 	if (!new_len)
+		return ret;
+
+	if ((flags & MREMAP_FIXED) &&
+	    !mm_mremap_fixed_keeps_slice(addr, new_addr))
 		return ret;
 
 	if (mmap_write_lock_killable(current->mm))
@@ -1207,10 +1212,9 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 		if (vma->vm_flags & VM_MAYSHARE)
 			map_flags |= MAP_SHARED;
 
-		new_addr = get_unmapped_area(vma->vm_file, 0, new_len,
-					vma->vm_pgoff +
-					((addr - vma->vm_start) >> PAGE_SHIFT),
-					map_flags);
+		new_addr = mm_mremap_get_unmapped_area(vma->vm_file, 0, new_len,
+						       vma_pgoff_offset(vma, addr),
+						       map_flags, addr, flags);
 		if (IS_ERR_VALUE(new_addr)) {
 			ret = new_addr;
 			goto out;
