@@ -212,6 +212,9 @@ static inline bool thp_vma_suitable_order(struct vm_area_struct *vma,
 	unsigned long hpage_size = PAGE_SIZE << order;
 	unsigned long haddr;
 
+	if (vma_is_p3s_4k(vma))
+		return false;
+
 	/* Don't have to check pgoff for anonymous vma */
 	if (!vma_is_anonymous(vma)) {
 		if (!IS_ALIGNED((vma->vm_start >> PAGE_SHIFT) - vma->vm_pgoff,
@@ -329,6 +332,8 @@ struct thpsize {
 static inline bool vma_thp_disabled(struct vm_area_struct *vma,
 		unsigned long vm_flags)
 {
+	if (vma_is_p3s_4k(vma))
+		return true;
 	/*
 	 * Explicitly disabled through madvise or prctl, or some
 	 * architectures may disable THP for some mappings, for
