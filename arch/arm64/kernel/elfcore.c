@@ -7,6 +7,8 @@
 
 #include <asm/cpufeature.h>
 #include <asm/mte.h>
+#include <asm/p3s/mte.h>
+#include <linux/p3s_user_pages.h>
 
 #define for_each_mte_vma(cprm, i, m)					\
 	if (system_supports_mte())					\
@@ -29,7 +31,8 @@ static int mte_dump_tag_range(struct coredump_params *cprm,
 	void *tags = NULL;
 
 	for (addr = start; addr < start + len; addr += PAGE_SIZE) {
-		struct page *page = get_dump_page(addr);
+		unsigned long page_offset;
+		struct page *page = get_dump_page(addr, &page_offset);
 
 		/*
 		 * get_dump_page() returns NULL when encountering an empty
@@ -63,7 +66,8 @@ static int mte_dump_tag_range(struct coredump_params *cprm,
 
 		mte_save_page_tags(page_address(page), tags);
 		put_page(page);
-		if (!dump_emit(cprm, tags, MTE_PAGE_TAG_STORAGE)) {
+		if (!dump_emit(cprm, tags + mte_tag_dump_offset(page_offset),
+			       MTE_PAGE_TAG_STORAGE)) {
 			ret = 0;
 			break;
 		}
