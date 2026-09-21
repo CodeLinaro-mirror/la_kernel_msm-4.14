@@ -89,6 +89,7 @@
 #include <trace/hooks/mm.h>
 
 #include "internal.h"
+#include <linux/p3s_user_pages.h>
 
 static struct kmem_cache *anon_vma_cachep;
 static struct kmem_cache *anon_vma_chain_cachep;
@@ -785,6 +786,7 @@ unsigned long page_address_in_vma(struct page *page, struct vm_area_struct *vma)
  */
 pmd_t *mm_find_pmd(struct mm_struct *mm, unsigned long address)
 {
+	P3S_CONTEXT_REMOTE_MM(mm);
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -1274,6 +1276,7 @@ static __always_inline void __folio_add_anon_rmap(struct folio *folio,
 		struct page *page, int nr_pages, struct vm_area_struct *vma,
 		unsigned long address, rmap_t flags, enum rmap_level level)
 {
+	P3S_CONTEXT_REMOTE_MM(vma->vm_mm);
 	int i, nr, nr_pmdmapped = 0;
 
 	VM_WARN_ON_FOLIO(!folio_test_anon(folio), folio);
@@ -1300,7 +1303,8 @@ static __always_inline void __folio_add_anon_rmap(struct folio *folio,
 		struct page *cur_page = page + i;
 
 		/* While PTE-mapping a THP we have a PMD and a PTE mapping. */
-		VM_WARN_ON_FOLIO((atomic_read(&cur_page->_mapcount) > 0 ||
+		VM_WARN_ON_FOLIO(((!vma_is_p3s_4k(vma) &&
+				   atomic_read(&cur_page->_mapcount) > 0) ||
 				  (folio_test_large(folio) &&
 				   folio_entire_mapcount(folio) > 1)) &&
 				 PageAnonExclusive(cur_page), folio);
@@ -1385,6 +1389,7 @@ void folio_add_new_anon_rmap(struct folio *folio, struct vm_area_struct *vma,
 	const int nr = folio_nr_pages(folio);
 	const bool exclusive = flags & RMAP_EXCLUSIVE;
 	int nr_pmdmapped = 0;
+	P3S_CONTEXT_REMOTE_MM(vma->vm_mm);
 
 	VM_WARN_ON_FOLIO(folio_test_hugetlb(folio), folio);
 	VM_WARN_ON_FOLIO(!exclusive && !folio_test_locked(folio), folio);
@@ -1614,6 +1619,7 @@ static bool try_to_unmap_one(struct folio *folio, struct vm_area_struct *vma,
 		     unsigned long address, void *arg)
 {
 	struct mm_struct *mm = vma->vm_mm;
+	P3S_CONTEXT_REMOTE_MM(vma->vm_mm);
 	DEFINE_FOLIO_VMA_WALK(pvmw, folio, vma, address, 0);
 	pte_t pteval;
 	struct page *subpage;
@@ -2004,6 +2010,7 @@ static bool try_to_migrate_one(struct folio *folio, struct vm_area_struct *vma,
 		     unsigned long address, void *arg)
 {
 	struct mm_struct *mm = vma->vm_mm;
+	P3S_CONTEXT_REMOTE_MM(vma->vm_mm);
 	DEFINE_FOLIO_VMA_WALK(pvmw, folio, vma, address, 0);
 	pte_t pteval;
 	struct page *subpage;
@@ -2523,7 +2530,8 @@ int make_device_exclusive_range(struct mm_struct *mm, unsigned long start,
 				unsigned long end, struct page **pages,
 				void *owner)
 {
-	long npages = (end - start) >> PAGE_SHIFT;
+	P3S_CONTEXT_REMOTE_MM(mm);
+	long npages = (end - start) >> PAGE_SHIFT_KERNEL;
 	long i;
 
 	npages = get_user_pages_remote(mm, start, npages,
