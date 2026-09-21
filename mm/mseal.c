@@ -16,6 +16,7 @@
 #include <linux/syscalls.h>
 #include <linux/sched.h>
 #include "internal.h"
+#include <linux/p3s_user_pages.h>
 
 static inline void set_vma_sealed(struct vm_area_struct *vma)
 {
