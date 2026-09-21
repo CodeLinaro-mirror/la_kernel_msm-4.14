@@ -1246,8 +1246,8 @@ static void __page_check_anon_rmap(struct folio *folio, struct page *page,
 	 */
 	VM_BUG_ON_FOLIO(folio_anon_vma(folio)->root != vma->anon_vma->root,
 			folio);
-	VM_BUG_ON_PAGE(page_to_pgoff(page) != linear_page_index(vma, address),
-		       page);
+	VM_BUG_ON_PAGE(!vma_anon_index_matches(vma, page_to_pgoff(page),
+					       address), page);
 }
 
 static void __folio_mod_stat(struct folio *folio, int nr, int nr_pmdmapped)
