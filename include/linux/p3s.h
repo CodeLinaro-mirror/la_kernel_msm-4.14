@@ -12,6 +12,8 @@
 #else
 #ifndef __ASSEMBLY__
 #define P3S_CONTEXT_REMOTE_MM(remote_mm)	do { } while (0)
+#define mm_exec_stack_top(mm)			STACK_TOP_MAX
+#define mm_exec_stack_size(mm)			__PAGE_SIZE
 static inline struct mm_struct *p3s_current_mm(void)
 {
 	return current ? current->mm : NULL;

@@ -40,6 +40,20 @@ static inline unsigned long mm_stack_top_max(const struct mm_struct *mm)
 	return mm_is_p3s_4k(mm) ? STACK_TOP_MAX_4KB : STACK_TOP_MAX;
 }
 
+/*
+ * exec places its temporary stack at the top of the new mm's address space,
+ * one page of that mm long, before setup_arg_pages() moves it.
+ */
+static inline unsigned long mm_exec_stack_top(const struct mm_struct *mm)
+{
+	return mm_stack_top_max(mm);
+}
+
+static inline unsigned long mm_exec_stack_size(const struct mm_struct *mm)
+{
+	return mm_pte_size(mm);
+}
+
 static inline unsigned long mm_stack_top(const struct mm_struct *mm)
 {
 	return mm_is_p3s_4k(mm) ? STACK_TOP_4KB : STACK_TOP;
