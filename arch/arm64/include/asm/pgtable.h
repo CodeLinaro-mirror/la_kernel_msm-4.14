@@ -24,11 +24,12 @@
 #if VA_BITS == VA_BITS_MIN
 #define VMALLOC_END		(VMEMMAP_START - SZ_8M)
 #else
-#define VMEMMAP_UNUSED_NPAGES	((_PAGE_OFFSET(vabits_actual) - PAGE_OFFSET) >> PAGE_SHIFT)
+#define VMEMMAP_UNUSED_NPAGES	((_PAGE_OFFSET(vabits_actual) - PAGE_OFFSET) >> PAGE_SHIFT_KERNEL)
 #define VMALLOC_END		(VMEMMAP_START + VMEMMAP_UNUSED_NPAGES * sizeof(struct page) - SZ_8M)
 #endif
 
-#define vmemmap			((struct page *)VMEMMAP_START - (memstart_addr >> PAGE_SHIFT))
+#define vmemmap \
+	((struct page *)VMEMMAP_START - (memstart_addr >> PAGE_SHIFT_KERNEL))
 
 #ifndef __ASSEMBLY__
 
@@ -37,6 +38,7 @@
 #include <asm/por.h>
 #include <linux/mmdebug.h>
 #include <linux/mm_types.h>
+#include <asm/p3s/pgtable.h>
 #include <linux/sched.h>
 #include <linux/page_table_check.h>
 
@@ -84,13 +86,13 @@ static inline pteval_t __phys_to_pte_val(phys_addr_t phys)
 	return (phys | (phys >> PTE_ADDR_HIGH_SHIFT)) & PHYS_TO_PTE_ADDR_MASK;
 }
 #else
-#define __pte_to_phys(pte)	(pte_val(pte) & PTE_ADDR_LOW)
+#define __pte_to_phys(pte)	(pte_val(pte) & __PTE_ADDR_LOW)
 #define __phys_to_pte_val(phys)	(phys)
 #endif
 
-#define pte_pfn(pte)		(__pte_to_phys(pte) >> PAGE_SHIFT)
+#define pte_pfn(pte)		(__pte_to_phys(pte) >> PAGE_SHIFT_KERNEL)
 #define pfn_pte(pfn,prot)	\
-	__pte(__phys_to_pte_val((phys_addr_t)(pfn) << PAGE_SHIFT) | pgprot_val(prot))
+	__pte(__phys_to_pte_val((phys_addr_t)(pfn) << PAGE_SHIFT_KERNEL) | pgprot_val(prot))
 
 #define pte_none(pte)		(!pte_val(pte))
 #define pte_page(pte)		(pfn_to_page(pte_pfn(pte)))
@@ -424,8 +426,11 @@ static inline void __set_ptes(struct mm_struct *mm,
 			      unsigned long __always_unused addr,
 			      pte_t *ptep, pte_t pte, unsigned int nr)
 {
+	unsigned long pgsize = mm_pte_size(mm);
+	unsigned long nr_pages = DIV_ROUND_UP((unsigned long)nr * pgsize, PAGE_SIZE_KERNEL);
+
 	page_table_check_ptes_set(mm, ptep, pte, nr);
-	__sync_cache_and_tags(pte, nr);
+	__sync_cache_and_tags(pte, nr_pages);
 
 	for (;;) {
 		__check_safe_pte_update(mm, ptep, pte);
@@ -433,7 +438,7 @@ static inline void __set_ptes(struct mm_struct *mm,
 		if (--nr == 0)
 			break;
 		ptep++;
-		pte = pte_advance_pfn(pte, 1);
+		pte = pte_advance_phys(pte, pgsize);
 	}
 }
 
@@ -449,7 +454,7 @@ static inline void __set_ptes(struct mm_struct *mm,
 #define HPAGE_SHIFT		PMD_SHIFT
 #define HPAGE_SIZE		(_AC(1, UL) << HPAGE_SHIFT)
 #define HPAGE_MASK		(~(HPAGE_SIZE - 1))
-#define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
+#define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT_KERNEL)
 
 static inline pte_t pgd_pte(pgd_t pgd)
 {
@@ -598,8 +603,9 @@ static inline pmd_t pmd_mkspecial(pmd_t pmd)
 
 #define __pmd_to_phys(pmd)	__pte_to_phys(pmd_pte(pmd))
 #define __phys_to_pmd_val(phys)	__phys_to_pte_val(phys)
-#define pmd_pfn(pmd)		((__pmd_to_phys(pmd) & PMD_MASK) >> PAGE_SHIFT)
-#define pfn_pmd(pfn,prot)	__pmd(__phys_to_pmd_val((phys_addr_t)(pfn) << PAGE_SHIFT) | pgprot_val(prot))
+#define pmd_pfn(pmd)		((__pmd_to_phys(pmd) & PMD_MASK) >> PAGE_SHIFT_KERNEL)
+#define pfn_pmd(pfn, prot)	\
+	__pmd(__phys_to_pmd_val((phys_addr_t)(pfn) << PAGE_SHIFT_KERNEL) | pgprot_val(prot))
 #define mk_pmd(page,prot)	pfn_pmd(page_to_pfn(page),prot)
 
 #define pud_young(pud)		pte_young(pud_pte(pud))
@@ -610,8 +616,9 @@ static inline pmd_t pmd_mkspecial(pmd_t pmd)
 
 #define __pud_to_phys(pud)	__pte_to_phys(pud_pte(pud))
 #define __phys_to_pud_val(phys)	__phys_to_pte_val(phys)
-#define pud_pfn(pud)		((__pud_to_phys(pud) & PUD_MASK) >> PAGE_SHIFT)
-#define pfn_pud(pfn,prot)	__pud(__phys_to_pud_val((phys_addr_t)(pfn) << PAGE_SHIFT) | pgprot_val(prot))
+#define pud_pfn(pud)		((__pud_to_phys(pud) & PUD_MASK) >> PAGE_SHIFT_KERNEL)
+#define pfn_pud(pfn, prot)	\
+	__pud(__phys_to_pud_val((phys_addr_t)(pfn) << PAGE_SHIFT_KERNEL) | pgprot_val(prot))
 
 #ifdef CONFIG_ARCH_SUPPORTS_PUD_PFNMAP
 #define pud_special(pte)	pte_special(pud_pte(pud))
@@ -648,7 +655,7 @@ static inline void set_pmd_at(struct mm_struct *mm, unsigned long addr,
 {
 	page_table_check_pmd_set(mm, pmdp, pmd);
 	return __set_pte_at(mm, addr, (pte_t *)pmdp, pmd_pte(pmd),
-						PMD_SIZE >> PAGE_SHIFT);
+						PMD_SIZE >> PAGE_SHIFT_KERNEL);
 }
 
 static inline void set_pud_at(struct mm_struct *mm, unsigned long addr,
@@ -656,7 +663,7 @@ static inline void set_pud_at(struct mm_struct *mm, unsigned long addr,
 {
 	page_table_check_pud_set(mm, pudp, pud);
 	return __set_pte_at(mm, addr, (pte_t *)pudp, pud_pte(pud),
-						PUD_SIZE >> PAGE_SHIFT);
+						PUD_SIZE >> PAGE_SHIFT_KERNEL);
 }
 
 #define __p4d_to_phys(p4d)	__pte_to_phys(p4d_pte(p4d))
