@@ -6684,7 +6684,7 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
 		aux_offset = READ_ONCE(rb->user_page->aux_offset);
 		aux_size = READ_ONCE(rb->user_page->aux_size);
 
-		if (aux_offset < perf_data_size(rb) + PAGE_SIZE)
+		if (aux_offset < perf_data_size(rb) + __PAGE_SIZE)
 			goto aux_unlock;
 
 		if (aux_offset != vma->vm_pgoff << PAGE_SHIFT)
