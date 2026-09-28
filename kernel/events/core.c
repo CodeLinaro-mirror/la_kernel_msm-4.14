@@ -6263,7 +6263,7 @@ static void perf_event_init_userpage(struct perf_event *event)
 	/* Allow new userspace to detect that bit 0 is deprecated */
 	userpg->cap_bit0_is_deprecated = 1;
 	userpg->size = offsetof(struct perf_event_mmap_page, __reserved);
-	userpg->data_offset = __PAGE_SIZE;
+	userpg->data_offset = p3s_perf_mmap_page_size(rb);
 	userpg->data_size = perf_data_size(rb);
 
 unlock:
@@ -6619,6 +6619,7 @@ static const struct vm_operations_struct perf_mmap_vmops = {
 	.close		= perf_mmap_close, /* non mergeable */
 	.fault		= perf_mmap_fault,
 	.page_mkwrite	= perf_mmap_fault,
+	.pfn_mkwrite	= p3s_perf_mmap_pfn_mkwrite,
 	.may_split	= perf_mmap_may_split,
 };
 
@@ -6653,7 +6654,7 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
 	if (ret)
 		return ret;
 
-	vma_size = vma->vm_end - vma->vm_start;
+	vma_size = p3s_perf_mmap_size(vma);
 
 	if (vma->vm_pgoff == 0) {
 		nr_pages = (vma_size / PAGE_SIZE) - (__PAGE_SIZE / PAGE_SIZE);
@@ -6732,7 +6733,9 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
 again:
 	mutex_lock(&event->mmap_mutex);
 	if (event->rb) {
-		if (data_page_nr(event->rb) != nr_pages) {
+		if (data_page_nr(event->rb) != nr_pages ||
+		    p3s_perf_mmap_page_size(event->rb) !=
+		    p3s_perf_mm_page_size(vma->vm_mm)) {
 			ret = -EINVAL;
 			goto unlock;
 		}
@@ -6807,6 +6810,7 @@ accounting:
 		atomic_set(&rb->mmap_count, 1);
 		rb->mmap_user = get_current_user();
 		rb->mmap_locked = extra;
+		p3s_perf_set_mmap_page_size(rb, p3s_perf_mm_page_size(vma->vm_mm));
 
 		ring_buffer_attach(event, rb);
 
@@ -6849,6 +6853,13 @@ aux_unlock:
 
 	if (event->pmu->event_mapped)
 		event->pmu->event_mapped(event, vma->vm_mm);
+
+	/* 4KB processes map the main ring in advance, see p3s_perf_map_main(). */
+	if (mm_is_p3s_4k(vma->vm_mm) && !vma->vm_pgoff) {
+		ret = p3s_perf_map_main(event->rb, vma);
+		if (ret)
+			perf_mmap_close(vma);
+	}
 
 	return ret;
 }
