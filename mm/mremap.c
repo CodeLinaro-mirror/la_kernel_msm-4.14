@@ -988,7 +988,7 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
 		map_flags |= MAP_SHARED;
 
 	ret = mm_mremap_get_unmapped_area(vma->vm_file, new_addr, new_len,
-					  vma_pgoff_offset(vma, addr),
+					  vma_mmap_pgoff(vma, addr),
 					  map_flags, addr, flags);
 	if (IS_ERR_VALUE(ret))
 		goto out;
@@ -1213,7 +1213,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 			map_flags |= MAP_SHARED;
 
 		new_addr = mm_mremap_get_unmapped_area(vma->vm_file, 0, new_len,
-						       vma_pgoff_offset(vma, addr),
+						       vma_mmap_pgoff(vma, addr),
 						       map_flags, addr, flags);
 		if (IS_ERR_VALUE(new_addr)) {
 			ret = new_addr;
