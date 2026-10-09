@@ -386,8 +386,8 @@ CONFIG_NVMEM                                    note<'TODO: update note'>
 CONFIG_N_GSM                                    policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_N_GSM                                    note<'TODO: update note'>
 
-CONFIG_OPTEE                                    policy<{'arm64': 'm', 'armhf': 'y'}>
-CONFIG_OPTEE                                    note<'armhf: built in as in 6.8; arch/arm/mach-imx builds busfreq_optee.o as obj-$(CONFIG_OPTEE) and it cannot link as a module'>
+CONFIG_OPTEE                                    policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_OPTEE                                    note<'arm64: built in with CONFIG_TEE, the kernel snap fails to boot Ubuntu Core with them modular; armhf: built in as in 6.8; arch/arm/mach-imx builds busfreq_optee.o as obj-$(CONFIG_OPTEE) and it cannot link as a module'>
 
 CONFIG_OSNOISE_TRACER                           policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_OSNOISE_TRACER                           note<'TODO: update note'>
@@ -545,8 +545,8 @@ CONFIG_TOUCHSCREEN_APPLE_Z2                     note<'TODO: update note'>
 CONFIG_TOUCHSCREEN_ELAN                         policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_TOUCHSCREEN_ELAN                         note<'TODO: update note'>
 
-CONFIG_TRUSTED_KEYS_TEE                         policy<{'armhf': 'n'}>
-CONFIG_TRUSTED_KEYS_TEE                         note<'armhf: n as in 6.8 so DCP stays the trusted-key backend'>
+CONFIG_TRUSTED_KEYS_TEE                         policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_TRUSTED_KEYS_TEE                         note<'arm64: y, the Kconfig default once CONFIG_TEE is built in; armhf: n as in 6.8 so DCP stays the trusted-key backend'>
 
 CONFIG_UBSAN                                    policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_UBSAN                                    note<'TODO: update note'>
@@ -1161,7 +1161,7 @@ CONFIG_SWIOTLB_DYNAMIC                          policy<{'arm64': 'y', 'armhf': '
 CONFIG_SWIOTLB_XEN                              policy<{'arm64': '-'}>
 CONFIG_SYS_HYPERVISOR                           policy<{'arm64': '-'}>
 CONFIG_TCG_XEN                                  policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_TEE                                      policy<{'arm64': 'm', 'armhf': 'y'}>
+CONFIG_TEE                                      policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_TEE_CRYPTO                               policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_TEE_STMM_EFI                             policy<{'arm64': 'n', 'armhf': 'm'}>
 CONFIG_TEGRA186_GPC_DMA                         policy<{'arm64': 'm', 'armhf': '-'}>
