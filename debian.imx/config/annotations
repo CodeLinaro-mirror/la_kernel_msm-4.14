@@ -4888,3 +4888,10 @@ CONFIG_ZYNQMP_FIRMWARE_DEBUG                    policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_IPI_MBOX                          policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_PM_DOMAINS                        policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_POWER                             policy<{'arm64': '-'}>
+CONFIG_ZRAM                                     policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_ZRAM_BACKEND_LZ4                         policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_ZRAM_BACKEND_LZ4HC                       policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_ZRAM_BACKEND_ZSTD                        policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_ZRAM_BACKEND_DEFLATE                     policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_ZRAM_BACKEND_842                         policy<{'arm64': 'y', 'armhf': '-'}>
+CONFIG_ZRAM_BACKEND_LZO                         policy<{'arm64': 'y', 'armhf': '-'}>
