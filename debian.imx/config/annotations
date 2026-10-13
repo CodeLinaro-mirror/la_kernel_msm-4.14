@@ -1772,6 +1772,7 @@ CONFIG_GPIO_MVEBU                               policy<{'arm64': '-', 'armhf': '
 CONFIG_GPIO_MXC_PAD_WAKEUP                      policy<{'arm64': '-'}>
 CONFIG_GPIO_NPCM_SGPIO                          policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_GPIO_OMAP                                policy<{'armhf': '-'}>
+CONFIG_GPIO_PCA953X                             policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_GPIO_PL061                               policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_GPIO_PMIC_EIC_SPRD                       policy<{'arm64': '-'}>
 CONFIG_GPIO_QIXIS_CPLD                          policy<{'arm64': 'm', 'armhf': 'n'}>
