@@ -444,7 +444,7 @@ CONFIG_ARM_GT_INITIAL_PRESCALER_VAL             policy<{'armhf': '-'}>
 CONFIG_ARM_HIGHBANK_CPUFREQ                     policy<{'armhf': '-'}>
 CONFIG_ARM_IMX8M_DDRC_DEVFREQ                   policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_ARM_IMX_BUS_DEVFREQ                      policy<{'arm64': 'n', 'armhf': 'n'}>
-CONFIG_ARM_IMX_CPUFREQ_DT                       policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_ARM_IMX_CPUFREQ_DT                       policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_ARM_L1_CACHE_SHIFT_7                     policy<{'armhf': '-'}>
 CONFIG_ARM_LPAE                                 policy<{'armhf': 'n'}>
 CONFIG_ARM_MEDIATEK_CCI_DEVFREQ                 policy<{'arm64': '-', 'armhf': '-'}>
@@ -2710,7 +2710,7 @@ CONFIG_NVEC_PAZ00                               policy<{'arm64': '-', 'armhf': '
 CONFIG_NVEC_POWER                               policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_NVMEM_APPLE_EFUSES                       policy<{'arm64': '-'}>
 CONFIG_NVMEM_BCM_OCOTP                          policy<{'arm64': '-'}>
-CONFIG_NVMEM_IMX_OCOTP_FSB_S400                 policy<{'arm64': 'n'}>
+CONFIG_NVMEM_IMX_OCOTP_FSB_S400                 policy<{'arm64': 'y'}>
 CONFIG_NVMEM_IMX_OCOTP_SCU                      policy<{'arm64': 'm', 'armhf': '-'}>
 CONFIG_NVMEM_MESON_EFUSE                        policy<{'arm64': '-'}>
 CONFIG_NVMEM_MESON_MX_EFUSE                     policy<{'arm64': '-', 'armhf': '-'}>
@@ -3440,6 +3440,7 @@ CONFIG_RDA_TIMER                                policy<{'armhf': '-'}>
 CONFIG_READ_ONLY_THP_FOR_FS                     policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_REGMAP_AC97                              policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_REGULATOR_ANATOP                         policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_REGULATOR_BD718XX                        policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_REGULATOR_FP9931                         policy<{'arm64': '-'}>
 CONFIG_REGULATOR_HI655X                         policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_REGULATOR_LOCHNAGAR                      policy<{'arm64': '-', 'armhf': '-'}>
