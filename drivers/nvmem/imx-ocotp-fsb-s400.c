@@ -354,9 +354,6 @@ static int imx_fsb_s400_fuse_probe(struct platform_device *pdev)
 	mutex_init(&fuse->lock);
 	fuse->hw = of_device_get_match_data(&pdev->dev);
 
-	if (fuse->hw->reverse_mac_address || fuse->hw->increase_mac_address)
-		fuse->config.layout = &imx_fsb_s400_fuse_layout;
-
 	if (fuse->hw->oscca_fuse_read) {
 		np = of_find_compatible_node(NULL, NULL, "fsl,imx93-aonmix-ns-syscfg");
 		if (!np)
