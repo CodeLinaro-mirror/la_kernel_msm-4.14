@@ -7011,10 +7011,7 @@ static int __access_remote_vm(struct mm_struct *mm, unsigned long addr,
 			if (bytes <= 0)
 				break;
 		} else {
-			bytes = len;
-			offset = addr & (PAGE_SIZE-1);
-			if (bytes > PAGE_SIZE-offset)
-				bytes = PAGE_SIZE-offset;
+			vma_remote_access_chunk(vma, addr, len, &offset, &bytes);
 
 			maddr = kmap_local_page(page);
 			if (write) {
