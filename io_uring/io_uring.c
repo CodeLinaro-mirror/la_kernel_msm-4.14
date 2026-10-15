@@ -3351,6 +3351,9 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 			       IORING_ENTER_NO_IOWAIT)))
 		return -EINVAL;
 
+	if (p3s_4k_unsupported(current->mm))
+		return -EPERM;
+
 	/*
 	 * Ring fd has been registered via IORING_REGISTER_RING_FDS, we
 	 * need only dereference our task private array to find it.
@@ -3816,6 +3819,10 @@ static inline bool io_uring_allowed(void)
 	kgid_t io_uring_group;
 
 	if (disabled == 2)
+		return false;
+
+	/* Rings and buffers are laid out in kernel pages */
+	if (p3s_4k_unsupported(current->mm))
 		return false;
 
 	if (disabled == 0 || capable(CAP_SYS_ADMIN))

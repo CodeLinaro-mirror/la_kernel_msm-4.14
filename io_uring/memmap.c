@@ -254,6 +254,9 @@ __cold int io_uring_mmap(struct file *file, struct vm_area_struct *vma)
 	unsigned int npages;
 	void *ptr;
 
+	if (p3s_4k_unsupported(vma->vm_mm))
+		return -EOPNOTSUPP;
+
 	ptr = io_uring_validate_mmap_request(file, vma->vm_pgoff, sz);
 	if (IS_ERR(ptr))
 		return PTR_ERR(ptr);
@@ -278,6 +281,9 @@ unsigned long io_uring_get_unmapped_area(struct file *filp, unsigned long addr,
 					 unsigned long flags)
 {
 	void *ptr;
+
+	if (p3s_4k_unsupported(current->mm))
+		return -EOPNOTSUPP;
 
 	/*
 	 * Do not allow to map to user-provided address to avoid breaking the
