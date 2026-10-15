@@ -94,6 +94,7 @@
 
 #include "pgalloc-track.h"
 #include "internal.h"
+#include "p3s/memory.h"
 #include "swap.h"
 #include <linux/p3s_user_pages.h>
 
@@ -2192,6 +2193,8 @@ static int insert_page(struct vm_area_struct *vma, unsigned long addr,
 	retval = validate_page_before_insert(vma, page);
 	if (retval)
 		goto out;
+	if (vma_is_p3s_4k(vma))
+		return vma_insert_page_slices(vma, addr, page, prot);
 	retval = -ENOMEM;
 	pte = get_locked_pte(vma->vm_mm, addr, &ptl);
 	if (!pte)
@@ -2227,6 +2230,9 @@ static int insert_pages(struct vm_area_struct *vma, unsigned long addr,
 	unsigned long remaining_pages_total = *num;
 	unsigned long pages_to_write_in_pmd;
 	int ret;
+
+	if (vma_is_p3s_4k(vma))
+		return vma_insert_pages_slices(vma, addr, pages, num, prot);
 more:
 	ret = -EFAULT;
 	pmd = walk_to_pmd(mm, addr);
@@ -2293,9 +2299,13 @@ int vm_insert_pages(struct vm_area_struct *vma, unsigned long addr,
 			struct page **pages, unsigned long *num)
 {
 	P3S_CONTEXT_REMOTE_MM(vma->vm_mm);
-	const unsigned long end_addr = addr + (*num * PAGE_SIZE) - 1;
+	unsigned long max_pages;
 
-	if (addr < vma->vm_start || end_addr >= vma->vm_end)
+	if (addr < vma->vm_start || addr >= vma->vm_end)
+		return -EFAULT;
+	max_pages = mm_kernel_pages(vma->vm_mm, vma_slice_offset(vma, addr) +
+				    ((vma->vm_end - addr) >> mm_pte_shift(vma->vm_mm)));
+	if (*num > max_pages)
 		return -EFAULT;
 	if (!(vma->vm_flags & VM_MIXEDMAP)) {
 		BUG_ON(mmap_read_trylock(vma->vm_mm));
@@ -2370,7 +2380,7 @@ static int __vm_map_pages(struct vm_area_struct *vma, struct page **pages,
 				unsigned long num, unsigned long offset)
 {
 	P3S_CONTEXT_REMOTE_MM(vma->vm_mm);
-	unsigned long count = vma_pages(vma);
+	unsigned long count = vma_kernel_pages(vma);
 	unsigned long uaddr = vma->vm_start;
 
 	/* Fail if the user requested offset is beyond the end of the object */
@@ -2425,6 +2435,7 @@ EXPORT_SYMBOL(vm_map_pages);
 int vm_map_pages_zero(struct vm_area_struct *vma, struct page **pages,
 				unsigned long num)
 {
+	vma_set_slice_off(vma, 0);
 	return __vm_map_pages(vma, pages, num, 0);
 }
 EXPORT_SYMBOL(vm_map_pages_zero);
