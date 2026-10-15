@@ -39,6 +39,7 @@
 #include <linux/memblock.h>
 #include <linux/fault-inject.h>
 #include <linux/slab.h>
+#include <linux/p3s/futex.h>
 
 #include "futex.h"
 #include "../locking/rtmutex_common.h"
@@ -283,13 +284,13 @@ again:
 	if (unlikely(should_fail_futex(true)))
 		return -EFAULT;
 
-	err = get_user_pages_fast(address, 1, FOLL_WRITE, &page);
+	err = get_user_pages_fast((unsigned long)uaddr, 1, FOLL_WRITE, &page);
 	/*
 	 * If write access is not required (eg. FUTEX_WAIT), try
 	 * and get read-only access.
 	 */
 	if (err == -EFAULT && rw == FUTEX_READ) {
-		err = get_user_pages_fast(address, 1, 0, &page);
+		err = get_user_pages_fast((unsigned long)uaddr, 1, 0, &page);
 		ro = 1;
 	}
 	if (err < 0)
@@ -377,6 +378,10 @@ again:
 
 	} else {
 		struct inode *inode;
+		unsigned long offset;
+
+		offset = p3s_futex_page_offset(mm, (unsigned long)uaddr,
+					       key->both.offset);
 
 		/*
 		 * The associated futex object in this case is the inode and
@@ -406,7 +411,7 @@ again:
 			goto again;
 		}
 
-		key->both.offset |= FUT_OFF_INODE; /* inode-based key */
+		key->both.offset = offset | FUT_OFF_INODE; /* inode-based key */
 		key->shared.i_seq = get_inode_sequence_number(inode);
 		key->shared.pgoff = folio->index + folio_page_idx(folio, page);
 		rcu_read_unlock();
