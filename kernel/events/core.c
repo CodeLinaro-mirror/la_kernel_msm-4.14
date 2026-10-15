@@ -6645,6 +6645,9 @@ static int perf_mmap(struct file *file, struct vm_area_struct *vma)
 	if (!(vma->vm_flags & VM_SHARED))
 		return -EINVAL;
 
+	if (vma_slice_off(vma))
+		return -EINVAL;
+
 	ret = security_perf_event_read(event);
 	if (ret)
 		return ret;
