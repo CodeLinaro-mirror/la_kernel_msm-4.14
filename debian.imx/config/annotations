@@ -365,6 +365,9 @@ CONFIG_NLS                                      note<'TODO: update note'>
 CONFIG_NOP_USB_XCEIV                            policy<{'arm64': 'm', 'armhf': 'y'}>
 CONFIG_NOP_USB_XCEIV                            note<'TODO: update note'>
 
+CONFIG_NOVA_CORE                                policy<{'arm64': '-'}>
+CONFIG_NOVA_CORE                                note<'LP: #2150845'>
+
 CONFIG_NO_HZ_FULL                               policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_NO_HZ_FULL                               note<'TODO: update note'>
 
@@ -976,7 +979,6 @@ CONFIG_NET_SCH_BPF                              policy<{'arm64': 'n'}>
 CONFIG_NET_SCH_MQPRIO_LIB                       policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_NET_SCH_TAPRIO                           policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_NEUTRON                                  policy<{'arm64': 'm'}>
-CONFIG_NOVA_CORE                                policy<{'arm64': '-'}>
 CONFIG_NO_PAGE_MAPCOUNT                         policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_NVDIMM_KEYS                              policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_NVDIMM_SECURITY_TEST                     policy<{'arm64': 'n', 'armhf': '-'}>
@@ -1203,6 +1205,7 @@ CONFIG_VIDEOBUF_GEN                             policy<{'arm64': 'm', 'armhf': '
 CONFIG_VIDEO_AP1302                             policy<{'arm64': 'm', 'armhf': 'n'}>
 CONFIG_VIDEO_DEV                                policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_VIDEO_DWC_MIPI_CSIS                      policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_VIDEO_DW_MIPI_CSI2RX                     policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEO_HANTRO_ROCKCHIP                    policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_VIDEO_IMX8_ISI                           policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_VIDEO_IMX_CAPTURE                        policy<{'arm64': 'y', 'armhf': 'm'}>
