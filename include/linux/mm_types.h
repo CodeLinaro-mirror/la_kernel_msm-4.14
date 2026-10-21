@@ -931,26 +931,20 @@ struct vm_area_struct {
 #ifdef __HAVE_PFNMAP_TRACKING
 	struct pfnmap_track_ctx *pfnmap_track_ctx;
 #endif
-#ifdef CONFIG_PTSHARE
-	union {
-		/* For client VMAs: pointer to domain */
-		struct ptshare_desc *__vm_ptshare_desc;
-		/* For shadow VMAs: number of clients */
-		refcount_t __vm_ptshare_refcount;
-	};
-#endif
 
 	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);
 
-	/*
-	 * For:
-	 * union {
-	 *         struct ptshare_desc* __vm_ptshare_desc;
-	 *         refcount_t __vm_ptshare_refcount;
-	 * }
-	 */
+#ifdef CONFIG_PTSHARE
+	ANDROID_BACKPORT_USE(1, union {
+		/* For client VMAs: pointer to domain */
+		struct ptshare_desc *__vm_ptshare_desc;
+		/* For shadow VMAs: number of clients */
+		refcount_t __vm_ptshare_refcount;
+	});
+#else
 	ANDROID_BACKPORT_RESERVE(1);
+#endif
 
 	ANDROID_BACKPORT_RESERVE(2);
 } __randomize_layout;
@@ -1191,10 +1185,6 @@ struct mm_struct {
 #ifdef CONFIG_MMU_NOTIFIER
 		struct mmu_notifier_subscriptions *notifier_subscriptions;
 #endif
-#ifdef CONFIG_PTSHARE
-		struct ptshare_desc __rcu *ptshare_desc;
-		refcount_t ptshare_vmas;
-#endif
 #if defined(CONFIG_TRANSPARENT_HUGEPAGE) && !defined(CONFIG_SPLIT_PMD_PTLOCKS)
 		pgtable_t pmd_huge_pte; /* protected by page_table_lock */
 #endif
@@ -1275,10 +1265,13 @@ struct mm_struct {
 
 		ANDROID_KABI_RESERVE(1);
 
-		/* For 'struct ptshare_desc* ptshare_desc' */
+#ifdef CONFIG_PTSHARE
+		ANDROID_BACKPORT_USE(1, struct ptshare_desc __rcu *ptshare_desc);
+		ANDROID_BACKPORT_USE(2, refcount_t ptshare_vmas);
+#else
 		ANDROID_BACKPORT_RESERVE(1);
-		/* For 'atomic_t ptshare_vmas' */
 		ANDROID_BACKPORT_RESERVE(2);
+#endif
 		ANDROID_BACKPORT_RESERVE(3);
 		ANDROID_VENDOR_DATA(1);
 	} __randomize_layout;
