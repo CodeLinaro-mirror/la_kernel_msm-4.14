@@ -1,3 +1,12 @@
+linux-imx (7.0.0-1011.28) resolute; urgency=medium
+
+  * [i.MX8x,9x] Enable kernel snap build
+  * [i.MX8x,9x] Enable CONFIG_AUTOFS_FS
+  * [i.MX8x,9x] Enable CONFIG_DM_CRYPT
+  * [i.MX8x,9x] Enable CONFIG_DM_VERITY
+
+ -- Ondrej Kubik <ondrej.kubik@canonical.com>  Wed, 28 Oct 2026 22:58:27 +0000
+
 linux-imx (7.0.0-1011.27) resolute; urgency=medium
 
   * resolute/linux-imx: 7.0.0-1011.27 -proposed tracker (LP: #2170926)
