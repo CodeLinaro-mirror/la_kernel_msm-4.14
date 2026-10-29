@@ -5,6 +5,12 @@
 
 include "../../debian.master/config/annotations"
 
+CONFIG_842_COMPRESS                              policy<{'arm64': 'y'}>
+CONFIG_842_COMPRESS                              note<'derived: selected by ZRAM=y (842 backend)'>
+
+CONFIG_842_DECOMPRESS                            policy<{'arm64': 'y'}>
+CONFIG_842_DECOMPRESS                            note<'derived: selected by ZRAM=y (842 backend)'>
+
 CONFIG_ACCESSIBILITY                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_ACCESSIBILITY                            note<'TODO: update note'>
 
@@ -68,6 +74,12 @@ CONFIG_ATA_PIIX                                 note<'TODO: update note'>
 CONFIG_AUTOFS_FS                                 policy<{'arm64': 'y'}>
 CONFIG_AUTOFS_FS                                 note<'autofs mounts needed by early systemd/snapd units'>
 
+
+CONFIG_BCM_NET_PHYLIB                            policy<{'arm64': 'y'}>
+CONFIG_BCM_NET_PHYLIB                            note<'derived: selected by BROADCOM_PHY=y'>
+
+CONFIG_BCM_NET_PHYPTP                            policy<{'arm64': 'y'}>
+CONFIG_BCM_NET_PHYPTP                            note<'derived: selected by BROADCOM_PHY=y'>
 
 CONFIG_BINFMT_SCRIPT                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_BINFMT_SCRIPT                            note<'TODO: update note'>
@@ -138,14 +150,32 @@ CONFIG_CRYPTO_AES_ARM64_NEON_BLK                 note<'boot: NEON AES fallback f
 CONFIG_CRYPTO_DEV_FSL_CAAM                       policy<{'arm64': 'y'}>
 CONFIG_CRYPTO_DEV_FSL_CAAM                       note<'i.MX8M/8ULP/91/93 CAAM crypto+RNG; static so hwrng/dm-crypt hw offload and trusted keys are ready early'>
 
+CONFIG_CRYPTO_DEV_FSL_CAAM_AHASH_API_DESC        policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_AHASH_API_DESC        note<'derived: selected by CRYPTO_DEV_FSL_CAAM_JR=y'>
+
+CONFIG_CRYPTO_DEV_FSL_CAAM_BLOB_GEN              policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_BLOB_GEN              note<'derived: selected by TRUSTED_KEYS_CAAM'>
+
+CONFIG_CRYPTO_DEV_FSL_CAAM_COMMON                policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_COMMON                note<'derived: selected by CRYPTO_DEV_FSL_CAAM=y'>
+
+CONFIG_CRYPTO_DEV_FSL_CAAM_CRYPTO_API_DESC       policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_CRYPTO_API_DESC       note<'derived: selected by CRYPTO_DEV_FSL_CAAM_JR=y'>
+
 CONFIG_CRYPTO_DEV_FSL_CAAM_JR                    policy<{'arm64': 'y'}>
 CONFIG_CRYPTO_DEV_FSL_CAAM_JR                    note<'CAAM job ring; must follow CRYPTO_DEV_FSL_CAAM'>
 
 CONFIG_CRYPTO_DEV_MXS_DCP                       policy<{'arm64': 'n', 'armhf': 'y'}>
 CONFIG_CRYPTO_DEV_MXS_DCP                       note<'armhf: i.MX6SL/6SX/6UL/6ULL/7D DCP crypto; built-in so TRUSTED_KEYS_DCP is available'>
 
+CONFIG_CRYPTO_ENGINE                             policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_ENGINE                             note<'derived: selected by CRYPTO_DEV_FSL_CAAM=y / crypto drivers'>
+
 CONFIG_CRYPTO_ESSIV                              policy<{'arm64': 'y'}>
 CONFIG_CRYPTO_ESSIV                              note<'boot: needed by dm-crypt aes-cbc-essiv; keep static with DM_CRYPT'>
+
+CONFIG_CRYPTO_LIB_DES                            policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_LIB_DES                            note<'derived: selected by CRYPTO_DES (CAAM)'>
 
 CONFIG_CRYPTO_LIB_SHA512_ARCH                   policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_LIB_SHA512_ARCH                   note<'TODO: update note'>
@@ -384,6 +414,12 @@ CONFIG_LRU_GEN                                  note<'TODO: update note'>
 CONFIG_LRU_GEN_ENABLED                          policy<{'arm64': 'y'}>
 CONFIG_LRU_GEN_ENABLED                          note<'TODO: update note'>
 
+CONFIG_LZ4HC_COMPRESS                            policy<{'arm64': 'y'}>
+CONFIG_LZ4HC_COMPRESS                            note<'derived: selected by ZRAM=y (lz4hc backend)'>
+
+CONFIG_LZ4_COMPRESS                              policy<{'arm64': 'y'}>
+CONFIG_LZ4_COMPRESS                              note<'derived: selected by ZRAM=y (lz4 backend)'>
+
 CONFIG_MFD_ROHM_BD718XX                          policy<{'arm64': 'y'}>
 CONFIG_MFD_ROHM_BD718XX                          note<'i.MX8MM boot: MFD core for BD71847/50, required by REGULATOR_BD718XX'>
 
@@ -546,6 +582,9 @@ CONFIG_PSI_DEFAULT_DISABLED                     note<'TODO: update note'>
 CONFIG_PWRSEQ_EMMC                               policy<{'arm64': 'y'}>
 CONFIG_PWRSEQ_EMMC                               note<'boot: eMMC power sequencing must be available before the rootfs eMMC probes'>
 
+CONFIG_QCOM_NET_PHYLIB                           policy<{'arm64': 'y'}>
+CONFIG_QCOM_NET_PHYLIB                           note<'derived: selected by AT803X_PHY=y'>
+
 CONFIG_QCOM_QDF2400_ERRATUM_0065                policy<{'arm64': 'y'}>
 CONFIG_QCOM_QDF2400_ERRATUM_0065                note<'TODO: update note'>
 
@@ -564,6 +603,9 @@ CONFIG_RCU_NOCB_CPU_DEFAULT_ALL                 note<'TODO: update note'>
 CONFIG_REALTEK_PHY                               policy<{'arm64': 'y'}>
 CONFIG_REALTEK_PHY                               note<'boot: Ethernet PHY on i.MX EVK boards'>
 
+CONFIG_REED_SOLOMON                              policy<{'arm64': 'y'}>
+CONFIG_REED_SOLOMON                              note<'derived: selected by DM_VERITY_FEC=y'>
+
 CONFIG_REGULATOR_BD718XX                         policy<{'arm64': 'y'}>
 CONFIG_REGULATOR_BD718XX                         note<'boot: ROHM PMIC (i.MX8M boards) for cpufreq OPP voltages'>
 
@@ -572,6 +614,9 @@ CONFIG_REGULATOR_PCA9450                         note<'boot: PMIC supplies cpufr
 
 CONFIG_REGULATOR_PFUZE100                        policy<{'arm64': 'y'}>
 CONFIG_REGULATOR_PFUZE100                        note<'boot: PMIC for i.MX8MQ/8MM EVK cpufreq OPP voltages'>
+
+CONFIG_REGULATOR_ROHM                            policy<{'arm64': 'y'}>
+CONFIG_REGULATOR_ROHM                            note<'derived: selected by REGULATOR_BD718XX=y'>
 
 CONFIG_REGULATOR_TPS65217                       policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_REGULATOR_TPS65217                       note<'TODO: update note'>
@@ -702,8 +747,14 @@ CONFIG_TOUCHSCREEN_APPLE_Z2                     note<'TODO: update note'>
 CONFIG_TOUCHSCREEN_ELAN                         policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_TOUCHSCREEN_ELAN                         note<'TODO: update note'>
 
+CONFIG_TRUSTED_KEYS_CAAM                         policy<{'arm64': 'y'}>
+CONFIG_TRUSTED_KEYS_CAAM                         note<'CAAM-backed trusted keys (default y); sealed keys for dm-crypt/dm-verity with CAAM built in'>
+
 CONFIG_TRUSTED_KEYS_TEE                         policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_TRUSTED_KEYS_TEE                         note<'arm64: y, the Kconfig default once CONFIG_TEE is built in; armhf: n as in 6.8 so DCP stays the trusted-key backend'>
+
+CONFIG_TYPEC                                     policy<{'arm64': 'y'}>
+CONFIG_TYPEC                                     note<'PHY_FSL_IMX8MQ_USB depends on TYPEC || TYPEC=n, so TYPEC must be y for the PHY to be static; TCPM/TCPCI drivers stay modules'>
 
 CONFIG_UBSAN                                    policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_UBSAN                                    note<'TODO: update note'>
@@ -713,6 +764,12 @@ CONFIG_USB_CHIPIDEA                              note<'i.MX8M/93/91 USB OTG cont
 
 CONFIG_USB_CHIPIDEA_IMX                          policy<{'arm64': 'y'}>
 CONFIG_USB_CHIPIDEA_IMX                          note<'i.MX glue for chipidea; static with USB_CHIPIDEA'>
+
+CONFIG_USB_DWC2_DUAL_ROLE                        policy<{'arm64': 'n'}>
+CONFIG_USB_DWC2_DUAL_ROLE                        note<'USB_GADGET=y now exposes the DWC2 mode choice; keep host-only'>
+
+CONFIG_USB_DWC2_PERIPHERAL                       policy<{'arm64': 'n'}>
+CONFIG_USB_DWC2_PERIPHERAL                       note<'USB_GADGET=y now exposes the DWC2 mode choice; keep host-only'>
 
 CONFIG_USB_DWC3                                  policy<{'arm64': 'y'}>
 CONFIG_USB_DWC3                                  note<'i.MX8MP/8QXP/95 USB3 controller; static for USB boot media and early console'>
@@ -743,6 +800,9 @@ CONFIG_USB_OTG                                  note<'TODO: update note'>
 
 CONFIG_USB_SERIAL_DEBUG                         policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_USB_SERIAL_DEBUG                         note<'TODO: update note'>
+
+CONFIG_USB_TEGRA_PHY                             policy<{'arm64': 'y'}>
+CONFIG_USB_TEGRA_PHY                             note<'derived: selected by USB_CHIPIDEA=y / USB_ULPI_BUS=y'>
 
 CONFIG_USB_UHCI_HCD                             policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_USB_UHCI_HCD                             note<'TODO: update note'>
@@ -859,7 +919,8 @@ CONFIG_CRYPTO_AUTHENC                           policy<{'arm64': 'y', 'armhf': '
 CONFIG_CRYPTO_DEV_FSL_CAAM_CRYPTO_API_QI        policy<{'arm64': '-'}>
 CONFIG_CRYPTO_DEV_FSL_CAAM_DMA                  policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_CRYPTO_DEV_FSL_CAAM_JR_UIO               policy<{'arm64': 'm', 'armhf': 'm'}>
-CONFIG_CRYPTO_DEV_FSL_CAAM_KEYBLOB_API_DESC     policy<{'arm64': 'm', 'armhf': 'm'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_KEYBLOB_API_DESC      policy<{'arm64': 'y', 'armhf': 'm'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_KEYBLOB_API_DESC      note<'derived: selected by CRYPTO_DEV_FSL_CAAM_TK_API'>
 CONFIG_CRYPTO_DEV_FSL_CAAM_SECVIO               policy<{'arm64': 'm', 'armhf': 'y'}>
 CONFIG_CRYPTO_DEV_FSL_CAAM_SM                   policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_DEV_FSL_CAAM_SM_SLOTSIZE          policy<{'arm64': '7', 'armhf': '7'}>
