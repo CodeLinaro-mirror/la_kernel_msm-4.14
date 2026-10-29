@@ -59,6 +59,9 @@ CONFIG_ASYMMETRIC_KEY_TYPE                      note<'TODO: update note'>
 CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE            note<'TODO: update note'>
 
+CONFIG_AT803X_PHY                                policy<{'arm64': 'y'}>
+CONFIG_AT803X_PHY                                note<'i.MX8MM/8MP boot+eth: AR8031/AR8035 PHY on NXP EVKs (FEC and EQoS); static so link is up for netboot/early network without module load'>
+
 CONFIG_ATA_PIIX                                 policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_ATA_PIIX                                 note<'TODO: update note'>
 
@@ -89,6 +92,9 @@ CONFIG_BLK_DEV_THROTTLING                       note<'TODO: update note'>
 
 CONFIG_BPF_UNPRIV_DEFAULT_OFF                   policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_BPF_UNPRIV_DEFAULT_OFF                   note<'TODO: update note'>
+
+CONFIG_BROADCOM_PHY                              policy<{'arm64': 'y'}>
+CONFIG_BROADCOM_PHY                              note<'i.MX8MM/8MP boot+eth: BCM54xx PHY on some SoMs'>
 
 CONFIG_CHR_DEV_SG                               policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CHR_DEV_SG                               note<'TODO: update note'>
@@ -170,6 +176,9 @@ CONFIG_DM_CRYPT                                  note<'boot: LUKS/dm-crypt rootf
 
 CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING note<'TODO: update note'>
+
+CONFIG_DP83867_PHY                               policy<{'arm64': 'y'}>
+CONFIG_DP83867_PHY                               note<'i.MX8MM/8MP boot+eth: TI DP83867 gigabit PHY on several SoM/carrier boards'>
 
 CONFIG_DRM_AMDGPU_CIK                           policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DRM_AMDGPU_CIK                           note<'TODO: update note'>
@@ -375,6 +384,9 @@ CONFIG_LRU_GEN                                  note<'TODO: update note'>
 CONFIG_LRU_GEN_ENABLED                          policy<{'arm64': 'y'}>
 CONFIG_LRU_GEN_ENABLED                          note<'TODO: update note'>
 
+CONFIG_MFD_ROHM_BD718XX                          policy<{'arm64': 'y'}>
+CONFIG_MFD_ROHM_BD718XX                          note<'i.MX8MM boot: MFD core for BD71847/50, required by REGULATOR_BD718XX'>
+
 CONFIG_MFD_SM501                                policy<{'arm64': 'm', 'armhf': 'y'}>
 CONFIG_MFD_SM501                                note<'TODO: update note'>
 
@@ -507,6 +519,12 @@ CONFIG_PCIEASPM_DEFAULT                         note<'TODO: update note'>
 CONFIG_PCI_DYNAMIC_OF_NODES                     policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_PCI_DYNAMIC_OF_NODES                     note<'TODO: update note'>
 
+CONFIG_PHY_FSL_IMX8MQ_USB                        policy<{'arm64': 'y'}>
+CONFIG_PHY_FSL_IMX8MQ_USB                        note<'i.MX8MM/8MP boot: USB PHY for dwc3; static for USB boot media'>
+
+CONFIG_PHY_FSL_IMX8M_PCIE                        policy<{'arm64': 'y'}>
+CONFIG_PHY_FSL_IMX8M_PCIE                        note<'i.MX8MM/8MP boot: PCIe PHY (PCI_IMX6_HOST already y)'>
+
 CONFIG_PHY_PACKAGE                               policy<{'arm64': 'y'}>
 CONFIG_PHY_PACKAGE                               note<'dependency of MOTORCOMM_PHY/REALTEK; static with the PHYs'>
 
@@ -566,6 +584,9 @@ CONFIG_RESET_GPIO                                note<'boot: gpio reset controll
 
 CONFIG_RPMB                                     policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_RPMB                                     note<'n on both arches so MMC_BLOCK can stay built-in (depends on RPMB || !RPMB)'>
+
+CONFIG_RTC_DRV_SNVS                              policy<{'arm64': 'y'}>
+CONFIG_RTC_DRV_SNVS                              note<'i.MX8MM/8MP boot: SNVS RTC for correct time before network sync'>
 
 CONFIG_RTC_DRV_TWL4030                          policy<{'arm64': 'm', 'armhf': 'y'}>
 CONFIG_RTC_DRV_TWL4030                          note<'TODO: update note'>
