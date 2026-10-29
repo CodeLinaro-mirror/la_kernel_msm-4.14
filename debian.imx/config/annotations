@@ -1287,3 +1287,6 @@ CONFIG_XEN_XENBUS_FRONTEND                      policy<{'arm64': '-'}>
 CONFIG_XE_VFIO_PCI                              policy<{'arm64': 'n', 'armhf': 'm'}>
 CONFIG_XILINX_GMII2RGMII                        policy<{'arm64': 'y', 'armhf': 'm'}>
 SCHED_PROXY_EXEC                                policy<{'arm64': '-'}>
+
+CONFIG_ZRAM                                      policy<{'arm64': 'y'}>
+CONFIG_ZRAM                                      note<'early swap/zram for low-memory i.MX parts; matches uc-mini-v3'>
