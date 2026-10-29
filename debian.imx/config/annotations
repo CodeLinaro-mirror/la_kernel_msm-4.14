@@ -105,6 +105,9 @@ CONFIG_CRASH_DUMP                               note<'TODO: update note'>
 CONFIG_CRYPTO_DEV_MXS_DCP                       policy<{'arm64': 'n', 'armhf': 'y'}>
 CONFIG_CRYPTO_DEV_MXS_DCP                       note<'armhf: i.MX6SL/6SX/6UL/6ULL/7D DCP crypto; built-in so TRUSTED_KEYS_DCP is available'>
 
+CONFIG_CRYPTO_ESSIV                              policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_ESSIV                              note<'boot: needed by dm-crypt aes-cbc-essiv; keep static with DM_CRYPT'>
+
 CONFIG_CRYPTO_LIB_SHA512_ARCH                   policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRYPTO_LIB_SHA512_ARCH                   note<'TODO: update note'>
 
@@ -128,6 +131,9 @@ CONFIG_DEBUG_INFO_SPLIT                         note<'TODO: update note'>
 
 CONFIG_DEFAULT_MMAP_MIN_ADDR                    policy<{'arm64': '32768', 'armhf': '32768'}>
 CONFIG_DEFAULT_MMAP_MIN_ADDR                    note<'TODO: update note'>
+
+CONFIG_DM_CRYPT                                  policy<{'arm64': 'y'}>
+CONFIG_DM_CRYPT                                  note<'boot: LUKS/dm-crypt rootfs/data unlocked from initramfs or early init; built-in so no module load ordering (uc-mini-v3 reference)'>
 
 CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING note<'TODO: update note'>
