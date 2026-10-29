@@ -50,6 +50,10 @@ CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE            note<'TODO: update note'>
 CONFIG_ATA_PIIX                                 policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_ATA_PIIX                                 note<'TODO: update note'>
 
+CONFIG_AUTOFS_FS                                 policy<{'arm64': 'y'}>
+CONFIG_AUTOFS_FS                                 note<'autofs mounts needed by early systemd/snapd units'>
+
+
 CONFIG_BINFMT_SCRIPT                            policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_BINFMT_SCRIPT                            note<'TODO: update note'>
 
