@@ -102,6 +102,27 @@ CONFIG_CPU_FREQ_GOV_PERFORMANCE                 note<'TODO: update note'>
 CONFIG_CRASH_DUMP                               policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_CRASH_DUMP                               note<'TODO: update note'>
 
+CONFIG_CRC7                                      policy<{'arm64': 'y'}>
+CONFIG_CRC7                                      note<'MMC-over-SPI/CRC helper for MMC_SPI; matches uc-mini-v3'>
+
+CONFIG_CRYPTO_AES_ARM64_BS                       policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_AES_ARM64_BS                       note<'boot: bit-sliced NEON AES; static with dm-crypt'>
+
+CONFIG_CRYPTO_AES_ARM64_CE_BLK                   policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_AES_ARM64_CE_BLK                   note<'boot: ARMv8 CE AES/XTS for dm-crypt/dm-verity speed; static so first mount is accelerated'>
+
+CONFIG_CRYPTO_AES_ARM64_CE_CCM                   policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_AES_ARM64_CE_CCM                   note<'boot: ARMv8 CE AES-CCM; static alongside the other AES arm64 drivers'>
+
+CONFIG_CRYPTO_AES_ARM64_NEON_BLK                 policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_AES_ARM64_NEON_BLK                 note<'boot: NEON AES fallback for cores without CE; static with dm-crypt'>
+
+CONFIG_CRYPTO_DEV_FSL_CAAM                       policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM                       note<'i.MX8M/8ULP/91/93 CAAM crypto+RNG; static so hwrng/dm-crypt hw offload and trusted keys are ready early'>
+
+CONFIG_CRYPTO_DEV_FSL_CAAM_JR                    policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_JR                    note<'CAAM job ring; must follow CRYPTO_DEV_FSL_CAAM'>
+
 CONFIG_CRYPTO_DEV_MXS_DCP                       policy<{'arm64': 'n', 'armhf': 'y'}>
 CONFIG_CRYPTO_DEV_MXS_DCP                       note<'armhf: i.MX6SL/6SX/6UL/6ULL/7D DCP crypto; built-in so TRUSTED_KEYS_DCP is available'>
 
