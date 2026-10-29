@@ -35,11 +35,23 @@ CONFIG_ARM64_USE_LSE_ATOMICS                    note<'TODO: update note'>
 CONFIG_ARMV8_DEPRECATED                         policy<{'arm64': 'y'}>
 CONFIG_ARMV8_DEPRECATED                         note<'TODO: update note'>
 
+CONFIG_ARM_FFA_TRANSPORT                         policy<{'arm64': 'y'}>
+CONFIG_ARM_FFA_TRANSPORT                         note<'FF-A transport used by TCG_ARM_CRB_FFA / OP-TEE on i.MX9; static for early TEE access'>
+
+CONFIG_ARM_IMX_CPUFREQ_DT                        policy<{'arm64': 'y'}>
+CONFIG_ARM_IMX_CPUFREQ_DT                        note<'boot: cpufreq governor active from start; as module ondemand only appears after module load (reference also m, but the goal is governor from boot)'>
+
 CONFIG_ARM_LPAE                                 policy<{'armhf': 'n'}>
 CONFIG_ARM_LPAE                                 note<'armhf: NXP i.MX6/7 vendor drivers assume 32-bit dma_addr_t/phys_addr_t (mxc_epdc_fb FTBFS with LPAE); imx_v7_defconfig and 6.8 armhf-imx are LPAE-off'>
 
+CONFIG_ARM_SCMI_TRANSPORT_OPTEE                  policy<{'arm64': 'y'}>
+CONFIG_ARM_SCMI_TRANSPORT_OPTEE                  note<'SCMI over OP-TEE; static with ARM_SCMI_PROTOCOL'>
+
 CONFIG_ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT       policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT       note<'TODO: update note'>
+
+CONFIG_ARM_TSTEE                                 policy<{'arm64': 'y'}>
+CONFIG_ARM_TSTEE                                 note<'Arm TS-TEE; static with OP-TEE/FF-A'>
 
 CONFIG_ASYMMETRIC_KEY_TYPE                      policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_ASYMMETRIC_KEY_TYPE                      note<'TODO: update note'>
@@ -162,6 +174,9 @@ CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING note<'TODO: update note'>
 CONFIG_DRM_AMDGPU_CIK                           policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_DRM_AMDGPU_CIK                           note<'TODO: update note'>
 
+CONFIG_DRM_IMX_LCDIF                             policy<{'arm64': 'y'}>
+CONFIG_DRM_IMX_LCDIF                             note<'display on i.MX8MP/93 from early boot (splash/console); matches uc-mini-v3'>
+
 CONFIG_DRM_MGAG200                              policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_DRM_MGAG200                              note<'TODO: update note'>
 
@@ -204,6 +219,9 @@ CONFIG_FEC_UIO                                  note<'armhf: i.MX8MM UIO shim; c
 CONFIG_FHANDLE                                  policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_FHANDLE                                  note<'TODO: update note'>
 
+CONFIG_FSL_EDMA                                  policy<{'arm64': 'y'}>
+CONFIG_FSL_EDMA                                  note<'boot: eDMA for LPUART/LPSPI/LPI2C on i.MX8ULP/93/95; matches uc-mini-v3'>
+
 CONFIG_FSL_ENETC                                policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_FSL_ENETC                                note<'armhf: LS1028A/i.MX95 hardware; the NXP version needs 64-bit division and does not link on arm'>
 
@@ -222,6 +240,9 @@ CONFIG_GPIO_TWL4030                             note<'TODO: update note'>
 CONFIG_HIBERNATION                              policy<{'arm64': 'n', 'armhf': 'y'}>
 CONFIG_HIBERNATION                              note<'TODO: update note'>
 
+CONFIG_HID                                       policy<{'arm64': 'y'}>
+CONFIG_HID                                       note<'USB/I2C input at console; matches uc-mini-v3'>
+
 CONFIG_HOTPLUG_PCI_PCIE                         policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_HOTPLUG_PCI_PCIE                         note<'TODO: update note'>
 
@@ -230,6 +251,9 @@ CONFIG_HOTPLUG_PCI_SHPC                         note<'TODO: update note'>
 
 CONFIG_HSA_AMD_P2P                              policy<{'arm64': 'y'}>
 CONFIG_HSA_AMD_P2P                              note<'TODO: update note'>
+
+CONFIG_HW_RANDOM_OPTEE                           policy<{'arm64': 'y'}>
+CONFIG_HW_RANDOM_OPTEE                           note<'OP-TEE RNG; early entropy'>
 
 CONFIG_HZ_100                                   policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_HZ_100                                   note<'TODO: update note'>
@@ -240,6 +264,9 @@ CONFIG_HZ_1000                                  note<'TODO: update note'>
 CONFIG_HZ_250                                   policy<{'arm64': 'n', 'armhf': 'y'}>
 CONFIG_HZ_250                                   note<'TODO: update note'>
 
+CONFIG_I2C_IMX                                   policy<{'arm64': 'y'}>
+CONFIG_I2C_IMX                                   note<'boot: I2C controller for PMIC (PCA9450/PF/BD718xx) needed before cpufreq/regulators; matches uc-mini-v3'>
+
 CONFIG_IDLE_PAGE_TRACKING                       policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IDLE_PAGE_TRACKING                       note<'TODO: update note'>
 
@@ -248,6 +275,12 @@ CONFIG_IIO_SIMPLE_DUMMY_BUFFER                  note<'TODO: update note'>
 
 CONFIG_IIO_SIMPLE_DUMMY_EVENTS                  policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_IIO_SIMPLE_DUMMY_EVENTS                  note<'TODO: update note'>
+
+CONFIG_IKCONFIG                                  policy<{'arm64': 'y'}>
+CONFIG_IKCONFIG                                  note<'/proc/config.gz for debugging boot issues; matches uc-mini-v3'>
+
+CONFIG_IKCONFIG_PROC                             policy<{'arm64': 'y'}>
+CONFIG_IKCONFIG_PROC                             note<'/proc/config.gz; follows IKCONFIG'>
 
 CONFIG_IMA                                      policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_IMA                                      note<'TODO: update note'>
@@ -276,11 +309,23 @@ CONFIG_IMA_SIG_TEMPLATE                         note<'TODO: update note'>
 CONFIG_IMA_WRITE_POLICY                         policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_IMA_WRITE_POLICY                         note<'TODO: update note'>
 
+CONFIG_IMX2_WDT                                  policy<{'arm64': 'y'}>
+CONFIG_IMX2_WDT                                  note<'boot: watchdog must be serviced from early boot (WATCHDOG_HANDLE_BOOT_ENABLED); i.MX6/7/8M/93'>
+
+CONFIG_IMX7ULP_WDT                               policy<{'arm64': 'y'}>
+CONFIG_IMX7ULP_WDT                               note<'boot: watchdog for i.MX7ULP/8ULP/93/95; WATCHDOG_HANDLE_BOOT_ENABLED needs it static'>
+
+CONFIG_IMX8MM_THERMAL                            policy<{'arm64': 'y'}>
+CONFIG_IMX8MM_THERMAL                            note<'boot: thermal throttling on i.MX8M available together with cpufreq'>
+
 CONFIG_IMX_IPUV3_CORE                           policy<{'armhf': 'n'}>
 CONFIG_IMX_IPUV3_CORE                           note<'armhf: NXP MXC_IPU_V3 drives the IPU (fbdev stack); the upstream IPUv3 core binds the same fsl,imx6q-ipu node'>
 
 CONFIG_IMX_SCU                                  policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_IMX_SCU                                  note<'armhf: i.MX8QM/QXP SCU; imx-scu-soc.c references the arm64-only TKT340553_SW_WORKAROUND; n as in 6.8'>
+
+CONFIG_IMX_SDMA                                  policy<{'arm64': 'y'}>
+CONFIG_IMX_SDMA                                  note<'boot: SDMA for UART/SPI/audio DMA on i.MX8M; matches uc-mini-v3'>
 
 CONFIG_INTEGRITY_PLATFORM_KEYRING               policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_INTEGRITY_PLATFORM_KEYRING               note<'TODO: update note'>
@@ -342,8 +387,14 @@ CONFIG_MHP_DEFAULT_ONLINE_TYPE_OFFLINE          note<'TODO: update note'>
 CONFIG_MHP_MEMMAP_ON_MEMORY                     policy<{'arm64': 'y'}>
 CONFIG_MHP_MEMMAP_ON_MEMORY                     note<'TODO: update note'>
 
+CONFIG_MICREL_PHY                                policy<{'arm64': 'y'}>
+CONFIG_MICREL_PHY                                note<'boot: Ethernet PHY on many i.MX EVK/boards, needed for network boot/NFS'>
+
 CONFIG_MMC_BLOCK                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_MMC_BLOCK                                note<'boot essential on armhf/arm64'>
+
+CONFIG_MMC_HSQ                                   policy<{'arm64': 'y'}>
+CONFIG_MMC_HSQ                                   note<'eMMC host software queue used by sdhci-esdhc-imx; static with MMC_SDHCI_ESDHC_IMX'>
 
 CONFIG_MMC_SDHCI                                policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_MMC_SDHCI                                note<'installation essential on omap/highbank'>
@@ -351,8 +402,17 @@ CONFIG_MMC_SDHCI                                note<'installation essential on 
 CONFIG_MMC_SDHCI_PLTFM                          policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_MMC_SDHCI_PLTFM                          note<'boot essential on highbank'>
 
+CONFIG_MMC_SPI                                   policy<{'arm64': 'y'}>
+CONFIG_MMC_SPI                                   note<'MMC over SPI; matches uc-mini-v3'>
+
 CONFIG_MODULE_COMPRESS_ZSTD                     policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_MODULE_COMPRESS_ZSTD                     note<'TODO: update note'>
+
+CONFIG_MODULE_SIG_FORCE                          policy<{'arm64': 'y'}>
+CONFIG_MODULE_SIG_FORCE                          note<'SECURITY: reject unsigned modules (only signed modules built with MODULE_SIG_ALL load); uc-mini-v3 enforces this. REVIEW before enabling for dev kernels'>
+
+CONFIG_MOTORCOMM_PHY                             policy<{'arm64': 'y'}>
+CONFIG_MOTORCOMM_PHY                             note<'boot: Ethernet PHY (YT8521) on newer i.MX93 boards'>
 
 CONFIG_MTD                                      policy<{'arm64': 'm', 'armhf': 'y'}>
 CONFIG_MTD                                      note<'TODO: update note'>
@@ -393,8 +453,14 @@ CONFIG_NET_VENDOR_EMULEX                        note<'TODO: update note'>
 CONFIG_NLS                                      policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_NLS                                      note<'TODO: update note'>
 
-CONFIG_NOP_USB_XCEIV                            policy<{'arm64': 'm', 'armhf': 'y'}>
-CONFIG_NOP_USB_XCEIV                            note<'TODO: update note'>
+CONFIG_NLS_ASCII                                 policy<{'arm64': 'y'}>
+CONFIG_NLS_ASCII                                 note<'FAT ESP/boot partition mounting; matches uc-mini-v3'>
+
+CONFIG_NLS_ISO8859_1                             policy<{'arm64': 'y'}>
+CONFIG_NLS_ISO8859_1                             note<'FAT ESP/boot partition mounting (iocharset=iso8859-1); matches uc-mini-v3'>
+
+CONFIG_NOP_USB_XCEIV                            policy<{'arm64': 'y', 'armhf': 'y'}>
+CONFIG_NOP_USB_XCEIV                             note<'USB boot/gadget: generic PHY used by chipidea and dwc3 on i.MX'>
 
 CONFIG_NOVA_CORE                                policy<{'arm64': '-'}>
 CONFIG_NOVA_CORE                                note<'LP: #2150845'>
@@ -441,6 +507,15 @@ CONFIG_PCIEASPM_DEFAULT                         note<'TODO: update note'>
 CONFIG_PCI_DYNAMIC_OF_NODES                     policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_PCI_DYNAMIC_OF_NODES                     note<'TODO: update note'>
 
+CONFIG_PHY_PACKAGE                               policy<{'arm64': 'y'}>
+CONFIG_PHY_PACKAGE                               note<'dependency of MOTORCOMM_PHY/REALTEK; static with the PHYs'>
+
+CONFIG_PINCTRL_IMX8ULP                           policy<{'arm64': 'y'}>
+CONFIG_PINCTRL_IMX8ULP                           note<'i.MX8ULP pinctrl; boot critical when i.MX8ULP is a target'>
+
+CONFIG_PINCTRL_IMX91                             policy<{'arm64': 'y'}>
+CONFIG_PINCTRL_IMX91                             note<'i.MX91 pinctrl; boot critical (i.MX93 is already y)'>
+
 CONFIG_PM                                       policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_PM                                       note<'TODO: update note'>
 
@@ -449,6 +524,9 @@ CONFIG_PREEMPT_DYNAMIC                          note<'TODO: update note'>
 
 CONFIG_PSI_DEFAULT_DISABLED                     policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_PSI_DEFAULT_DISABLED                     note<'TODO: update note'>
+
+CONFIG_PWRSEQ_EMMC                               policy<{'arm64': 'y'}>
+CONFIG_PWRSEQ_EMMC                               note<'boot: eMMC power sequencing must be available before the rootfs eMMC probes'>
 
 CONFIG_QCOM_QDF2400_ERRATUM_0065                policy<{'arm64': 'y'}>
 CONFIG_QCOM_QDF2400_ERRATUM_0065                note<'TODO: update note'>
@@ -465,11 +543,26 @@ CONFIG_RCU_NOCB_CPU                             note<'TODO: update note'>
 CONFIG_RCU_NOCB_CPU_DEFAULT_ALL                 policy<{'arm64': 'n', 'armhf': '-'}>
 CONFIG_RCU_NOCB_CPU_DEFAULT_ALL                 note<'TODO: update note'>
 
+CONFIG_REALTEK_PHY                               policy<{'arm64': 'y'}>
+CONFIG_REALTEK_PHY                               note<'boot: Ethernet PHY on i.MX EVK boards'>
+
+CONFIG_REGULATOR_BD718XX                         policy<{'arm64': 'y'}>
+CONFIG_REGULATOR_BD718XX                         note<'boot: ROHM PMIC (i.MX8M boards) for cpufreq OPP voltages'>
+
+CONFIG_REGULATOR_PCA9450                         policy<{'arm64': 'y'}>
+CONFIG_REGULATOR_PCA9450                         note<'boot: PMIC supplies cpufreq OPP voltages on i.MX8MM/MN/MP/93/91; as module cpufreq probe is deferred'>
+
+CONFIG_REGULATOR_PFUZE100                        policy<{'arm64': 'y'}>
+CONFIG_REGULATOR_PFUZE100                        note<'boot: PMIC for i.MX8MQ/8MM EVK cpufreq OPP voltages'>
+
 CONFIG_REGULATOR_TPS65217                       policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_REGULATOR_TPS65217                       note<'TODO: update note'>
 
 CONFIG_REGULATOR_TWL4030                        policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_REGULATOR_TWL4030                        note<'TODO: update note'>
+
+CONFIG_RESET_GPIO                                policy<{'arm64': 'y'}>
+CONFIG_RESET_GPIO                                note<'boot: gpio reset controller used by PHY/hub/eMMC resets; avoids probe deferral'>
 
 CONFIG_RPMB                                     policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_RPMB                                     note<'n on both arches so MMC_BLOCK can stay built-in (depends on RPMB || !RPMB)'>
@@ -549,6 +642,12 @@ CONFIG_SOUND                                    note<'TODO: update note'>
 CONFIG_SOUND_OSS_CORE_PRECLAIM                  policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_SOUND_OSS_CORE_PRECLAIM                  note<'TODO: update note'>
 
+CONFIG_SPI_BITBANG                               policy<{'arm64': 'y'}>
+CONFIG_SPI_BITBANG                               note<'bitbang SPI helper; matches uc-mini-v3'>
+
+CONFIG_SPI_IMX                                   policy<{'arm64': 'y'}>
+CONFIG_SPI_IMX                                   note<'boot: ecspi for SPI NOR/TPM boot media; matches uc-mini-v3'>
+
 CONFIG_SQUASHFS_4K_DEVBLK_SIZE                  policy<{'arm64': 'n', 'armhf': 'n'}>
 CONFIG_SQUASHFS_4K_DEVBLK_SIZE                  note<'TODO: update note'>
 
@@ -560,6 +659,9 @@ CONFIG_SWP_EMULATION                            note<'TODO: update note'>
 
 CONFIG_SYSFB_SIMPLEFB                           policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_SYSFB_SIMPLEFB                           note<'TODO: update note'>
+
+CONFIG_TCG_FTPM_TEE                              policy<{'arm64': 'y'}>
+CONFIG_TCG_FTPM_TEE                              note<'firmware TPM in OP-TEE; needed early for measured boot / sealed dm-crypt keys'>
 
 CONFIG_TCG_TIS_I2C_ATMEL                        policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_TCG_TIS_I2C_ATMEL                        note<'TODO: update note'>
@@ -585,8 +687,23 @@ CONFIG_TRUSTED_KEYS_TEE                         note<'arm64: y, the Kconfig defa
 CONFIG_UBSAN                                    policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_UBSAN                                    note<'TODO: update note'>
 
+CONFIG_USB_CHIPIDEA                              policy<{'arm64': 'y'}>
+CONFIG_USB_CHIPIDEA                              note<'i.MX8M/93/91 USB OTG controller; static for USB gadget/console and USB boot media'>
+
+CONFIG_USB_CHIPIDEA_IMX                          policy<{'arm64': 'y'}>
+CONFIG_USB_CHIPIDEA_IMX                          note<'i.MX glue for chipidea; static with USB_CHIPIDEA'>
+
+CONFIG_USB_DWC3                                  policy<{'arm64': 'y'}>
+CONFIG_USB_DWC3                                  note<'i.MX8MP/8QXP/95 USB3 controller; static for USB boot media and early console'>
+
+CONFIG_USB_DWC3_IMX8MP                           policy<{'arm64': 'y'}>
+CONFIG_USB_DWC3_IMX8MP                           note<'i.MX8MP glue for dwc3; static with USB_DWC3'>
+
 CONFIG_USB_EHCI_HCD_PLATFORM                    policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_USB_EHCI_HCD_PLATFORM                    note<'TODO: update note'>
+
+CONFIG_USB_GADGET                                policy<{'arm64': 'y'}>
+CONFIG_USB_GADGET                                note<'UUU/fastboot/ethernet-gadget provisioning from early boot; matches uc-mini-v3'>
 
 CONFIG_USB_HCD_BCMA                             policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_USB_HCD_BCMA                             note<'TODO: update note'>
@@ -609,8 +726,14 @@ CONFIG_USB_SERIAL_DEBUG                         note<'TODO: update note'>
 CONFIG_USB_UHCI_HCD                             policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_USB_UHCI_HCD                             note<'TODO: update note'>
 
+CONFIG_USB_ULPI_BUS                              policy<{'arm64': 'y'}>
+CONFIG_USB_ULPI_BUS                              note<'ULPI bus used by chipidea on i.MX6/7/8M; static with USB_CHIPIDEA'>
+
 CONFIG_USB_XHCI_DBGCAP                          policy<{'arm64': 'y', 'armhf': 'y'}>
 CONFIG_USB_XHCI_DBGCAP                          note<'TODO: update note'>
+
+CONFIG_USB_XHCI_PLATFORM                         policy<{'arm64': 'y'}>
+CONFIG_USB_XHCI_PLATFORM                         note<'platform xHCI used by dwc3 host on i.MX8M/93/95; static for USB boot media'>
 
 CONFIG_VFIO                                     policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_VFIO                                     note<'TODO: update note'>
@@ -677,7 +800,8 @@ CONFIG_CLKSRC_IMX_TPM                           policy<{'arm64': 'y', 'armhf': '
 CONFIG_CLK_IMX8MN                               policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_IMX8MP                               policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_IMX8MQ                               policy<{'arm64': 'y', 'armhf': 'n'}>
-CONFIG_CLK_IMX8ULP                              policy<{'arm64': 'm', 'armhf': 'n'}>
+CONFIG_CLK_IMX8ULP                              policy<{'arm64': 'y', 'armhf': 'n'}>
+CONFIG_CLK_IMX8ULP                               note<'i.MX8ULP clock controller; boot critical when i.MX8ULP is a target'>
 CONFIG_CLK_IMX93                                policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_IMX95_BLK_CTL                        policy<{'arm64': 'y', 'armhf': 'n'}>
 CONFIG_CLK_PX30                                 policy<{'arm64': '-'}>
