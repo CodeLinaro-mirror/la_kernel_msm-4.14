@@ -563,8 +563,17 @@ CONFIG_AT803X_PHY                                note<'i.MX8MM/8MP boot+eth: AR8
 CONFIG_ATA_PIIX                                 policy<{'arm64': 'm', 'armhf': 'm'}>
 CONFIG_ATA_PIIX                                 note<'TODO: update note'>
 
+CONFIG_ATH10K_AHB                                policy<{'arm64': 'n'}>
+CONFIG_ATH10K_AHB                                note<'trim: Qualcomm IPQ SoC-integrated (AHB) Wi-Fi, selects QCOM_SCM and cannot exist on i.MX'>
+
 CONFIG_ATH10K_SNOC                               policy<{'arm64': '-'}>
 CONFIG_ATH10K_SNOC                               note<'trim: derived, follows its parent option being disabled'>
+
+CONFIG_ATH11K_AHB                                policy<{'arm64': 'n'}>
+CONFIG_ATH11K_AHB                                note<'trim: Qualcomm IPQ SoC-integrated (AHB) Wi-Fi, selects QCOM_SCM and cannot exist on i.MX'>
+
+CONFIG_ATH12K_AHB                                policy<{'arm64': 'n'}>
+CONFIG_ATH12K_AHB                                note<'trim: Qualcomm IPQ SoC-integrated (AHB) Wi-Fi, selects QCOM_SCM and cannot exist on i.MX'>
 
 CONFIG_ATM                                       policy<{'arm64': 'n'}>
 CONFIG_ATM                                       note<'trim: legacy / exotic networking, not used on i.MX'>
@@ -7461,6 +7470,9 @@ CONFIG_QCOM_LLCC                                 note<'trim: derived, follows it
 CONFIG_QCOM_LMH                                  policy<{'arm64': '-'}>
 CONFIG_QCOM_LMH                                  note<'trim: derived, follows its parent option being disabled'>
 
+CONFIG_QCOM_MDT_LOADER                           policy<{'arm64': '-'}>
+CONFIG_QCOM_MDT_LOADER                           note<'trim: derived, follows its parent option being disabled'>
+
 CONFIG_QCOM_MPM                                  policy<{'arm64': '-'}>
 CONFIG_QCOM_MPM                                  note<'trim: derived, follows its parent option being disabled'>
 
@@ -7527,8 +7539,8 @@ CONFIG_QCOM_RPM_MASTER_STATS                     note<'trim: derived, follows it
 CONFIG_QCOM_RPROC_COMMON                         policy<{'arm64': '-'}>
 CONFIG_QCOM_RPROC_COMMON                         note<'trim: derived, follows its parent option being disabled'>
 
-CONFIG_QCOM_SCM                                  policy<{'arm64': 'm'}>
-CONFIG_QCOM_SCM                                  note<'derived: selected by another option'>
+CONFIG_QCOM_SCM                                  policy<{'arm64': '-'}>
+CONFIG_QCOM_SCM                                  note<'trim: derived, follows its parent option being disabled'>
 
 CONFIG_QCOM_SMD_RPM                              policy<{'arm64': '-'}>
 CONFIG_QCOM_SMD_RPM                              note<'trim: derived, follows its parent option being disabled'>
@@ -7572,8 +7584,14 @@ CONFIG_QCOM_SYSMON                               note<'trim: derived, follows it
 CONFIG_QCOM_TSENS                                policy<{'arm64': '-'}>
 CONFIG_QCOM_TSENS                                note<'trim: derived, follows its parent option being disabled'>
 
-CONFIG_QCOM_TZMEM                                policy<{'arm64': 'm'}>
-CONFIG_QCOM_TZMEM                                note<'derived: selected by another option'>
+CONFIG_QCOM_TZMEM                                policy<{'arm64': '-'}>
+CONFIG_QCOM_TZMEM                                note<'trim: derived, follows its parent option being disabled'>
+
+CONFIG_QCOM_TZMEM_MODE_GENERIC                   policy<{'arm64': '-'}>
+CONFIG_QCOM_TZMEM_MODE_GENERIC                   note<'trim: derived, follows its parent option being disabled'>
+
+CONFIG_QCOM_TZMEM_MODE_SHMBRIDGE                 policy<{'arm64': '-'}>
+CONFIG_QCOM_TZMEM_MODE_SHMBRIDGE                 note<'trim: derived, follows its parent option being disabled'>
 
 CONFIG_QCOM_UBWC_CONFIG                          policy<{'arm64': '-'}>
 CONFIG_QCOM_UBWC_CONFIG                          note<'trim: derived, follows its parent option being disabled'>
