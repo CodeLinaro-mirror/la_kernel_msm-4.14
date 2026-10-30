@@ -2130,7 +2130,7 @@ static int snd_pcm_drain(struct snd_pcm_substream *substream,
 		long tout;
 		struct snd_pcm_runtime *to_check;
 		unsigned int drain_rate;
-		snd_pcm_uframes_t drain_bufsz;
+		snd_pcm_uframes_t drain_period_size;
 		bool drain_no_period_wakeup;
 
 		if (signal_pending(current)) {
@@ -2160,19 +2160,19 @@ static int snd_pcm_drain(struct snd_pcm_substream *substream,
 		 */
 		drain_no_period_wakeup = to_check->no_period_wakeup;
 		drain_rate = to_check->rate;
-		drain_bufsz = to_check->buffer_size;
+		drain_period_size = to_check->period_size;
 		init_wait_entry(&wait, 0);
 		prepare_to_wait(&to_check->sleep, &wait, TASK_INTERRUPTIBLE);
 		snd_pcm_stream_unlock_irq(substream);
 		if (drain_no_period_wakeup)
 			tout = MAX_SCHEDULE_TIMEOUT;
 		else {
-			tout = 100;
+			tout = 10;
 			if (drain_rate) {
-				long t = drain_bufsz * 1100 / drain_rate;
+				long t = drain_period_size * 2 / drain_rate;
 				tout = max(t, tout);
 			}
-			tout = msecs_to_jiffies(tout);
+			tout = msecs_to_jiffies(tout * 1000);
 		}
 		tout = schedule_timeout(tout);
 
@@ -2195,7 +2195,7 @@ static int snd_pcm_drain(struct snd_pcm_substream *substream,
 				result = -ESTRPIPE;
 			else {
 				dev_dbg(substream->pcm->card->dev,
-					"playback drain timeout (DMA or IRQ trouble?)\n");
+					"playback drain error (DMA or IRQ trouble?)\n");
 				snd_pcm_stop(substream, SNDRV_PCM_STATE_SETUP);
 				result = -EIO;
 			}
