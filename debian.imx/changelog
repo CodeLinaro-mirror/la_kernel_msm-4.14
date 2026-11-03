@@ -1,3 +1,10 @@
+linux-imx (7.0.0-1011.30-uci) resolute; urgency=medium
+
+  * [all] Build upstream ubuntu-core-initramfs
+  * [all] Seed patched systemd-bootchart with root switch fix
+
+ -- Ondrej Kubik <ondrej.kubik@canonical.com>  Tue, 03 Nov 2026 13:05:05 +0100
+
 linux-imx (7.0.0-1011.29) resolute; urgency=medium
 
   * [i.MX8x,9x] Enable CONFIG_CRYPTO_RNG
