@@ -9,7 +9,7 @@
 #include <linux/page_table_check.h>
 #include <linux/swap.h>
 #include <linux/swapops.h>
-#include <linux/p3s/mm.h>
+#include "p3s/page_table_check.h"
 
 #undef pr_fmt
 #define pr_fmt(fmt)	"page_table_check: " fmt
@@ -61,7 +61,8 @@ static struct page_table_check *get_page_table_check(struct page_ext *page_ext)
  * An entry is removed from the page table, decrement the counters for that page
  * verify that it is of correct type and counters do not become negative.
  */
-static void page_table_check_clear(unsigned long pfn, unsigned long pgcnt)
+static void page_table_check_clear(unsigned long pfn, unsigned long pgcnt,
+				   unsigned int nr_maps)
 {
 	struct page_ext *page_ext;
 	struct page *page;
@@ -85,7 +86,7 @@ static void page_table_check_clear(unsigned long pfn, unsigned long pgcnt)
 
 		if (anon) {
 			BUG_ON(atomic_read(&ptc->file_map_count));
-			BUG_ON(atomic_dec_return(&ptc->anon_map_count) < 0);
+			BUG_ON(atomic_sub_return(nr_maps, &ptc->anon_map_count) < 0);
 		} else {
 			BUG_ON(atomic_read(&ptc->anon_map_count));
 			BUG_ON(atomic_dec_return(&ptc->file_map_count) < 0);
@@ -101,7 +102,7 @@ static void page_table_check_clear(unsigned long pfn, unsigned long pgcnt)
  * type to a different process.
  */
 static void page_table_check_set(unsigned long pfn, unsigned long pgcnt,
-				 bool rw)
+				 unsigned int nr_maps, bool rw)
 {
 	struct page_ext *page_ext;
 	struct page *page;
@@ -125,7 +126,8 @@ static void page_table_check_set(unsigned long pfn, unsigned long pgcnt,
 
 		if (anon) {
 			BUG_ON(atomic_read(&ptc->file_map_count));
-			BUG_ON(atomic_inc_return(&ptc->anon_map_count) > P3S_SLICES_PER_PAGE && rw);
+			BUG_ON(atomic_add_return(nr_maps, &ptc->anon_map_count) >
+			       P3S_PTC_NATIVE_MAPS && rw);
 		} else {
 			BUG_ON(atomic_read(&ptc->anon_map_count));
 			BUG_ON(atomic_inc_return(&ptc->file_map_count) < 0);
@@ -167,7 +169,8 @@ void __page_table_check_pte_clear(struct mm_struct *mm, pte_t pte)
 		return;
 
 	if (pte_user_accessible_page(pte)) {
-		page_table_check_clear(pte_pfn(pte), PAGE_SIZE >> PAGE_SHIFT);
+		page_table_check_clear(pte_pfn(pte), PAGE_SIZE >> PAGE_SHIFT,
+				       p3s_ptc_nr_maps(mm));
 	}
 }
 EXPORT_SYMBOL(__page_table_check_pte_clear);
@@ -178,7 +181,8 @@ void __page_table_check_pmd_clear(struct mm_struct *mm, pmd_t pmd)
 		return;
 
 	if (pmd_user_accessible_page(pmd)) {
-		page_table_check_clear(pmd_pfn(pmd), PMD_SIZE >> PAGE_SHIFT);
+		page_table_check_clear(pmd_pfn(pmd), PMD_SIZE >> PAGE_SHIFT,
+				       p3s_ptc_nr_maps(mm));
 	}
 }
 EXPORT_SYMBOL(__page_table_check_pmd_clear);
@@ -189,7 +193,8 @@ void __page_table_check_pud_clear(struct mm_struct *mm, pud_t pud)
 		return;
 
 	if (pud_user_accessible_page(pud)) {
-		page_table_check_clear(pud_pfn(pud), PUD_SIZE >> PAGE_SHIFT);
+		page_table_check_clear(pud_pfn(pud), PUD_SIZE >> PAGE_SHIFT,
+				       p3s_ptc_nr_maps(mm));
 	}
 }
 EXPORT_SYMBOL(__page_table_check_pud_clear);
@@ -227,10 +232,14 @@ void __page_table_check_ptes_set(struct mm_struct *mm, pte_t *ptep, pte_t pte,
 			for (i = 0; i < nr; i++) {
 				pte_t slice_pte = __pte(pte_val(pte) + (i << PAGE_SHIFT_4KB));
 
-				page_table_check_set(pte_pfn(slice_pte), 1, pte_write(slice_pte));
+				page_table_check_set(pte_pfn(slice_pte), 1,
+						     p3s_ptc_nr_maps(mm),
+						     pte_write(slice_pte));
 			}
 		} else {
-			page_table_check_set(pte_pfn(pte), nr, pte_write(pte));
+			page_table_check_set(pte_pfn(pte), nr,
+					     p3s_ptc_nr_maps(mm),
+					     pte_write(pte));
 		}
 	}
 }
@@ -254,6 +263,7 @@ void __page_table_check_pmd_set(struct mm_struct *mm, pmd_t *pmdp, pmd_t pmd)
 	__page_table_check_pmd_clear(mm, *pmdp);
 	if (pmd_user_accessible_page(pmd)) {
 		page_table_check_set(pmd_pfn(pmd), PMD_SIZE >> PAGE_SHIFT,
+				     p3s_ptc_nr_maps(mm),
 				     pmd_write(pmd));
 	}
 }
@@ -267,6 +277,7 @@ void __page_table_check_pud_set(struct mm_struct *mm, pud_t *pudp, pud_t pud)
 	__page_table_check_pud_clear(mm, *pudp);
 	if (pud_user_accessible_page(pud)) {
 		page_table_check_set(pud_pfn(pud), PUD_SIZE >> PAGE_SHIFT,
+				     p3s_ptc_nr_maps(mm),
 				     pud_write(pud));
 	}
 }
