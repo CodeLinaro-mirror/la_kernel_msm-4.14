@@ -11436,7 +11436,7 @@ CONFIG_DRM_XE_PAGEMAP                            policy<{'arm64': '-'}>
 CONFIG_DRM_XE_PAGEMAP                            note<'trim: derived, follows its parent option being disabled'>
 CONFIG_DVB_CORE                                  policy<{'arm64': '-', 'armhf': 'm'}>
 CONFIG_DVB_CORE                                  note<'trim: derived, follows its parent option being disabled'>
-CONFIG_DWMAC_IMX8                               policy<{'arm64': 'y', 'armhf': 'm'}>
+CONFIG_DWMAC_IMX8                                policy<{'arm64': 'm'}>
 CONFIG_DWMAC_ROCKCHIP                           policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_EC_LENOVO_YOGA_C630                       policy<{'arm64': '-'}>
 CONFIG_EC_LENOVO_YOGA_C630                       note<'trim: derived, follows its parent option being disabled'>
@@ -11883,10 +11883,10 @@ CONFIG_SOC_S32V234                               policy<{'arm64': '-'}>
 CONFIG_SOC_S32V234                               note<'trim: derived, follows its parent option being disabled'>
 CONFIG_SPI_ROCKCHIP                             policy<{'arm64': '-', 'armhf': '-'}>
 CONFIG_SPI_ROCKCHIP_SFC                         policy<{'arm64': '-', 'armhf': '-'}>
-CONFIG_STMMAC_ETH                               policy<{'arm64': 'y', 'armhf': 'm'}>
+CONFIG_STMMAC_ETH                                policy<{'arm64': 'm'}>
 CONFIG_STMMAC_LIBPCI                            policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_STMMAC_PCI                               policy<{'arm64': 'y', 'armhf': 'm'}>
-CONFIG_STMMAC_PLATFORM                          policy<{'arm64': 'y', 'armhf': 'm'}>
+CONFIG_STMMAC_PLATFORM                           policy<{'arm64': 'm'}>
 CONFIG_STP                                      policy<{'arm64': 'y', 'armhf': 'm'}>
 CONFIG_SWIOTLB                                  policy<{'arm64': 'y', 'armhf': '-'}>
 CONFIG_SWIOTLB_DYNAMIC                          policy<{'arm64': 'y', 'armhf': '-'}>
@@ -12031,3 +12031,9 @@ CONFIG_ZYNQMP_PM_DOMAINS                         note<'trim: derived, follows it
 
 CONFIG_ZYNQMP_POWER                              policy<{'arm64': '-'}>
 CONFIG_ZYNQMP_POWER                              note<'trim: derived, follows its parent option being disabled'>
+
+CONFIG_ARM_IMX_BUS_DEVFREQ                       policy<{'arm64': 'y'}>
+CONFIG_ARM_IMX8M_DDRC_DEVFREQ                    policy<{'arm64': 'y'}>
+CONFIG_CRYPTO_DEV_FSL_CAAM_PKC_API               policy<{'arm64': 'n'}>
+CONFIG_STMMAC_LIBPCI                             policy<{'arm64': 'm'}>
+CONFIG_STMMAC_PCI                                policy<{'arm64': 'm'}>
