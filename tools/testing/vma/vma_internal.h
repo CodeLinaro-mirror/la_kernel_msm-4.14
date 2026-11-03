@@ -911,4 +911,15 @@ static inline bool signal_pending(void *)
 	return false;
 }
 
+static inline void vm_flags_clear(struct vm_area_struct *vma,
+				  vm_flags_t flags)
+{
+	vma_start_write(vma);
+	vma->__vm_flags &= ~flags;
+}
+
+static inline void vma_close(struct vm_area_struct *vma)
+{
+}
+
 #endif	/* __MM_VMA_INTERNAL_H */
