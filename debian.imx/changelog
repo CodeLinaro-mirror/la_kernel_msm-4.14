@@ -1,3 +1,25 @@
+linux-imx (7.0.0-1011.29) resolute; urgency=medium
+
+  * [i.MX8x,9x] Enable CONFIG_CRYPTO_RNG
+  * [i.MX FRDM] Enable CONFIG_DRM_PANEL_WAVESHARE_DSI
+  * [i.MX8x,9x] Enable CONFIG_IKCONFIG
+  * [i.MX8x,9x] Enable CONFIG_IKCONFIG_PROC
+  * [i.MX8x,9x] Enable CONFIG_MODULE_SIG_KEY_TYPE_RSA
+  * [i.MX FRDM] Enable CONFIG_MOTORCOMM_PHY
+  * [i.MX8x,9x] Enable CONFIG_SCHEDSTATS
+  * [i.MX8,9x]  Enable CONFIG_SYSTEM_TRUSTED_KEYRING
+  * [i.MX FRDM] Enable CONFIG_TOUCHSCREEN_GOODIX
+  * [i.MX91]    Change m to y for CLK_IMX91, IMX91_THERMAL
+  * [i.MX95]    Change m to y for CLK_IMX95_BLK_CTL
+  * [all]       Set CONFIG_RELR to fix auto config generation
+  * [i.MX8M]    Enable ATH10K Wifi support
+  * [all]       Enable CONFIG_TRUSTED_KEYS_TEE, disable CONFIG_TRUSTED_KEYS_TPM
+  * [all]       Use imx firmware from lf-6.18.20-2.0.0 release
+  * [i.MX8M]    Enable cpu governor from the start with static build
+  * [i.MX8M]    Deprioritise CAAM based sha calculation for faster boo
+
+ -- Ondrej Kubik <ondrej.kubik@canonical.com>  Tue, 03 Nov 2026 12:54:43 +0000
+
 linux-imx (7.0.0-1011.28) resolute; urgency=medium
 
   * [i.MX8x,9x] Enable kernel snap build
