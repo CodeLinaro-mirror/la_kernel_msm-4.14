@@ -652,3 +652,6 @@ __traceiter_android_vh_restore_may_deactivate
 __tracepoint_android_vh_snapshot_refaults
 __traceiter_android_vh_snapshot_refaults
 
+# memcg flush stats
+__tracepoint_android_vh_mem_cgroup_flush_stats_bypass
+__traceiter_android_vh_mem_cgroup_flush_stats_bypass
