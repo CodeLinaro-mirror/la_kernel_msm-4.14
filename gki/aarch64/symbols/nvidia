@@ -113,6 +113,7 @@
   __bitmap_intersects
   __bitmap_or
   bitmap_parselist
+  bitmap_parselist_user
   bitmap_parse_user
   bitmap_print_to_pagebuf
   __bitmap_replace
@@ -2652,6 +2653,7 @@
   platform_irq_count
   __platform_register_drivers
   platform_unregister_drivers
+  play_idle_precise
   pm_generic_freeze
   pm_generic_poweroff
   pm_generic_restore
@@ -3273,6 +3275,7 @@
   sk_stop_timer
   sk_stream_error
   sk_stream_wait_memory
+  smp_call_function_many
   smp_call_function_single
   smp_call_function_single_async
   snd_card_disconnect

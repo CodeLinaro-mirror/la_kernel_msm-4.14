@@ -403571,6 +403571,14 @@ function {
   parameter_id: 0x4585663f
 }
 function {
+  id: 0x1dfa429f
+  return_type_id: 0x48b5725f
+  parameter_id: 0x310ec01d
+  parameter_id: 0x498e6bfd
+  parameter_id: 0x18bd6530
+  parameter_id: 0x6d7f5ff6
+}
+function {
   id: 0x1dfacbed
   return_type_id: 0x48b5725f
   parameter_id: 0x360c66c5
@@ -407109,6 +407117,12 @@ function {
   return_type_id: 0xe62ebf07
   parameter_id: 0x36f346e7
   parameter_id: 0x07265846
+}
+function {
+  id: 0x365811b9
+  return_type_id: 0x48b5725f
+  parameter_id: 0x92233392
+  parameter_id: 0x92233392
 }
 function {
   id: 0x367755e6
@@ -476050,6 +476064,15 @@ elf_symbol {
   full_name: "bitmap_parselist"
 }
 elf_symbol {
+  id: 0xfdac2b91
+  name: "bitmap_parselist_user"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0xa2bb1d5d
+  type_id: 0x9312d42a
+  full_name: "bitmap_parselist_user"
+}
+elf_symbol {
   id: 0xbd9a7739
   name: "bitmap_print_to_pagebuf"
   is_defined: true
@@ -519364,6 +519387,15 @@ elf_symbol {
   full_name: "platform_unregister_drivers"
 }
 elf_symbol {
+  id: 0x6a680e3c
+  name: "play_idle_precise"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0x371e4eb2
+  type_id: 0x365811b9
+  full_name: "play_idle_precise"
+}
+elf_symbol {
   id: 0x2c4cd39b
   name: "plist_add"
   is_defined: true
@@ -529262,6 +529294,15 @@ elf_symbol {
   crc: 0x57228df0
   type_id: 0x90e2d95d
   full_name: "smp_call_function_any"
+}
+elf_symbol {
+  id: 0xdf906b66
+  name: "smp_call_function_many"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0x8af897eb
+  type_id: 0x1dfa429f
+  full_name: "smp_call_function_many"
 }
 elf_symbol {
   id: 0x4c674d1e
@@ -550261,6 +550302,7 @@ interface {
   symbol_id: 0xa1f151cb
   symbol_id: 0xba7da88a
   symbol_id: 0x10425c32
+  symbol_id: 0xfdac2b91
   symbol_id: 0xbd9a7739
   symbol_id: 0xb5b2d835
   symbol_id: 0x226328f4
@@ -555069,6 +555111,7 @@ interface {
   symbol_id: 0xf5e8f5ed
   symbol_id: 0xa10f5ac7
   symbol_id: 0x25e7db1a
+  symbol_id: 0x6a680e3c
   symbol_id: 0x2c4cd39b
   symbol_id: 0xd734aca0
   symbol_id: 0xb634bd54
@@ -556168,6 +556211,7 @@ interface {
   symbol_id: 0x5d808bbc
   symbol_id: 0xf46be251
   symbol_id: 0x824ee5eb
+  symbol_id: 0xdf906b66
   symbol_id: 0x4c674d1e
   symbol_id: 0x1f9b728b
   symbol_id: 0x99a17453
