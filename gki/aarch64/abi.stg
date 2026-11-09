@@ -486418,6 +486418,15 @@ elf_symbol {
   full_name: "devm_regulator_bulk_get_enable"
 }
 elf_symbol {
+  id: 0x8a8a9efd
+  name: "devm_regulator_bulk_get_exclusive"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0x589e8c50
+  type_id: 0x9c874de2
+  full_name: "devm_regulator_bulk_get_exclusive"
+}
+elf_symbol {
   id: 0xadafc9a7
   name: "devm_regulator_get"
   is_defined: true
@@ -551404,6 +551413,7 @@ interface {
   symbol_id: 0x09b1d689
   symbol_id: 0x7c6f39ac
   symbol_id: 0x9f156785
+  symbol_id: 0x8a8a9efd
   symbol_id: 0xadafc9a7
   symbol_id: 0x21343bbe
   symbol_id: 0x502d0b80

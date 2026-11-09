@@ -490,6 +490,7 @@
   dev_get_stats
   dev_get_tstats64
   dev_graft_qdisc
+  devm_regulator_bulk_get_exclusive
   dev_pm_opp_get_required_pstate
   device_add
   device_add_disk
