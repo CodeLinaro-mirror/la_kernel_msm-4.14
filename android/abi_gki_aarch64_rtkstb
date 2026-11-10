@@ -681,6 +681,7 @@
   v4l2_enum_dv_timings_cap
   v4l2_fh_open
   v4l2_find_dv_timings_cea861_vic
+  v4l2_subdev_notify_event
   v4l2_i2c_subdev_init
   vabits_actual
   vb2_buffer_done
@@ -1574,6 +1575,7 @@
   drm_property_create_enum
   drm_property_create_range
   drm_property_lookup_blob
+  drm_property_replace_global_blob
   drm_read
   drm_release
   drm_scdc_read
