@@ -216,6 +216,7 @@ unsafe fn get_shmem_fops(
         // immutable.
         let mut new_fops = unsafe { *shmem_fops };
         new_fops.mmap = Some(ashmem_vmfile_mmap);
+        new_fops.mmap_prepare = None;
         new_fops.get_unmapped_area = Some(bindings::mm_get_unmapped_area);
         // SAFETY: We hold the `SHMEM_FOPS_ONCE` guard, so there are no other writers. The value of
         // `SHMEM_FOPS_ONCE` is false, so there are no readers either.
